@@ -324,7 +324,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
 
     // These should not be called while a game is in progress to prevent hostage holding.
     // TODO: Add logic around if a game is in progress.
-
     /// @notice Sets the max number NFTs (honeyComb) that can be generated from the deposit of a bear (asset)
     function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
         mintConfig.maxHoneycomb = _maxHoneycomb;

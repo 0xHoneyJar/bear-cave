@@ -15,7 +15,6 @@ import {GameRegistry} from "src/GameRegistry.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-
 // TODO: test bearCave claiming process
 contract BearCaveTest is Test, ERC1155TokenReceiver {
     using Random for uint256;
