@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 /// @title BearCave: Only one true honey can make a bear wake up
-/// @author ZayenX
 interface IBearCave {
     struct HibernatingBear {
         uint256 id;
@@ -13,8 +12,7 @@ interface IBearCave {
 
     struct MintConfig {
         uint32 maxHoneycomb; // Max # of generated honeys (Max of 4.2m -- we'll have 10420)
-        uint32 maxClaimableHoneyComb; // # of honeycombs that can be claimed for each game.
-        uint32 maxClaimableHoneyCombPerPlayer; // # of honeycombs that can be claimed for each game.
+        uint32 maxClaimableHoneyCombPerPlayer; // # of honeycombs that can be claimed by each player
         uint256 honeycombPrice_ERC20;
         uint256 honeycombPrice_ETH;
     }

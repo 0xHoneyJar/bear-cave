@@ -16,9 +16,11 @@ import {Constants} from "./GameLib.sol";
 /**
  * Bear GateKeeper
  *      In order to remain gas-efficient gates will be calculated off-chain
- *      Bearlock: owning bears
- *      FrenLock: owning particular assets
- *      PartnerLock: being on a traditional allowlist
+ *      BearGate: owning bears
+ *      CrownGate: every single one of the digital collectible articles, then they get a free claim in every game
+ *      HoneyGate: Genesis mint & n-1 can mint
+ *      FrenGate: owning particular assets
+ *      PartnerGate: being on a traditional allowlist
  *      Since gates are merkle trees, the per-player amounts will be set off-chain in the root.
  */
 // Gatekeeper should be pass through, and claimed amounts should be stored in the cave.

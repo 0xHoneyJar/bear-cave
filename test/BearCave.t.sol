@@ -15,6 +15,8 @@ import {GameRegistry} from "src/GameRegistry.sol";
 
 import {console2} from "forge-std/console2.sol";
 
+
+// TODO: test bearCave claiming process
 contract BearCaveTest is Test, ERC1155TokenReceiver {
     using Random for uint256;
 
@@ -73,7 +75,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         // MintConfig
         mintConfig.maxHoneycomb = maxHoneycomb;
-        mintConfig.maxClaimableHoneyComb = 0; // TODO
         mintConfig.maxClaimableHoneyCombPerPlayer = 0; // TODO
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
@@ -278,6 +279,22 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         // Simple math since we're using 10000 as the ohm Amount in this test
         assertEq(paymentToken.balanceOf(beekeeper), honeycombShare);
         assertEq(paymentToken.balanceOf(jani), ohmAmount - honeycombShare);
+    }
+
+    function testWithdrawETH() public {
+        // check initial conditions
+        assertEq(beekeeper.balance, 0);
+        assertEq(jani.balance, 0);
+
+        uint256 ethAmount = 1 ether;
+        vm.deal(address(bearCave), ethAmount);
+
+        uint256 beekeeperExpected = ethAmount * uint256(honeycombShare) / 10_000;
+        vm.prank(beekeeper);
+        uint256 amountLeft = bearCave.withdrawETH();
+        assertEq(amountLeft, 0, "bearcave still has money left in it");
+        assertEq(beekeeper.balance, beekeeperExpected);
+        assertEq(jani.balance, ethAmount - beekeeperExpected);
     }
 
     /**

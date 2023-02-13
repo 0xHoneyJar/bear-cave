@@ -8,26 +8,32 @@ import {Constants} from "./GameLib.sol";
 /// @notice Central repository that tracks games and permissions.
 /// @dev All game contracts should use extend `GameRegistryConsumer` to have consistent permissioning
 contract GameRegistry is AccessControl {
+    uint256 public earlyAccessTime = 72 hours;
+
+    struct Game {
+        bool enabled;
+        uint256 generalMintTime; // timestamp when generalMint
+    }
+
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(Constants.GAME_ADMIN, msg.sender);
     }
 
-    address[] public games;
-    mapping(address => uint256) gameToIndex;
+    mapping(address => Game) public games;
 
     function registerGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.GAME_INSTANCE, game_);
-        games.push(game_);
-        gameToIndex[game_] = games.length - 1;
     }
 
     function startGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.MINTER, game_);
+        games[game_] = Game(true, block.timestamp + earlyAccessTime);
     }
 
     function stopGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _revokeRole(Constants.MINTER, game_);
+        games[game_].enabled = false;
     }
 
     /**
@@ -41,6 +47,10 @@ contract GameRegistry is AccessControl {
 
     function setBeekeeper(address beeKeeper_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.JANI, beeKeeper_);
+    }
+
+    function setEarlyAccessTime(uint256 earlyAccessTime_) external onlyRole(Constants.GAME_ADMIN) {
+        earlyAccessTime = earlyAccessTime_;
     }
 }
 
@@ -58,6 +68,16 @@ abstract contract GameRegistryConsumer {
 
     constructor(address gameRegistry_) {
         gameRegistry = GameRegistry(gameRegistry_);
+    }
+
+    function _isEnabled(address game_) internal view returns (bool enabled) {
+        (enabled,) = gameRegistry.games(game_);
+    }
+
+    // TODO: Use the game registry to track game states
+    function _isGeneralMintEnabled(address game_) internal view returns (bool enabled) {
+        (, uint256 generalMintTime) = gameRegistry.games(game_);
+        return block.timestamp >= generalMintTime;
     }
 
     function _hasRole(bytes32 role_) internal view returns (bool) {

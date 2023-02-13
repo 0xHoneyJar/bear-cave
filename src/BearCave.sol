@@ -5,6 +5,7 @@ import {ERC1155, ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import "solmate/tokens/ERC721.sol";
 import "solmate/tokens/ERC20.sol";
 import "solmate/utils/LibString.sol";
+import "solmate/utils/SafeTransferLib.sol";
 
 import "@chainlink/interfaces/LinkTokenInterface.sol";
 import "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
@@ -22,6 +23,7 @@ import {Constants} from "./GameLib.sol";
 
 // Example: https://opensea.io/0xd87fa9FeD90948cd7deA9f77c06b9168Ac07F407 :dafoe:
 contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameRegistryConsumer {
+    using SafeTransferLib for ERC20;
     using Counters for Counters.Counter;
 
     /**
@@ -57,8 +59,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
     /**
      * bearPouch
      */
-    address private beekeeper; // rev share 22.33%
-    address private jani;
+    address payable private beekeeper; // rev share 22.33%
+    address payable private jani;
     uint16 private honeyCombShare; // in bps (10_000)
     // Accounting vars
     uint256 public totalFees;
@@ -79,7 +81,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
     mapping(uint256 => HibernatingBear) public bears; //  bearId --> hibernatingBear status
     mapping(uint256 => uint256[]) public honeyJar; //  bearId --> honeycomb that was made for it
     mapping(uint256 => uint256) public honeycombToBear; // Reverse mapping: honeyId -> bearId
-    mapping(uint256 => uint32) public claimed; // bearid -> numClaimed
+    mapping(uint256 => mapping(address => uint32)) public claimed; // bearid ->  player -> numClaimed
     mapping(uint256 => uint256) public rng; // Chainlink VRF request ID => bearId
 
     constructor(
@@ -128,13 +130,15 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
         require(honeyJar[bearId_].length < mintConfig.maxHoneycomb, "Already made too much honeyCombs");
     }
 
+    function earlyMint(uint256 bearId, uint32 gateId, uint32 amount, bytes32[] calldata proof) external {}
+
     /// @inheritdoc IBearCave
     function mekHoneyCombWithERC20(uint256 bearId_) external returns (uint256) {
         _canMintHoneycomb(bearId_);
         uint256 price = mintConfig.honeycombPrice_ERC20;
 
         // TODO: add an earlyAccessCheck
-        paymentToken.transferFrom(msg.sender, address(this), price); // will revert if there isn't enough
+        paymentToken.safeTransferFrom(msg.sender, address(this), price); // will revert if there isn't enough
         totalERC20Fees += price;
 
         // Mint da honey
@@ -232,8 +236,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
         require(currBalance > 0, "oogabooga theres nothing here");
 
         // xfer everything all at once so we don't have to worry about accounting
-        paymentToken.transfer(beekeeper, currBalance * honeyCombShare / 10_000);
-        paymentToken.transfer(jani, (currBalance * (10_000 - honeyCombShare)) / 10_000); // This should be everything
+        paymentToken.safeTransfer(beekeeper, currBalance * honeyCombShare / 10_000);
+        paymentToken.safeTransfer(jani, (currBalance * (10_000 - honeyCombShare)) / 10_000); // This should be everything
 
         return paymentToken.balanceOf(address(this));
     }
@@ -244,11 +248,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
         require(jani != address(0), "withdrawFunds::jani address not set");
 
         uint256 ethBalance = address(this).balance;
-        (bool success,) = beekeeper.call{value: ethBalance * honeyCombShare / 10_000}("");
-        require(success, "withdrawETH::Failed to send eth");
-
-        (success,) = jani.call{value: (ethBalance * (10_000 - honeyCombShare)) / 10_000}("");
-        require(success, "withdrawETH::Failed to send eth");
+        SafeTransferLib.safeTransferETH(beekeeper, ethBalance * honeyCombShare / 10_000);
+        SafeTransferLib.safeTransferETH(jani, (ethBalance * (10_000 - honeyCombShare)) / 10_000);
 
         return address(this).balance;
     }
@@ -267,12 +268,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
      */
 
     function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
-        HibernatingBear memory bear = bears[bearId_];
-        require(bear.id == bearId_, "Da bear isn't hibernating");
-        require(!bear.isAwake, "bear is already awake");
-        require(claimed[bearId_] < mintConfig.maxHoneycomb, "Already made too much honey");
-        require(claimed[bearId_] < mintConfig.maxClaimableHoneyComb, "no more free honeycomb 4 u. GG");
-
+        _canMintHoneycomb(bearId_);
         // Gatekeeper tracks per-player/per-gate claims
         uint32 numClaim = gatekeeper.claim(bearId_, gateId, msg.sender, amount, proof);
         if (numClaim == 0) {
@@ -280,16 +276,12 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
         }
 
         // Track per bear freeClaims
-        uint32 claimedAmount = claimed[bearId_];
-        if (numClaim + claimedAmount > mintConfig.maxClaimableHoneyComb) {
-            numClaim = mintConfig.maxClaimableHoneyComb - claimedAmount;
+        uint32 claimedAmount = claimed[bearId_][msg.sender];
+        if (numClaim + claimedAmount > mintConfig.maxClaimableHoneyCombPerPlayer) {
+            numClaim = mintConfig.maxClaimableHoneyCombPerPlayer; // TODO: Track already claimed per bear per player & link with minted through payments
         }
 
-        if (numClaim > mintConfig.maxClaimableHoneyCombPerPlayer) {
-            numClaim = mintConfig.maxClaimableHoneyComb; // TODO: Track already claimed per bear per player & link with minted through payments
-        }
-
-        claimed[bearId_] += numClaim;
+        claimed[bearId_][msg.sender] += numClaim;
 
         // If for some reason this fails, GG no honeyComb for you
         for (uint256 i = 0; i < numClaim; ++i) {
@@ -319,16 +311,20 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
      *  Currently separate from the permissioned roles in gameRegistry
      */
     function setJani(address jani_) external onlyRole(Constants.GAME_ADMIN) {
-        jani = jani_;
+        jani = payable(jani_);
     }
 
     function setBeeKeeper(address beekeeper_) external onlyRole(Constants.GAME_ADMIN) {
-        beekeeper = beekeeper_;
+        beekeeper = payable(beekeeper_);
     }
 
     /**
      * Game setters
      */
+
+    // These should not be called while a game is in progress to prevent hostage holding.
+    // TODO: Add logic around if a game is in progress.
+
     /// @notice Sets the max number NFTs (honeyComb) that can be generated from the deposit of a bear (asset)
     function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
         mintConfig.maxHoneycomb = _maxHoneycomb;
