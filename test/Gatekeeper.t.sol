@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import "murky/Merkle.sol";
 
 import "src/Gatekeeper.sol";
+import {GameRegistry} from "src/GameRegistry.sol";
 
 import "./mocks/MockERC1155.sol";
 import "./mocks/MockERC721.sol";
@@ -19,6 +20,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     UserFactory private userFactory = new UserFactory();
 
     Gatekeeper private gatekeeper;
+    GameRegistry private gameRegistry;
 
     bytes32[] private data1;
     bytes32[] private data2;
@@ -54,6 +56,9 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         // mockBear = new MockERC1155();
         // mockBear.mint(address(this), TOKENID, 1, "");
 
+        // Game Registry
+        gameRegistry = new GameRegistry();
+
         // Building the merkle tree
         data1 = new bytes32[](gate1Users.length);
         data2 = new bytes32[](gate2Users.length);
@@ -72,8 +77,8 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         bytes32 root3 = merkleLib.getRoot(allowListData);
 
         gatekeeper = new Gatekeeper(
-            MAX_CLAIMABLE, 
-            address(honeyComb) // need address for HoneyComb
+            address(gameRegistry),
+            MAX_CLAIMABLE
         );
 
         gatekeeper.addGate(root1, 2 * MAX_CLAIMABLE);
@@ -127,7 +132,6 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
-        gatekeeper.setGameContract(address(this));
         gatekeeper.addClaimed(TOKENID, gateIdx, player, MAX_CLAIMABLE + 1);
 
         bytes32[] memory proof = getProof1(userIdx);
@@ -138,7 +142,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
-        gatekeeper.setGameContract(address(this));
+        gameRegistry.registerGame(address(this));
         gatekeeper.addClaimed(TOKENID, gateIdx, player, MAX_CLAIMABLE);
 
         userIdx = 9;
