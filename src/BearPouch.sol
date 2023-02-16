@@ -17,9 +17,13 @@ abstract contract BearPouch is GameRegistryConsumer {
     uint256 private totalERC20Fees;
     uint256 private totalETHfees;
 
-    constructor(address gameRegistery_, address jani_, address beekeeper_, ERC20 paymentToken_, uint16 honeycombShare_)
-        GameRegistryConsumer(gameRegistery_)
-    {
+    constructor(
+        address gameRegistry_,
+        address jani_,
+        address beekeeper_,
+        ERC20 paymentToken_,
+        uint16 honeycombShare_
+    ) GameRegistryConsumer(gameRegistry_) {
         paymentToken = paymentToken_;
         jani = payable(jani_);
         beekeeper = payable(beekeeper_);
@@ -37,7 +41,11 @@ abstract contract BearPouch is GameRegistryConsumer {
         totalETHfees += msg.value;
     }
 
-    function withdrawFunds() public returns (uint256) {
+    /// @notice Will distribute payments as the honeycomb is minted
+    function distributePayments() internal {}
+
+    /// @notice withdrawss _all_ funds in the account
+    function withdrawERC20() public returns (uint256) {
         // permissions check
         require(_hasRole(Constants.JANI) || _hasRole(Constants.BEEKEEPER), "oogabooga you can't do that");
         require(beekeeper != address(0), "withdrawFunds::beekeeper address not set");
@@ -49,7 +57,7 @@ abstract contract BearPouch is GameRegistryConsumer {
         // ETh balanec
 
         // xfer everything all at once so we don't have to worry about accounting
-        paymentToken.transfer(beekeeper, currBalance * honeycombShare / 10_000);
+        paymentToken.transfer(beekeeper, (currBalance * honeycombShare) / 10_000);
         paymentToken.transfer(jani, (currBalance * (10_000 - honeycombShare)) / 10_000); // This should be everything
 
         return paymentToken.balanceOf(address(this));
@@ -61,10 +69,10 @@ abstract contract BearPouch is GameRegistryConsumer {
         require(jani != address(0), "withdrawFunds::jani address not set");
 
         uint256 ethBalance = address(this).balance;
-        (bool success,) = beekeeper.call{value: ethBalance * honeycombShare / 10_000}("");
+        (bool success, ) = beekeeper.call{value: (ethBalance * honeycombShare) / 10_000}("");
         require(success, "withdrawETH::Failed to send eth");
 
-        (success,) = jani.call{value: (ethBalance * (10_000 - honeycombShare)) / 10_000}("");
+        (success, ) = jani.call{value: (ethBalance * (10_000 - honeycombShare)) / 10_000}("");
         require(success, "withdrawETH::Failed to send eth");
     }
 }

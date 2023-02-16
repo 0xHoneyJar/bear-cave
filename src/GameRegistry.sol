@@ -71,7 +71,7 @@ abstract contract GameRegistryConsumer {
     }
 
     function _isEnabled(address game_) internal view returns (bool enabled) {
-        (enabled,) = gameRegistry.games(game_);
+        (enabled, ) = gameRegistry.games(game_);
     }
 
     // TODO: Use the game registry to track game states

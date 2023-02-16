@@ -20,6 +20,18 @@
         "lint:check": "npm run prettier:check && npm run solhint:check",
         "test": "forge test"
     },
+    "prettier": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "overrides": [
+            {
+                "files": "*.sol",
+                "options": {
+                    "explicitTypes": "always"
+                }
+            }
+        ]
+    },
     "eslintConfig": {
         "extends": "eslint:recommended",
         "parserOptions": {
