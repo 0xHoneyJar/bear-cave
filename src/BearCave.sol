@@ -18,7 +18,7 @@ import {GameRegistryConsumer} from "./GameRegistry.sol";
 import {Constants} from "./GameLib.sol";
 
 // Example: https://opensea.io/0xd87fa9FeD90948cd7deA9f77c06b9168Ac07F407 :dafoe:
-contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameRegistryConsumer {
+contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, GameRegistryConsumer {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
@@ -90,7 +90,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
         address _erc1155Address,
         address _paymentToken,
         uint256 _honeyCombShare
-    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) {
+    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) ReentrancyGuard() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeycomb = IHoneyComb(_honeycombAddress);
         erc1155 = ERC1155(_erc1155Address);
@@ -264,7 +264,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
     }
 
     /// @notice should only get called in the event automatic distribution doesn't work
-    function withdrawERC20() external returns (uint256) {
+    function withdrawERC20() external nonReentrant returns (uint256) {
         require(!distributeWithMint, "distriboot w/ mints should be false");
         // permissions check
         require(_hasRole(Constants.JANI) || _hasRole(Constants.BEEKEEPER), "oogabooga you can't do that");
@@ -283,7 +283,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, GameReg
     }
 
     /// @notice should only get called in the event automatic distribution doesn't work
-    function withdrawETH() public returns (uint256) {
+    function withdrawETH() public nonReentrant returns (uint256) {
         require(!distributeWithMint, "distriboot w/ mints should be false");
         require(_hasRole(Constants.JANI) || _hasRole(Constants.BEEKEEPER), "oogabooga you can't do that");
         require(beekeeper != address(0), "withdrawETH::beekeeper address not set");
