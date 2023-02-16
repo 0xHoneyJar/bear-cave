@@ -1,6 +1,5 @@
 {
     "editor.formatOnSave": true,
-    "solidity.formatter": "forge",
     "[solidity]": {
         "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
     }

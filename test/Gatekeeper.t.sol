@@ -14,7 +14,7 @@ import "./mocks/MockERC20.sol";
 import "./utils/UserFactory.sol";
 
 contract GateKeeperTest is Test, ERC1155TokenReceiver {
-    uint32 private constant MAX_CLAIMABLE = 6;
+    uint32 private constant MAX_CLAIMABLE = 12;
     uint32 private constant TOKENID = 69;
     Merkle private merkleLib = new Merkle();
     UserFactory private userFactory = new UserFactory();
@@ -24,7 +24,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
 
     bytes32[] private data1;
     bytes32[] private data2;
-    bytes32[] private allowListData;
+    bytes32[] private allowListData; // TODO: do i need this?
 
     address[] private gate1Users;
     address[] private gate2Users;
@@ -49,12 +49,10 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     }
 
     function setUp() public {
-        gate1Users = userFactory.create(12);
+        gate1Users = userFactory.create(15);
         gate2Users = userFactory.create(17);
 
         honeyComb = new MockERC721("honeycomb", "honeycomb");
-        // mockBear = new MockERC1155();
-        // mockBear.mint(address(this), TOKENID, 1, "");
 
         // Game Registry
         gameRegistry = new GameRegistry();
@@ -74,40 +72,22 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
 
         bytes32 root1 = merkleLib.getRoot(data1);
         bytes32 root2 = merkleLib.getRoot(data2);
-        bytes32 root3 = merkleLib.getRoot(allowListData);
 
-        gatekeeper = new Gatekeeper(
-            address(gameRegistry),
-            MAX_CLAIMABLE
-        );
+        gatekeeper = new Gatekeeper(address(gameRegistry));
 
-        gatekeeper.addGate(root1, 2 * MAX_CLAIMABLE);
-        gatekeeper.addGate(root2, 2 * MAX_CLAIMABLE + 1);
-        gatekeeper.setAllowRoot(root3);
+        gatekeeper.addGate(TOKENID, root1, MAX_CLAIMABLE);
+        gatekeeper.addGate(TOKENID, root2, MAX_CLAIMABLE);
     }
 
     function testAddingGates() public {
-        (bool active,, uint32 maxClaimable,) = gatekeeper.gates(0);
-        assertEq(maxClaimable, 2 * MAX_CLAIMABLE);
+        (bool active, , uint32 maxClaimable, ) = gatekeeper.tokenToGates(TOKENID, 0);
+        assertEq(maxClaimable, MAX_CLAIMABLE);
         assertEq(active, true);
     }
 
-    function testAllowList(uint8 userIdx) public {
-        vm.assume(userIdx < gate1Users.length);
-        address player = gate1Users[userIdx];
-
-        // bytes32 leafNode = keccak256(abi.encodePacked(player));
-        bytes32[] memory proof = merkleLib.getProof(allowListData, userIdx);
-        bool result = gatekeeper.gatekeep(player, proof);
-        assertTrue(result, "You should be allowed in bro");
-
-        // should fail
-        proof = merkleLib.getProof(allowListData, userIdx + 1);
-        result = gatekeeper.gatekeep(player, proof);
-        assertFalse(result, "how did you get in with a bad proof");
-    }
-
     function testClaim() public {
+        gameRegistry.registerGame(address(this));
+
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
@@ -115,40 +95,38 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         bytes32[] memory proof = getProof1(userIdx);
         uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, userIdx);
+        gatekeeper.addClaimed(TOKENID, gateIdx, userIdx);
 
         // hit the max
-        userIdx = 9;
+        userIdx = 10;
         proof = getProof1(userIdx);
         player = gate1Users[userIdx];
         claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        assertEq(claimedAmount, MAX_CLAIMABLE - 5); // 5 is the orinal claimed
+    }
+
+    function testClaim_onlyMax() public {
+        uint32 userIdx = MAX_CLAIMABLE + 1;
+        uint32 gateIdx = 0;
+        address player = gate1Users[userIdx];
+
+        bytes32[] memory proof = getProof1(userIdx);
+        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, MAX_CLAIMABLE);
     }
 
     function testFailNoPermissions() public {
-        gatekeeper.addClaimed(TOKENID, 69, address(420), MAX_CLAIMABLE + 1);
+        gatekeeper.addClaimed(TOKENID, 69, MAX_CLAIMABLE + 1);
     }
 
     function testFailNoMoreLeft() public {
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
-        gatekeeper.addClaimed(TOKENID, gateIdx, player, MAX_CLAIMABLE + 1);
+        gameRegistry.registerGame(address(this));
+        gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1);
 
         bytes32[] memory proof = getProof1(userIdx);
         gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
-    }
-
-    function testAnotherUserClaim() public {
-        uint32 userIdx = 5; // also the amount to claim
-        uint32 gateIdx = 0;
-        address player = gate1Users[userIdx];
-        gameRegistry.registerGame(address(this));
-        gatekeeper.addClaimed(TOKENID, gateIdx, player, MAX_CLAIMABLE);
-
-        userIdx = 9;
-        bytes32[] memory proof = getProof1(userIdx);
-        player = gate1Users[userIdx];
-        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
-        assertEq(claimedAmount, MAX_CLAIMABLE);
     }
 }

@@ -22,8 +22,9 @@ import {Constants} from "./GameLib.sol";
  *      FrenGate: owning particular assets
  *      PartnerGate: being on a traditional allowlist
  *      Since gates are merkle trees, the per-player amounts will be set off-chain in the root.
+ *  @notice state needs to be reset after each game.
+ *  @notice tracks claims per player, and claims per gate.
  */
-// Gatekeeper should be pass through, and claimed amounts should be stored in the cave.
 contract Gatekeeper is GameRegistryConsumer {
     struct Gate {
         bool active;
@@ -33,60 +34,48 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /**
-     * Configuration
-     */
-    bytes32 public allowRoot; // High level tree to determine if you're allowed through
-    uint32 public maxClaimable; // Max claimable per player
-    address gameContract;
-
-    /**
      * Internal Storage
      */
-    mapping(uint256 => mapping(address => uint32)) public assetToClaimed; // bear --> player --> numClaimed
+    mapping(uint256 => Gate[]) public tokenToGates; // bear -> Gates[]
+    mapping(uint256 => address) public games; // bear --> gameContract;
 
     /**
      * Dependencies
      */
-    Gate[] public gates; // TODO: tokenId -> Gates[]
-
     /// @notice admin is the address that is set as the owner.
-    /// @param maxClaimable_ maxClaimable honeycomb per player
-    constructor(address gameRegistry_, uint32 maxClaimable_) GameRegistryConsumer(gameRegistry_) {
-        maxClaimable = maxClaimable_;
-    }
+    constructor(address gameRegistry_) GameRegistryConsumer(gameRegistry_) {}
 
     /// @notice validate how much you can claim for a particular token and gate. (not a real claim)
     /// @param tokenId the ID of the bear in the game.
     /// @param index the gate index we're claiming
     /// @param amount number between 0-maxClaimablel you a player wants to claim
     /// @param proof merkle proof
-    function claim(uint256 tokenId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
-        external
-        view
-        returns (uint32 claimAmount)
-    {
+    function claim(
+        uint256 tokenId,
+        uint256 index,
+        address player,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) external view returns (uint32 claimAmount) {
+        Gate[] memory gates = tokenToGates[tokenId];
+        require(gates.length > 0, "nogates fren");
         require(index < gates.length, "Index too big bro");
 
         Gate memory gate = gates[index];
-        require(gate.active, "gates closed bruh");
-        require(assetToClaimed[tokenId][player] < maxClaimable, "You've taken as much free honey as you can ");
-        require(gate.claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
 
+        require(gate.active, "gates closed bruh");
+        uint32 claimedCount = gate.claimedCount;
+        require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
+
+        // validate proof
         claimAmount = amount;
         bytes32 leaf = keccak256(abi.encodePacked(player, amount));
         bool validProof = MerkleProofLib.verify(proof, gates[index].gateRoot, leaf);
         require(validProof, "Not a valid proof bro");
 
-        uint32 claimedAmount = assetToClaimed[tokenId][player];
-        if (amount + claimedAmount > maxClaimable) {
-            claimAmount = maxClaimable - claimedAmount;
+        if (amount + claimedCount > gate.maxClaimable) {
+            claimAmount = gate.maxClaimable - claimedCount;
         }
-    }
-
-    /// @notice simple function that accepts a proof + player and validates if its elegible for a claim
-    function gatekeep(address player_, bytes32[] calldata proof) public view returns (bool) {
-        bytes32 leaf = keccak256(abi.encodePacked(player_));
-        return MerkleProofLib.verify(proof, allowRoot, leaf);
     }
 
     /**
@@ -95,43 +84,35 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice  update accounting
     /// @dev should only be called by a game
-    function addClaimed(uint256 tokenId_, uint256 gateId, address player_, uint32 numClaimed_)
-        external
-        onlyRole(Constants.GAME_INSTANCE)
-    {
-        assetToClaimed[tokenId_][player_] += numClaimed_;
-        gates[gateId].claimedCount += numClaimed_;
-    }
-
-    /**
-     * Gatekeeper admins
-     */
-
-    function setAllowRoot(bytes32 root_) external onlyRole(Constants.GAME_ADMIN) {
-        allowRoot = root_;
-    }
-
-    function setMaxClaimable(uint32 maxClaimable_) external onlyRole(Constants.GAME_ADMIN) {
-        maxClaimable = maxClaimable_;
+    function addClaimed(
+        uint256 tokenId,
+        uint256 gateId,
+        uint32 numClaimed_
+    ) external onlyRole(Constants.GAME_INSTANCE) {
+        tokenToGates[tokenId][gateId].claimedCount += numClaimed_;
     }
 
     /**
      * Gate admin methods
      */
 
-    function addGate(bytes32 root_, uint32 maxClaimable_) external onlyRole(Constants.GAME_ADMIN) {
-        gates.push(Gate(true, 0, maxClaimable_, root_));
+    function addGate(uint256 tokenId, bytes32 root_, uint32 maxClaimable_) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[tokenId].push(Gate(true, 0, maxClaimable_, root_));
     }
 
-    function setGateActive(uint256 index, bool active) external onlyRole(Constants.GAME_ADMIN) {
-        gates[index].active = active;
+    function setGateActive(uint256 tokenId, uint256 index, bool active) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[tokenId][index].active = active;
     }
 
-    function setGateMaxClaimable(uint256 index, uint32 maxClaimable_) external onlyRole(Constants.GAME_ADMIN) {
-        gates[index].maxClaimable = maxClaimable_;
+    function setGateMaxClaimable(
+        uint256 tokenId,
+        uint256 index,
+        uint32 maxClaimable_
+    ) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[tokenId][index].maxClaimable = maxClaimable_;
     }
 
-    function resetGate(uint256 index) external onlyRole(Constants.GAME_ADMIN) {
-        gates[index].claimedCount = 0;
+    function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[tokenId][index].claimedCount = 0;
     }
 }

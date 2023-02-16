@@ -12,7 +12,7 @@ interface IBearCave {
 
     struct MintConfig {
         uint32 maxHoneycomb; // Max # of generated honeys (Max of 4.2m -- we'll have 10420)
-        uint32 maxClaimableHoneyCombPerPlayer; // # of honeycombs that can be claimed by each player
+        uint32 maxClaimableHoneycomb; // # of honeycombs that can be claimed (total)
         uint256 honeycombPrice_ERC20;
         uint256 honeycombPrice_ETH;
     }
