@@ -5,11 +5,10 @@ import {ERC1155, ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import "solmate/tokens/ERC20.sol";
 import "solmate/utils/SafeTransferLib.sol";
 import "solmate/utils/FixedPointMathLib.sol";
+import "solmate/utils/ReentrancyGuard.sol";
 
 import "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/VRFConsumerBaseV2.sol";
-
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import {Gatekeeper} from "./Gatekeeper.sol";
 import {IHoneyComb} from "./IHoneyComb.sol";
@@ -23,15 +22,22 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     using FixedPointMathLib for uint256;
 
     /**
-     * Common Game Errors
+     *  Game Errors
      */
+    // Contract State
     error NotInitialized();
     error AlreadyInitialized();
+    // Game state
     error BearAlreadyWoke(uint256 bearId);
+    error GameInProgress();
     error TooManyHoneyCombs(uint256 bearId);
     error SpecialHoneyCombNotFound(uint256 bearId);
     error NotEnoughHoneyCombMinted(uint256 bearId);
-    error GameInProgress();
+
+    // User Errors
+    error NotOwnerOfSpecialHoneyComb(uint256 bearId, uint256 honeycombId);
+    error Claim_IncorrectInput();
+    error Claim_InvalidProof();
 
     /**
      * Configuration
@@ -77,6 +83,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Internal Storage
      */
     bool initialized;
+    // TODO: Review usage & combine these mappings into a single struct where appropriate.
     mapping(uint256 => HibernatingBear) public bears; //  bearId --> hibernatingBear status
     mapping(uint256 => uint256[]) public honeyJar; //  bearId --> honeycomb that was made for it (honeyJar[bearId].length is # minted honeycomb)
     mapping(uint256 => uint256) public honeycombToBear; // Reverse mapping: honeyId -> bearId
@@ -137,7 +144,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         _canMintHoneycomb(bearId_);
         uint256 price = mintConfig.honeycombPrice_ERC20;
 
-        // TODO: add an earlyAccessCheck
         if (distributeWithMint) {
             _distribute(price);
         } else {
@@ -229,10 +235,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (honeyJar[_bearId].length < mintConfig.maxHoneycomb) revert NotEnoughHoneyCombMinted(_bearId);
         if (!bear.specialHoneycombFound) revert SpecialHoneyCombNotFound(_bearId);
 
-        require(
-            honeycomb.ownerOf(bear.specialHoneycombId) == msg.sender,
-            "wakeBear::You don't have the special honeycomb"
-        );
+        if (honeycomb.ownerOf(bear.specialHoneycombId) != msg.sender)
+            revert NotOwnerOfSpecialHoneyComb(_bearId, bear.specialHoneycombId);
 
         // Send over bear
         erc1155.safeTransferFrom(address(this), msg.sender, bear.id, 1, "");
@@ -263,6 +267,10 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         }
     }
 
+    function _splitFee(uint256 currentBalance) internal returns (uint256) {
+        return currentBalance.mulWadUp(honeyCombShare);
+    }
+
     /// @notice should only get called in the event automatic distribution doesn't work
     function withdrawERC20() external nonReentrant returns (uint256) {
         require(!distributeWithMint, "distriboot w/ mints should be false");
@@ -275,7 +283,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         require(currBalance > 0, "oogabooga theres nothing here");
 
         // xfer everything all at once so we don't have to worry about accounting
-        uint256 beekeeperShare = currBalance.mulWadUp(honeyCombShare);
+        uint256 beekeeperShare = _splitFee(currBalance);
         paymentToken.safeTransfer(beekeeper, beekeeperShare);
         paymentToken.safeTransfer(jani, paymentToken.balanceOf(address(this))); // This should be everything
 
@@ -289,8 +297,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         require(beekeeper != address(0), "withdrawETH::beekeeper address not set");
         require(jani != address(0), "withdrawFunds::jani address not set");
 
-        uint256 ethBalance = address(this).balance;
-        uint256 beekeeperShare = ethBalance.mulWadUp(honeyCombShare);
+        uint256 beekeeperShare = _splitFee(address(this).balance);
         SafeTransferLib.safeTransferETH(beekeeper, beekeeperShare);
         SafeTransferLib.safeTransferETH(jani, address(this).balance);
 
@@ -301,9 +308,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Gatekeeper: for claiming free honeycomb
      * BearCave:
      *    - maxMintableHoneyComb per Bear
-     *    - claimedHoneyComb per Bear// free
+     *    - claimedHoneyComb per Bear // free
+     *    - maxClaimableHoneyComb per Bear
      * Gatekeeper: (per bear)
-     *    - maxHoneycombAvailable per player
      * Gates:
      *    - maxHoneycombAvailable per gate
      *    - maxClaimable per gate
@@ -312,6 +319,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
         _canMintHoneycomb(bearId_);
         // Gatekeeper tracks per-player/per-gate claims
+        if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.claim(bearId_, gateId, msg.sender, amount, proof);
         if (numClaim == 0) {
             return;
@@ -341,10 +349,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         bytes32[][] calldata proof
     ) external {
         uint256 inputLength = proof.length;
-        require(inputLength == gateId.length, "claimAll:incorrectInput");
-        require(inputLength == amount.length, "claimAll:incorrectInput");
+        if (inputLength != gateId.length) revert Claim_IncorrectInput();
+        if (inputLength != amount.length) revert Claim_IncorrectInput();
 
         for (uint256 i = 0; i < inputLength; ++i) {
+            if (proof[i].length == 0) continue; // Don't nomad yourself
             claim(bearId_, gateId[i], amount[i], proof[i]);
         }
     }
@@ -372,7 +381,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      */
 
     // These should not be called while a game is in progress to prevent hostage holding.
-    // TODO: Add logic around if a game is in progress.
     /// @notice Sets the max number NFTs (honeyComb) that can be generated from the deposit of a bear (asset)
     function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();

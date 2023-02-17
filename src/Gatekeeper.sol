@@ -48,7 +48,7 @@ contract Gatekeeper is GameRegistryConsumer {
     /// @notice validate how much you can claim for a particular token and gate. (not a real claim)
     /// @param tokenId the ID of the bear in the game.
     /// @param index the gate index we're claiming
-    /// @param amount number between 0-maxClaimablel you a player wants to claim
+    /// @param amount number between 0-maxClaimable you a player wants to claim
     /// @param proof merkle proof
     function claim(
         uint256 tokenId,
@@ -67,6 +67,7 @@ contract Gatekeeper is GameRegistryConsumer {
         uint32 claimedCount = gate.claimedCount;
         require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
 
+        // TODO: Track used proofs. Exploit: reusing the same proof to claim max tokens.
         // validate proof
         claimAmount = amount;
         bytes32 leaf = keccak256(abi.encodePacked(player, amount));
