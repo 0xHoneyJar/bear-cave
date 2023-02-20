@@ -20,7 +20,7 @@ contract HoneyComb is IHoneyComb, ERC721, GameRegistryConsumer {
     constructor(address gameRegistry_) ERC721("Honey Comb", "HONEYCOMB") GameRegistryConsumer(gameRegistry_) {}
 
     function _baseURI() internal pure override returns (string memory) {
-        return "https://0xhoneyjar.com/";
+        return "https://www.0xhoneyjar.xyz/";
     }
 
     function tokenURI(uint256 _id) public pure override returns (string memory) {

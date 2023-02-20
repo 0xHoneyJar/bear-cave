@@ -267,7 +267,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         }
     }
 
-    function _splitFee(uint256 currentBalance) internal returns (uint256) {
+    function _splitFee(uint256 currentBalance) internal view returns (uint256) {
         return currentBalance.mulWadUp(honeyCombShare);
     }
 
