@@ -15,7 +15,7 @@ contract HoneyComb is IHoneyComb, ERC721, GameRegistryConsumer {
     using LibString for uint256;
     using Counters for Counters.Counter;
 
-    Counters.Counter private lastHoneyId; // atomically increasing tokenId
+    Counters.Counter public lastHoneyId; // atomically increasing tokenId
 
     constructor(address gameRegistry_) ERC721("Honey Comb", "HONEYCOMB") GameRegistryConsumer(gameRegistry_) {}
 
