@@ -95,7 +95,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         bytes32[] memory proof = getProof1(userIdx);
         uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, userIdx);
-        gatekeeper.addClaimed(TOKENID, gateIdx, userIdx);
+        gatekeeper.addClaimed(TOKENID, gateIdx, userIdx, proof);
 
         // hit the max
         userIdx = 10;
@@ -115,18 +115,38 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         assertEq(claimedAmount, MAX_CLAIMABLE);
     }
 
-    function testFailNoPermissions() public {
-        gatekeeper.addClaimed(TOKENID, 69, MAX_CLAIMABLE + 1);
+    function testClaim_alreadyClaimed() public {
+        gameRegistry.registerGame(address(this));
+
+        uint32 userIdx = 5;
+        uint32 gateIdx = 0;
+        address player = gate1Users[userIdx];
+
+        bytes32[] memory proof = getProof1(userIdx);
+        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        assertEq(claimedAmount, userIdx, "uwot");
+
+        gatekeeper.addClaimed(TOKENID, gateIdx, userIdx, proof);
+        claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        assertEq(claimedAmount, 0, "you shouldn't be able to claim anymore");
     }
 
-    function testFailNoMoreLeft() public {
+    function testFailNoPermissions() public {
+        bytes32[] memory proof = getProof1(1);
+
+        gatekeeper.addClaimed(TOKENID, 69, MAX_CLAIMABLE + 1, proof);
+    }
+
+    function testNoMoreLeft() public {
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
         gameRegistry.registerGame(address(this));
-        gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1);
-
         bytes32[] memory proof = getProof1(userIdx);
-        gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+
+        gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1, proof);
+
+        uint256 claimAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        assertEq(claimAmount, 0);
     }
 }

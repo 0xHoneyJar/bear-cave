@@ -28,7 +28,7 @@ import {Constants} from "./GameLib.sol";
 contract Gatekeeper is GameRegistryConsumer {
     struct Gate {
         bool active;
-        uint32 claimedCount; // # of claims already happend (this won't be reusable for other bears... ._.)
+        uint32 claimedCount; // # of claims already happend
         uint32 maxClaimable; // # of claims per gate
         bytes32 gateRoot;
     }
@@ -37,6 +37,7 @@ contract Gatekeeper is GameRegistryConsumer {
      * Internal Storage
      */
     mapping(uint256 => Gate[]) public tokenToGates; // bear -> Gates[]
+    mapping(uint256 => mapping(bytes32 => bool)) consumedProofs; // gateId --> proof --> boolean
     mapping(uint256 => address) public games; // bear --> gameContract;
 
     /**
@@ -57,18 +58,21 @@ contract Gatekeeper is GameRegistryConsumer {
         uint32 amount,
         bytes32[] calldata proof
     ) external view returns (uint32 claimAmount) {
-        Gate[] memory gates = tokenToGates[tokenId];
+        Gate[] storage gates = tokenToGates[tokenId];
         require(gates.length > 0, "nogates fren");
         require(index < gates.length, "Index too big bro");
+        require(proof.length > 0, "Invalid Proof");
 
-        Gate memory gate = gates[index];
-
+        Gate storage gate = gates[index];
         require(gate.active, "gates closed bruh");
+
+        // If proof was already used within the gate, there are 0 left to claim
+        bytes32 proofHash = keccak256(abi.encode(proof));
+        if (consumedProofs[index][proofHash]) return 0;
+
         uint32 claimedCount = gate.claimedCount;
         require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
 
-        // TODO: Track used proofs. Exploit: reusing the same proof to claim max tokens.
-        // validate proof
         claimAmount = amount;
         bytes32 leaf = keccak256(abi.encodePacked(player, amount));
         bool validProof = MerkleProofLib.verify(proof, gates[index].gateRoot, leaf);
@@ -88,9 +92,14 @@ contract Gatekeeper is GameRegistryConsumer {
     function addClaimed(
         uint256 tokenId,
         uint256 gateId,
-        uint32 numClaimed_
+        uint32 numClaimed,
+        bytes32[] calldata proof
     ) external onlyRole(Constants.GAME_INSTANCE) {
-        tokenToGates[tokenId][gateId].claimedCount += numClaimed_;
+        Gate storage gate = tokenToGates[tokenId][gateId];
+        gate.claimedCount += numClaimed;
+
+        bytes32 proofHash = keccak256(abi.encode(proof));
+        consumedProofs[gateId][proofHash] = true;
     }
 
     /**
@@ -115,5 +124,14 @@ contract Gatekeeper is GameRegistryConsumer {
 
     function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].claimedCount = 0;
+    }
+
+    function resetAllGates(uint256 tokenId) external onlyRole(Constants.GAME_ADMIN) {
+        uint numGates = tokenToGates[tokenId].length;
+        Gate[] storage tokenGates = tokenToGates[tokenId];
+        for (uint i = 0; i < numGates; i++) {
+            tokenGates[i].claimedCount = 0;
+            // TODO: How do you reset user claims?
+        }
     }
 }

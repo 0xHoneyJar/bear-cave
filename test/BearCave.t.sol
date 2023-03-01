@@ -13,6 +13,7 @@ import "./utils/Random.sol";
 import "src/BearCave.sol";
 import {HoneyComb} from "src/HoneyComb.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
+import {Gatekeeper} from "src/Gatekeeper.sol";
 
 import {console2} from "forge-std/console2.sol";
 
@@ -32,6 +33,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     uint256 private bearId;
     MockERC1155 private erc1155;
     MockERC20 private paymentToken;
+    Gatekeeper private mockGatekeeper;
 
     // Users
     address payable private beekeeper;
@@ -81,9 +83,19 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
 
+        Gatekeeper gatekeeper = new Gatekeeper(address(gameRegistry));
+
         // Deploy the bearCave
-        bearCave =
-        new BearCave(address(vrfCoordinator), address(gameRegistry), address(honeycomb), address(erc1155), address(paymentToken), honeycombShare);
+        bearCave = new BearCave(
+            address(vrfCoordinator),
+            address(gameRegistry),
+            address(honeycomb),
+            address(erc1155),
+            address(paymentToken),
+            address(gatekeeper),
+            honeycombShare
+        );
+
         bearCave.setSubId(subId);
         bearCave.setJani(jani);
         bearCave.setBeeKeeper(beekeeper);
@@ -371,7 +383,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     // ============= Claiming will be an integration test  ==================== //
 
-    
     /**
      * Internal Helper methods
      */

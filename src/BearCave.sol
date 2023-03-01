@@ -96,12 +96,14 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         address _honeycombAddress,
         address _erc1155Address,
         address _paymentToken,
+        address _gatekeeper,
         uint256 _honeyCombShare
     ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) ReentrancyGuard() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeycomb = IHoneyComb(_honeycombAddress);
         erc1155 = ERC1155(_erc1155Address);
         paymentToken = ERC20(_paymentToken);
+        gatekeeper = Gatekeeper(_gatekeeper);
         honeyCombShare = _honeyCombShare;
     }
 
@@ -338,7 +340,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
             _mintHoneyCombForBear(msg.sender, bearId_);
         }
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
-        gatekeeper.addClaimed(bearId_, gateId, numClaim);
+        gatekeeper.addClaimed(bearId_, gateId, numClaim, proof);
     }
 
     // Helpfer function to claim all the free shit
@@ -378,9 +380,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
     /**
      * Game setters
+     *  These should not be called while a game is in progress to prevent hostage holding.
      */
 
-    // These should not be called while a game is in progress to prevent hostage holding.
     /// @notice Sets the max number NFTs (honeyComb) that can be generated from the deposit of a bear (asset)
     function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
