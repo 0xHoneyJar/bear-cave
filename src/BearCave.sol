@@ -54,9 +54,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Configuration
      */
     ERC20 public paymentToken; // OHM
-    ERC1155 private erc1155; //the openseaAddress (rip) for Bears
+    ERC1155 public erc1155; //the openseaAddress (rip) for Bears
     MintConfig private mintConfig;
-    bool private distributeWithMint; // Feature Toggle... what if we just make a feature toggle lib...
+    bool public distributeWithMint; // Feature Toggle... what if we just make a feature toggle lib...
     uint256 public publicMintingTime;
 
     /**
@@ -65,10 +65,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     // The gas lane to use, which specifies the maximum gas price to bump to.
     // For a list of available gas lanes on each network,
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    bytes32 internal keyHash; // TODO: config VRF
-    uint64 internal subId = 69; // TODO: https://vrf.chain.link/goerli/new
+    bytes32 internal keyHash;
+    uint64 internal subId; // https://vrf.chain.link/goerli/new
     uint16 internal minConfirmations = 3; // Default is 3
-
     // Storing each word costs about 20,000 gas,
     // so 100,000 is a safe default for this example contract.
     uint32 internal callbackGasLimit = 100000; // enough for ~5 words
@@ -80,9 +79,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     address payable private jani;
     uint256 private honeyCombShare; // as a WAD
     // Accounting vars
-    uint256 public totalFees;
-    uint256 private totalERC20Fees;
-    uint256 private totalETHfees;
+    uint256 public totalERC20Fees;
+    uint256 public totalETHfees;
 
     /**
      * Depenedncies

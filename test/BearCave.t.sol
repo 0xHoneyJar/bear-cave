@@ -383,10 +383,9 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     function testClaimHoneycomb() public {
         // initial conditions
-        
+
         bearCave.setDistributeWithMint(true);
         _hibernateBear(bearId);
-
     }
 
     // ============= Claiming will be an integration test  ==================== //
