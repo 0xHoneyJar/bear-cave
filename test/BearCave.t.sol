@@ -118,8 +118,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         // Beekeeper is unauthorized
         vm.startPrank(beekeeper);
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
     }
 
     function testHibernateBear() public {
@@ -137,8 +136,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailMekHoney_noMinterPerms() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         // Stoping the game revokes minter permissions.
         gameRegistry.stopGame(address(bearCave));
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
@@ -146,20 +145,20 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailMekHoney_wrongBearId() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         bearCave.mekHoneyCombWithERC20(69);
     }
 
     function testFailMekHoney_noETH() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         bearCave.mekHoneyCombWithEth(bearId);
     }
 
     function testFailMekHoney_noMoneys() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.burn(address(this), MINT_PRICE_ERC20);
 
         assertEq(paymentToken.balanceOf(address(this)), 0, "how do you still have monies?");
@@ -168,8 +167,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testmekHoneyCombWithERC20() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
 
         assertEq(honeycomb.balanceOf(address(this)), 0, "how do you already have honey?");
         paymentToken.approve(address(bearCave), MINT_PRICE_ERC20);
@@ -181,8 +179,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testMekHoneyCombWithETH() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
 
         // Will make a call to bearCave.mekHoneyCombWithETH(bearId).
         bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId);
@@ -203,8 +200,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFindSpecialHoney() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
         _makeMultipleHoney(bearId, maxHoneycomb);
 
@@ -222,8 +219,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     function testFailWakeBear_notEnoughHoney() public {
         // Same as the bear is sleeping
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
         bearCave.mekHoneyCombWithERC20(bearId);
 
@@ -231,8 +228,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailWakeBear_wrongUser() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
         _makeMultipleHoney(bearId, maxHoneycomb);
 
@@ -243,16 +240,16 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailWakeBear_allHoneyCombNoVRF() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
         _makeMultipleHoney(bearId, maxHoneycomb);
         bearCave.wakeBear(bearId);
     }
 
     function testWakeBear() public {
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
         _makeMultipleHoney(bearId, maxHoneycomb);
 
@@ -268,13 +265,11 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     function testTwoSleepingBears() public {
         // TODO: can make this test more robust by validating the mekHoneyCombWithERC20/findSpecial honey outputs.
-        // uint256 secondBearId = MAX_RANDOM.randomFromMax(); // This shit isn't random.
         uint256 secondBearId = 69420;
-        erc1155.setApprovalForAll(address(bearCave), true);
         erc1155.mint(address(this), secondBearId, 1, "");
 
-        bearCave.hibernateBear(bearId);
-        bearCave.hibernateBear(secondBearId);
+        _hibernateBear(bearId);
+        _hibernateBear(secondBearId);
 
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20 * 2);
         _makeMultipleHoney(bearId, maxHoneycomb);
@@ -357,8 +352,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         assertEq(paymentToken.balanceOf(jani), 0, "init: not zero");
 
         bearCave.setDisitrbuteWithMint(true);
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
+
         paymentToken.approve(address(bearCave), MINT_PRICE_ERC20);
         bearCave.mekHoneyCombWithERC20(bearId);
 
@@ -374,8 +369,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         assertEq(jani.balance, 0, "init: not zero");
 
         bearCave.setDisitrbuteWithMint(true);
-        erc1155.setApprovalForAll(address(bearCave), true);
-        bearCave.hibernateBear(bearId);
+        _hibernateBear(bearId);
 
         // Will make a call to bearCave.mekHoneyCombWithETH(bearId).
         bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId);
@@ -397,5 +391,11 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
             paymentToken.mint(address(this), MINT_PRICE_ERC20);
             bearCave.mekHoneyCombWithERC20(_bearId);
         }
+    }
+
+    function _hibernateBear(uint256 bearId_) internal {
+        erc1155.setApprovalForAll(address(bearCave), true);
+        bearCave.hibernateBear(bearId_);
+        vm.warp(block.timestamp + 73 hours); // Test in the public mint area
     }
 }

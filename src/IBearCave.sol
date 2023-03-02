@@ -6,6 +6,7 @@ interface IBearCave {
     struct HibernatingBear {
         uint256 id;
         uint256 specialHoneycombId; // defaults to 0
+        uint256 publicMintTime; // block.timstamp that general public can start making honeycombs
         bool specialHoneycombFound; // So tokenID=0 can't wake bear before special honey is found
         bool isAwake; // don't try to wake if its already awake
     }

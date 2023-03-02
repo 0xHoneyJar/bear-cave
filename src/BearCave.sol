@@ -33,6 +33,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     error TooManyHoneyCombs(uint256 bearId);
     error SpecialHoneyCombNotFound(uint256 bearId);
     error NotEnoughHoneyCombMinted(uint256 bearId);
+    error GeneralMintNotOpen(uint256 bearId);
 
     // User Errors
     error NotOwnerOfSpecialHoneyComb(uint256 bearId, uint256 honeycombId);
@@ -56,6 +57,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     ERC1155 private erc1155; //the openseaAddress (rip) for Bears
     MintConfig private mintConfig;
     bool private distributeWithMint; // Feature Toggle... what if we just make a feature toggle lib...
+    uint256 public publicMintingTime;
 
     /**
      * Chainlink VRF Config
@@ -144,7 +146,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
         erc1155.safeTransferFrom(msg.sender, address(this), _bearId, 1, "");
 
-        bears[_bearId] = HibernatingBear(_bearId, 0, false, false);
+        bears[_bearId] = HibernatingBear(_bearId, 0, block.timestamp + 72 hours, false, false);
         gatekeeper.startGatesForToken(_bearId);
 
         emit BearHibernated(_bearId);
@@ -160,29 +162,65 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     // TODO: earlyMint
-    function earlyMint(uint256 bearId, uint32 gateId, uint32 amount, bytes32[] calldata proof) external {}
+    function earlyMekHoneyCombWithERC20(
+        uint256 bearId,
+        uint32 gateId,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) external returns (uint256) {
+        _canMintHoneycomb(bearId);
+        // validateProof checks that gates are open
+        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, amount, proof);
+        if (!validProof) revert Claim_InvalidProof();
+        return _distributeERC20AndMintHoneycomb(bearId);
+    }
+
+    function earlyMekHoneyCombWithEth(
+        uint256 bearId,
+        uint32 gateId,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) external payable returns (uint256) {
+        _canMintHoneycomb(bearId);
+        // validateProof checks that gates are open
+        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, amount, proof); // This shit needs to be bulletproof
+        if (!validProof) revert Claim_InvalidProof();
+        return _distributeETHAndMintHoneycomb(bearId);
+    }
 
     /// @inheritdoc IBearCave
     function mekHoneyCombWithERC20(uint256 bearId_) external returns (uint256) {
         _canMintHoneycomb(bearId_);
-        uint256 price = mintConfig.honeycombPrice_ERC20;
+        if (bears[bearId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bearId_);
+        return _distributeERC20AndMintHoneycomb(bearId_);
+    }
 
+    function mekHoneyCombWithEth(uint256 bearId_) external payable returns (uint256) {
+        _canMintHoneycomb(bearId_);
+        if (bears[bearId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bearId_);
+
+        return _distributeETHAndMintHoneycomb(bearId_);
+    }
+
+    /// @dev internal helper function to collect payment and mint honeycomb
+    /// @return tokenID of minted honeyComb
+    function _distributeERC20AndMintHoneycomb(uint256 bearId_) internal returns (uint256) {
+        uint256 price = mintConfig.honeycombPrice_ERC20;
         if (distributeWithMint) {
             _distribute(price);
         } else {
             paymentToken.safeTransferFrom(msg.sender, address(this), price); // will revert if there isn't enough
             totalERC20Fees += price;
         }
-
         // Mint da honey
         return _mintHoneyCombForBear(msg.sender, bearId_);
     }
 
-    function mekHoneyCombWithEth(uint256 bearId_) external payable returns (uint256) {
-        _canMintHoneycomb(bearId_);
+    /// @dev internal helper function to collect payment and mint honeycomb
+    /// @return tokenID of minted honeyComb
+    function _distributeETHAndMintHoneycomb(uint256 bearId_) internal returns (uint256) {
         uint256 price = mintConfig.honeycombPrice_ETH;
-
-        require(msg.value == price, "MekHoney::Moar eth pls");
+        require(msg.value == price, "MekHoney::Exact eth pls");
 
         if (distributeWithMint) {
             _distribute(0);
