@@ -79,6 +79,10 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         gatekeeper.addGate(TOKENID, root2, MAX_CLAIMABLE, 1); // opens after first stage
     }
 
+    function testFailAddingGates() public {
+        gatekeeper.addGate(TOKENID, bytes32(""), MAX_CLAIMABLE, 14);
+    }
+
     function testAddingGates() public {
         (bool active, , , uint32 maxClaimable, , ) = gatekeeper.tokenToGates(TOKENID, 0);
         assertEq(maxClaimable, MAX_CLAIMABLE);

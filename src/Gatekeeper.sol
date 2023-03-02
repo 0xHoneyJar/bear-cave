@@ -129,6 +129,7 @@ contract Gatekeeper is GameRegistryConsumer {
         uint8 stageIndex_
     ) external onlyRole(Constants.GAME_ADMIN) {
         // claimedCount = activeAt = 0
+        require(_getStages().length > stageIndex_, "addGate: stageIndex_ is out of bounds");
         tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
     }
 
