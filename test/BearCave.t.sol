@@ -33,7 +33,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     uint256 private bearId;
     MockERC1155 private erc1155;
     MockERC20 private paymentToken;
-    Gatekeeper private mockGatekeeper;
+    Gatekeeper private gatekeeper;
 
     // Users
     address payable private beekeeper;
@@ -83,7 +83,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
 
-        Gatekeeper gatekeeper = new Gatekeeper(address(gameRegistry));
+        gatekeeper = new Gatekeeper(address(gameRegistry));
 
         // Deploy the bearCave
         bearCave = new BearCave(
@@ -384,8 +384,35 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     function testClaimHoneycomb() public {
         // initial conditions
 
+
         bearCave.setDistributeWithMint(true);
+
+        gatekeeper.addGate(0, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
+        gatekeeper.addGate(1, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
+        gatekeeper.addGate(2, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
         _hibernateBear(bearId);
+
+        vm.warp(block.timestamp + 1);
+
+        vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
+        bytes32[] memory proof = new bytes32[](11);
+        proof[0] = 0x2cab18c6136eee630c87d06ee09d821becc2ab5de6884ec207caa6efbf106dfc;
+        proof[1] = 0x4050c58f7f1b02c5ab26124e25dbee16bdd575ae58f48de5caca4819b669db38;
+        proof[2] = 0x6ecb27ca41e2b2a9984fd4b44f01652a1ea666deb47158aee4f667c02c0d6331;
+        proof[3] = 0x84f50225cb4b0751536690e95944e89deeb058bbf6a9a93a0b8c0a389262ff1a;
+        proof[4] = 0x9dcde3885e47f382fddc73d7cc5b992245e718e837309d9585d9dffa1dbfebe6;
+        proof[5] = 0xef2ef4e06ee9416d61bdc94af8443294afd09dc52024f6684f90d7a53a492fa4;
+        proof[6] = 0xf23a29367916e77c2d0c4cf1028644ccbff08fb01528ad364b43783b1ac48e64;
+        proof[7] = 0xf511c06624aa37de81ca3636dc5fb1f07fc4c899d178b71ef253219f3854ae95;
+        proof[8] = 0xb281427fdfe85dd2596444f48f541fe1b67abc9cf017046d62f557be67bb0c2a;
+        proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
+        proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
+
+        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) = gatekeeper.tokenToGates(0,0);
+        console2.log(enabled);
+
+        bearCave.claim(0, 0, 2, proof);
+ 
     }
 
     // ============= Claiming will be an integration test  ==================== //
