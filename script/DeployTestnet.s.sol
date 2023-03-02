@@ -24,6 +24,9 @@ contract DeployScript is Script {
     // Config
     uint256 private honeycombShare = 2233 * 1e14;
 
+    bytes32 private keyhash = "";
+    uint64 private subId = 9;
+
     function setUp() public {}
 
     function run() public {
@@ -47,6 +50,11 @@ contract DeployScript is Script {
             honeycombShare
         );
 
+        /**
+         * Setup
+         */
+
+        // Create mint Config
         IBearCave.MintConfig memory mintConfig = IBearCave.MintConfig({
             maxHoneycomb: 69,
             maxClaimableHoneycomb: 4,
@@ -54,10 +62,15 @@ contract DeployScript is Script {
             honeycombPrice_ETH: 99 * 1e6 * 1 gwei // 0.099 eth
         });
 
-        bearCave.initialize(mintConfig);
+        bearCave.initialize(keyhash, subId, mintConfig);
 
-        // TODO: Create VRF Sub?
-        // TODO: gatekeeper config
+        // Register game with gameRegistry
+        // gameRegistry.registerGame(address(bearCave));
+
+        // Identify tokenID to hibernate
+        // Generate merkle roots..
+        // add gates w/ appropriate roots & stages to gatekeeper to gatekeeper.
+        // User hibernates bear:  calls start on gatekeeper.
 
         vm.stopBroadcast();
     }

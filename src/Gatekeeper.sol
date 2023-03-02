@@ -36,6 +36,15 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /**
+     * Events when business logic is affects
+     */
+    event GateAdded(uint256 tokenId, uint256 gateId);
+    event GateSetEnabled(uint256 tokenId, uint256 gateId, bool enabled);
+    event GateActivated(uint256 tokenId, uint256 gateId, uint256 activationTime);
+    event GetSetMaxClaimable(uint256 tokenId, uint256 gateId, uint256 maxClaimable);
+    event GateReset(uint256 tokenId, uint256 index);
+
+    /**
      * Internal Storage
      */
     mapping(uint256 => Gate[]) public tokenToGates; // bear -> Gates[]
@@ -131,6 +140,8 @@ contract Gatekeeper is GameRegistryConsumer {
         // claimedCount = activeAt = 0
         require(_getStages().length > stageIndex_, "addGate: stageIndex_ is out of bounds");
         tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
+
+        emit GateAdded(tokenId, tokenToGates[tokenId].length - 1);
     }
 
     function startGatesForToken(uint256 tokenId) external onlyRole(Constants.GAME_INSTANCE) {
@@ -141,12 +152,15 @@ contract Gatekeeper is GameRegistryConsumer {
         for (uint256 i = 0; i < numGates; i++) {
             gates[i].enabled = true;
             gates[i].activeAt = block.timestamp + stageTimes[gates[i].stageIndex];
+            emit GateActivated(tokenId, i, gates[i].activeAt);
         }
     }
 
     /// @notice Only to be used for emergency gate shutdown.
     function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].enabled = enabled;
+
+        emit GateSetEnabled(tokenId, index, enabled);
     }
 
     function setGateMaxClaimable(
@@ -155,10 +169,12 @@ contract Gatekeeper is GameRegistryConsumer {
         uint32 maxClaimable_
     ) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].maxClaimable = maxClaimable_;
+        emit GetSetMaxClaimable(tokenId, index, maxClaimable_);
     }
 
     function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].claimedCount = 0;
+        emit GateReset(tokenId, index);
     }
 
     function resetAllGates(uint256 tokenId) external onlyRole(Constants.GAME_ADMIN) {

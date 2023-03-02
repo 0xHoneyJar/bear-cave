@@ -40,6 +40,16 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     error Claim_InvalidProof();
 
     /**
+     * Events
+     */
+    event Initialized(MintConfig mintConfig);
+    event BearHibernated(uint256 tokenId);
+    event SpecialHoneyCombFound(uint256 tokenId, uint256 honeyCombId);
+    event MintConfigChanged(MintConfig mintConfig);
+    event HoneycombClaimed(uint256 tokenId, address player, uint256 amount);
+    event BearAwoke(uint256 tokenId, address player);
+
+    /**
      * Configuration
      */
     ERC20 public paymentToken; // OHM
@@ -105,13 +115,21 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         paymentToken = ERC20(_paymentToken);
         gatekeeper = Gatekeeper(_gatekeeper);
         honeyCombShare = _honeyCombShare;
+        distributeWithMint = true;
     }
 
-    function initialize(MintConfig calldata mintConfig_) external onlyRole(Constants.GAME_ADMIN) {
+    function initialize(
+        bytes32 keyhash_,
+        uint64 subId_,
+        MintConfig calldata mintConfig_
+    ) external onlyRole(Constants.GAME_ADMIN) {
         if (initialized) revert AlreadyInitialized();
 
         initialized = true;
+        keyHash = keyhash_;
+        subId = subId_;
         mintConfig = mintConfig_;
+        emit Initialized(mintConfig);
     }
 
     /// @notice you miss your bear so you want it
@@ -127,6 +145,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         erc1155.safeTransferFrom(msg.sender, address(this), _bearId, 1, "");
 
         bears[_bearId] = HibernatingBear(_bearId, 0, false, false);
+        gatekeeper.startGatesForToken(_bearId);
+
+        emit BearHibernated(_bearId);
     }
 
     function _canMintHoneycomb(uint256 bearId_) internal view {
@@ -225,6 +246,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         HibernatingBear storage bear = bears[bearId];
         bear.specialHoneycombFound = true;
         bear.specialHoneycombId = specialHoneyCombId;
+
+        emit SpecialHoneyCombFound(bearId, specialHoneyCombId);
     }
 
     /// @inheritdoc IBearCave
@@ -242,6 +265,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
         // Send over bear
         erc1155.safeTransferFrom(address(this), msg.sender, bear.id, 1, "");
+
+        emit BearAwoke(_bearId, msg.sender);
     }
 
     /**
@@ -341,6 +366,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         }
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bearId_, gateId, numClaim, proof);
+
+        emit HoneycombClaimed(bearId_, msg.sender, amount);
     }
 
     // Helpfer function to claim all the free shit
@@ -387,24 +414,35 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
         mintConfig.maxHoneycomb = _maxHoneycomb;
+
+        emit MintConfigChanged(mintConfig);
     }
 
     /// @notice sets the price of the honeycomb in `paymentToken`
     function setHoneyCombPrice_ERC20(uint256 _honeyCombPrice) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
         mintConfig.honeycombPrice_ERC20 = _honeyCombPrice;
+
+        emit MintConfigChanged(mintConfig);
     }
 
     /// @notice sets the price of the honeycomb in `ETH`
     function setHoneyCombPrice_ETH(uint256 _honeyCombPrice) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
         mintConfig.honeycombPrice_ETH = _honeyCombPrice;
+
+        emit MintConfigChanged(mintConfig);
     }
 
     /**
      * Chainlink Setters
+     * @notice modifiable after initialization isn't a security risk. Just for VRF config.
      */
     function setSubId(uint64 subId_) external onlyRole(Constants.GAME_ADMIN) {
         subId = subId_;
+    }
+
+    function setKeyHash(bytes32 keyHash_) external onlyRole(Constants.GAME_ADMIN) {
+        keyHash = keyHash_;
     }
 }

@@ -99,7 +99,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         bearCave.setSubId(subId);
         bearCave.setJani(jani);
         bearCave.setBeeKeeper(beekeeper);
-        bearCave.initialize(mintConfig);
+        bearCave.initialize(bytes32(""), subId, mintConfig);
 
         vrfCoordinator.addConsumer(subId, address(bearCave));
         gameRegistry.registerGame(address(bearCave));
@@ -107,7 +107,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailBearcave_alreadyInitialized() public {
-        bearCave.initialize(mintConfig);
+        bearCave.initialize(bytes32(""), 1, mintConfig);
     }
 
     // ============= Hibernating Bear ==================== //
@@ -293,22 +293,26 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     function testFailWithdrawFunds_noPerms() public {
         vm.prank(anotherUser);
+        bearCave.setDisitrbuteWithMint(false);
+
         bearCave.withdrawERC20();
     }
 
     function testFailWithdrawFunds_noFunds() public {
         vm.prank(jani);
+        bearCave.setDisitrbuteWithMint(false);
+
         bearCave.withdrawERC20();
     }
 
-    function testFailWithdraw_featureToggleOn() public {
-        bearCave.setDisitrbuteWithMint(true);
+    function testFailWithdraw() public {
         vm.prank(beekeeper);
         bearCave.withdrawERC20();
     }
 
     function testWithdrawERC20() public {
         // Setup: reset balances
+        bearCave.setDisitrbuteWithMint(false);
         paymentToken.burn(address(bearCave), paymentToken.balanceOf(address(bearCave)));
         paymentToken.burn(address(this), paymentToken.balanceOf(address(this)));
         paymentToken.burn(beekeeper, paymentToken.balanceOf(beekeeper));
@@ -329,6 +333,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testWithdrawETH() public {
+        bearCave.setDisitrbuteWithMint(false);
+
         // check initial conditions
         assertEq(beekeeper.balance, 0);
         assertEq(jani.balance, 0);
