@@ -387,14 +387,13 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         bearCave.setDistributeWithMint(true);
 
-        gatekeeper.addGate(0, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
-        gatekeeper.addGate(0, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
-        gatekeeper.addGate(0, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
+        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
+        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
+        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
         _hibernateBear(bearId);
 
         vm.warp(block.timestamp + 1);
 
-        vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
         bytes32[] memory proof = new bytes32[](11);
         proof[0] = 0x2cab18c6136eee630c87d06ee09d821becc2ab5de6884ec207caa6efbf106dfc;
         proof[1] = 0x4050c58f7f1b02c5ab26124e25dbee16bdd575ae58f48de5caca4819b669db38;
@@ -408,9 +407,10 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
         proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
 
-        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) = gatekeeper.tokenToGates(0,0);
+        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) = gatekeeper.tokenToGates(bearId,0);
 
-        bearCave.claim(0, 0, 2, proof);
+        vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
+        bearCave.claim(bearId, 0, 2, proof);
  
     }
 
