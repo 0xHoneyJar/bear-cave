@@ -439,7 +439,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         beekeeper = payable(beekeeper_);
     }
 
-    function setDisitrbuteWithMint(bool distributeWithMint_) external onlyRole(Constants.GAME_ADMIN) {
+    function setDistributeWithMint(bool distributeWithMint_) external onlyRole(Constants.GAME_ADMIN) {
         distributeWithMint = distributeWithMint_;
     }
 
