@@ -24,7 +24,6 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
 
     bytes32[] private data1;
     bytes32[] private data2;
-    bytes32[] private allowListData; // TODO: do i need this?
 
     address[] private gate1Users;
     address[] private gate2Users;
@@ -63,11 +62,9 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
 
         for (uint8 i = 0; i < gate1Users.length; ++i) {
             data1[i] = createNode(gate1Users[i], i);
-            allowListData.push(keccak256(abi.encodePacked(gate1Users[i])));
         }
         for (uint8 i = 0; i < gate2Users.length; ++i) {
             data2[i] = createNode(gate2Users[i], i);
-            allowListData.push(keccak256(abi.encodePacked(gate2Users[i])));
         }
 
         bytes32 root1 = merkleLib.getRoot(data1);

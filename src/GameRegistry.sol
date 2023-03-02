@@ -88,21 +88,17 @@ abstract contract GameRegistryConsumer {
         (enabled, ) = gameRegistry.games(game_);
     }
 
+    /// @dev the last stageTime is generalMint
     function _getStages() internal view returns (uint256[] memory) {
         return gameRegistry.getStageTimes();
     }
 
+    /// @dev just a helper function. For access to all stages you should use _getStages()
     function _getStage(uint8 stageIndex) internal view returns (uint256) {
         uint256[] memory stageTimes = gameRegistry.getStageTimes();
         if (stageIndex >= stageTimes.length) revert GameRegistry_StageOutOfBounds(stageIndex);
 
         return stageTimes[stageIndex];
-    }
-
-    // TODO: Use the game registry to track game states
-    function _isGeneralMintEnabled(address game_) internal view returns (bool enabled) {
-        (, uint256 generalMintTime) = gameRegistry.games(game_);
-        return block.timestamp >= generalMintTime;
     }
 
     function _hasRole(bytes32 role_) internal view returns (bool) {

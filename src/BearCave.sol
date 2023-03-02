@@ -159,7 +159,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (honeyJar[bearId_].length > mintConfig.maxHoneycomb) revert TooManyHoneyCombs(bearId_);
     }
 
-    // TODO: earlyMint
     function earlyMekHoneyCombWithERC20(
         uint256 bearId,
         uint32 gateId,

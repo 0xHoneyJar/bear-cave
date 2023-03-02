@@ -49,6 +49,7 @@ contract Gatekeeper is GameRegistryConsumer {
      */
     mapping(uint256 => Gate[]) public tokenToGates; // bear -> Gates[]
     mapping(uint256 => mapping(bytes32 => bool)) consumedProofs; // gateId --> proof --> boolean
+    mapping(uint256 => bytes32[]) consumedProofsList; // gateId
     mapping(uint256 => address) public games; // bear --> gameContract;
 
     /**
@@ -125,6 +126,7 @@ contract Gatekeeper is GameRegistryConsumer {
 
         bytes32 proofHash = keccak256(abi.encode(proof));
         consumedProofs[gateId][proofHash] = true;
+        consumedProofsList[gateId].push(proofHash);
     }
 
     /**
@@ -178,11 +180,18 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     function resetAllGates(uint256 tokenId) external onlyRole(Constants.GAME_ADMIN) {
-        uint numGates = tokenToGates[tokenId].length;
+        uint256 numGates = tokenToGates[tokenId].length;
         Gate[] storage tokenGates = tokenToGates[tokenId];
-        for (uint i = 0; i < numGates; i++) {
+        uint256 numProofs;
+
+        // Currently a hacky way but need to clear out if the proofs were used.
+        for (uint256 i = 0; i < numGates; i++) {
             tokenGates[i].claimedCount = 0;
-            // TODO: How do you reset user claims?
+            numProofs = consumedProofsList[i].length;
+            for (uint256 j = 0; j < numProofs; ++j) {
+                // Step through all proofs from a particular gate.
+                consumedProofs[i][consumedProofsList[i][j]] = false;
+            }
         }
     }
 }

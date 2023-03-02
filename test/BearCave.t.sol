@@ -384,7 +384,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     function testClaimHoneycomb() public {
         // initial conditions
 
-
         bearCave.setDistributeWithMint(true);
 
         gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
@@ -407,11 +406,19 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
         proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
 
-        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) = gatekeeper.tokenToGates(bearId,0);
+        (
+            bool enabled,
+            uint8 stageIndex,
+            uint32 claimedCount,
+            uint32 maxClaimable,
+            bytes32 gateRoot,
+            uint256 activeAt
+        ) = gatekeeper.tokenToGates(bearId, 0);
 
         vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
-        bearCave.claim(bearId, 0, 2, proof);
- 
+        bearCave.claim(bearId, 0, 2, proof); // results in 2
+
+        bearCave.claim(bearId, 0, 2, proof); // results in 0
     }
 
     // ============= Claiming will be an integration test  ==================== //
