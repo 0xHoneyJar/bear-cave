@@ -10,7 +10,6 @@ import {Constants} from "./GameLib.sol";
 contract GameRegistry is AccessControl {
     struct Game {
         bool enabled;
-        uint256 generalMintTime; // timestamp when generalMint
     }
 
     uint256[] public stageTimes;
@@ -30,11 +29,11 @@ contract GameRegistry is AccessControl {
 
     function registerGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.GAME_INSTANCE, game_);
+        games[game_] = Game(true);
     }
 
     function startGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.MINTER, game_);
-        games[game_] = Game(true, block.timestamp + stageTimes[stageTimes.length - 1]);
     }
 
     function stopGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
@@ -85,7 +84,7 @@ abstract contract GameRegistryConsumer {
     }
 
     function _isEnabled(address game_) internal view returns (bool enabled) {
-        (enabled, ) = gameRegistry.games(game_);
+        enabled = gameRegistry.games(game_);
     }
 
     /// @dev the last stageTime is generalMint
