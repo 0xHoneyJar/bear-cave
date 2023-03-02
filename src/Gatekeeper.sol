@@ -27,10 +27,12 @@ import {Constants} from "./GameLib.sol";
  */
 contract Gatekeeper is GameRegistryConsumer {
     struct Gate {
-        bool active;
+        bool enabled;
+        uint8 stageIndex; // stage from [0-3]
         uint32 claimedCount; // # of claims already happend
         uint32 maxClaimable; // # of claims per gate
         bytes32 gateRoot;
+        uint256 activeAt; // timestamp when active.
     }
 
     /**
@@ -58,29 +60,43 @@ contract Gatekeeper is GameRegistryConsumer {
         uint32 amount,
         bytes32[] calldata proof
     ) external view returns (uint32 claimAmount) {
+        // If proof was already used within the gate, there are 0 left to claim
+        bytes32 proofHash = keccak256(abi.encode(proof));
+        if (consumedProofs[index][proofHash]) return 0;
+
+        Gate storage gate = tokenToGates[tokenId][index];
+        uint32 claimedCount = gate.claimedCount;
+        require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
+
+        claimAmount = amount;
+        bool validProof = validateProof(tokenId, index, player, amount, proof);
+        require(validProof, "Not a valid proof bro");
+
+        if (amount + claimedCount > gate.maxClaimable) {
+            claimAmount = gate.maxClaimable - claimedCount;
+        }
+    }
+
+    /// @notice Validates proof
+    /// @dev relies on gates being enabled
+    function validateProof(
+        uint256 tokenId,
+        uint256 index,
+        address player,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) public view returns (bool validProof) {
         Gate[] storage gates = tokenToGates[tokenId];
         require(gates.length > 0, "nogates fren");
         require(index < gates.length, "Index too big bro");
         require(proof.length > 0, "Invalid Proof");
 
         Gate storage gate = gates[index];
-        require(gate.active, "gates closed bruh");
+        require(gate.enabled, "gates closed bruh");
+        require(gate.activeAt <= block.timestamp, "gate isn't active");
 
-        // If proof was already used within the gate, there are 0 left to claim
-        bytes32 proofHash = keccak256(abi.encode(proof));
-        if (consumedProofs[index][proofHash]) return 0;
-
-        uint32 claimedCount = gate.claimedCount;
-        require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
-
-        claimAmount = amount;
         bytes32 leaf = keccak256(abi.encodePacked(player, amount));
-        bool validProof = MerkleProofLib.verify(proof, gates[index].gateRoot, leaf);
-        require(validProof, "Not a valid proof bro");
-
-        if (amount + claimedCount > gate.maxClaimable) {
-            claimAmount = gate.maxClaimable - claimedCount;
-        }
+        validProof = MerkleProofLib.verify(proof, gate.gateRoot, leaf);
     }
 
     /**
@@ -106,12 +122,30 @@ contract Gatekeeper is GameRegistryConsumer {
      * Gate admin methods
      */
 
-    function addGate(uint256 tokenId, bytes32 root_, uint32 maxClaimable_) external onlyRole(Constants.GAME_ADMIN) {
-        tokenToGates[tokenId].push(Gate(true, 0, maxClaimable_, root_));
+    function addGate(
+        uint256 tokenId,
+        bytes32 root_,
+        uint32 maxClaimable_,
+        uint8 stageIndex_
+    ) external onlyRole(Constants.GAME_ADMIN) {
+        // claimedCount = activeAt = 0
+        tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
     }
 
-    function setGateActive(uint256 tokenId, uint256 index, bool active) external onlyRole(Constants.GAME_ADMIN) {
-        tokenToGates[tokenId][index].active = active;
+    function startGatesForToken(uint256 tokenId) external onlyRole(Constants.GAME_INSTANCE) {
+        Gate[] storage gates = tokenToGates[tokenId];
+        uint256[] memory stageTimes = _getStages(); // External Call
+        uint256 numGates = gates.length;
+
+        for (uint256 i = 0; i < numGates; i++) {
+            gates[i].enabled = true;
+            gates[i].activeAt = block.timestamp + stageTimes[gates[i].stageIndex];
+        }
+    }
+
+    /// @notice Only to be used for emergency gate shutdown.
+    function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[tokenId][index].enabled = enabled;
     }
 
     function setGateMaxClaimable(
