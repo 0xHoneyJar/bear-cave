@@ -28,6 +28,12 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, Multis
         _baseTokenURI = baseURI;
     }
 
+    function setGenerated(bool generated_) external onlyRealOwner {
+        isGenerated = generated_;
+    }
+
+    /// @notice Token URI will be a generic URI at first.
+    /// @notice When isGnerated is set to true, it will concat the baseURI & tokenID
     function tokenURI(uint256 tokenId) public view override(IERC721A, ERC721A) returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
