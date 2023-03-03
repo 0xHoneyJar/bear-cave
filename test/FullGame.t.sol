@@ -95,7 +95,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         // Mint a bear to the gameAdmin
         erc1155.mint(gameAdmin, bearId, 1, "");
 
-        // TODO: Mint everyone money to make honeycomb
         paymentToken.mint(alfaHunter, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(bera, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(clown, MINT_PRICE_ERC20 * 100);

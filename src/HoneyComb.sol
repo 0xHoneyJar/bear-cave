@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "solmate/auth/Owned.sol";
+import "dual-ownership-nft/MultisigOwnable.sol";
 import "solmate/utils/LibString.sol";
 
 import {ERC721AQueryable, ERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
@@ -10,7 +11,7 @@ import {IHoneyComb} from "./IHoneyComb.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
 import {Constants} from "./GameLib.sol";
 
-contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable {
+contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, MultisigOwnable {
     using LibString for uint256;
 
     constructor(address gameRegistry_) ERC721A("Honey Comb", "HONEYCOMB") GameRegistryConsumer(gameRegistry_) {}
@@ -22,7 +23,7 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable {
         return _baseTokenURI;
     }
 
-    function setBaseURI(string calldata baseURI) external onlyRole(Constants.GAME_ADMIN) {
+    function setBaseURI(string calldata baseURI) external onlyRealOwner {
         _baseTokenURI = baseURI;
     }
 
