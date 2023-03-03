@@ -20,3 +20,6 @@
 	path = lib/ERC721A
 	url = https://github.com/chiru-labs/ERC721A
 	branch = v4.2.3
+[submodule "lib/dual-ownership-nft"]
+	path = lib/dual-ownership-nft
+	url = https://github.com/tubby-cats/dual-ownership-nft
