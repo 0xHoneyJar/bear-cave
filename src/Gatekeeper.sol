@@ -48,8 +48,8 @@ contract Gatekeeper is GameRegistryConsumer {
      * Internal Storage
      */
     mapping(uint256 => Gate[]) public tokenToGates; // bear -> Gates[]
-    mapping(uint256 => mapping(bytes32 => bool)) consumedProofs; // gateId --> proof --> boolean
-    mapping(uint256 => bytes32[]) consumedProofsList; // gateId
+    mapping(uint256 => mapping(bytes32 => bool)) public consumedProofs; // gateId --> proof --> boolean
+    mapping(uint256 => bytes32[]) public consumedProofsList; // gateId
     mapping(uint256 => address) public games; // bear --> gameContract;
 
     /**
@@ -159,7 +159,11 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /// @notice Only to be used for emergency gate shutdown.
-    function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
+    function setGateEnabled(
+        uint256 tokenId,
+        uint256 index,
+        bool enabled
+    ) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].enabled = enabled;
 
         emit GateSetEnabled(tokenId, index, enabled);

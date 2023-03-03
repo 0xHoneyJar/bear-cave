@@ -56,7 +56,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      */
     ERC20 public paymentToken; // OHM
     ERC1155 public erc1155; //the openseaAddress (rip) for Bears
-    MintConfig private mintConfig;
+    MintConfig public mintConfig;
     bool public distributeWithMint; // Feature Toggle... what if we just make a feature toggle lib...
     uint256 public publicMintingTime;
 
@@ -78,7 +78,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      */
     address payable private beekeeper; // rev share 22.33%
     address payable private jani;
-    uint256 private honeyCombShare; // as a WAD
+    uint256 public honeyCombShare; // as a WAD
     // Accounting vars
     uint256 public totalERC20Fees;
     uint256 public totalETHfees;
