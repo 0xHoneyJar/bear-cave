@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import "ERC721A/extensions/IERC721AQueryable.sol";
 
-interface IHoneyComb is IERC721 {
+interface IHoneyComb is IERC721AQueryable {
     function mint(address to) external returns (uint256);
 
-    function batchMint(address to, uint8 amount) external;
+    function batchMint(address to, uint256 amount) external;
 
     function burn(uint256 _id) external;
+
+    function nextTokenId() external view returns (uint256);
 }
