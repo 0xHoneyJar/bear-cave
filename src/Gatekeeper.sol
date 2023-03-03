@@ -63,13 +63,11 @@ contract Gatekeeper is GameRegistryConsumer {
     /// @param index the gate index we're claiming
     /// @param amount number between 0-maxClaimable you a player wants to claim
     /// @param proof merkle proof
-    function claim(
-        uint256 tokenId,
-        uint256 index,
-        address player,
-        uint32 amount,
-        bytes32[] calldata proof
-    ) external view returns (uint32 claimAmount) {
+    function claim(uint256 tokenId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
+        external
+        view
+        returns (uint32 claimAmount)
+    {
         // If proof was already used within the gate, there are 0 left to claim
         bytes32 proofHash = keccak256(abi.encode(proof));
         if (consumedProofs[index][proofHash]) return 0;
@@ -89,13 +87,11 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice Validates proof
     /// @dev relies on gates being enabled
-    function validateProof(
-        uint256 tokenId,
-        uint256 index,
-        address player,
-        uint32 amount,
-        bytes32[] calldata proof
-    ) public view returns (bool validProof) {
+    function validateProof(uint256 tokenId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
+        public
+        view
+        returns (bool validProof)
+    {
         Gate[] storage gates = tokenToGates[tokenId];
         require(gates.length > 0, "nogates fren");
         require(index < gates.length, "Index too big bro");
@@ -115,12 +111,10 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice  update accounting
     /// @dev should only be called by a game
-    function addClaimed(
-        uint256 tokenId,
-        uint256 gateId,
-        uint32 numClaimed,
-        bytes32[] calldata proof
-    ) external onlyRole(Constants.GAME_INSTANCE) {
+    function addClaimed(uint256 tokenId, uint256 gateId, uint32 numClaimed, bytes32[] calldata proof)
+        external
+        onlyRole(Constants.GAME_INSTANCE)
+    {
         Gate storage gate = tokenToGates[tokenId][gateId];
         gate.claimedCount += numClaimed;
 
@@ -133,12 +127,10 @@ contract Gatekeeper is GameRegistryConsumer {
      * Gate admin methods
      */
 
-    function addGate(
-        uint256 tokenId,
-        bytes32 root_,
-        uint32 maxClaimable_,
-        uint8 stageIndex_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function addGate(uint256 tokenId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         // claimedCount = activeAt = 0
         require(_getStages().length > stageIndex_, "addGate: stageIndex_ is out of bounds");
         tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
@@ -159,21 +151,16 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /// @notice Only to be used for emergency gate shutdown.
-    function setGateEnabled(
-        uint256 tokenId,
-        uint256 index,
-        bool enabled
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].enabled = enabled;
 
         emit GateSetEnabled(tokenId, index, enabled);
     }
 
-    function setGateMaxClaimable(
-        uint256 tokenId,
-        uint256 index,
-        uint32 maxClaimable_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function setGateMaxClaimable(uint256 tokenId, uint256 index, uint32 maxClaimable_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         tokenToGates[tokenId][index].maxClaimable = maxClaimable_;
         emit GetSetMaxClaimable(tokenId, index, maxClaimable_);
     }

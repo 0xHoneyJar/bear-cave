@@ -93,7 +93,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /**
      * Internal Storage
      */
-    bool initialized;
+    bool public initialized;
     // TODO: Review usage & combine these mappings into a single struct where appropriate.
     mapping(uint256 => HibernatingBear) public bears; //  bearId --> hibernatingBear status
     mapping(uint256 => uint256[]) public honeyJar; //  bearId --> honeycomb that was made for it (honeyJar[bearId].length is # minted honeycomb)
@@ -119,11 +119,10 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         distributeWithMint = true;
     }
 
-    function initialize(
-        bytes32 keyhash_,
-        uint64 subId_,
-        MintConfig calldata mintConfig_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function initialize(bytes32 keyhash_, uint64 subId_, MintConfig calldata mintConfig_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         if (initialized) revert AlreadyInitialized();
 
         initialized = true;
@@ -305,8 +304,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (honeyJar[_bearId].length < mintConfig.maxHoneycomb) revert NotEnoughHoneyCombMinted(_bearId);
         if (!bear.specialHoneycombFound) revert SpecialHoneyCombNotFound(_bearId);
 
-        if (honeycomb.ownerOf(bear.specialHoneycombId) != msg.sender)
+        if (honeycomb.ownerOf(bear.specialHoneycombId) != msg.sender) {
             revert NotOwnerOfSpecialHoneyComb(_bearId, bear.specialHoneycombId);
+        }
 
         // Send over bear
         erc1155.safeTransferFrom(address(this), msg.sender, bear.id, 1, "");
@@ -415,12 +415,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     // Helpfer function to claim all the free shit
-    function claimAll(
-        uint256 bearId_,
-        uint32[] calldata gateId,
-        uint32[] calldata amount,
-        bytes32[][] calldata proof
-    ) external {
+    function claimAll(uint256 bearId_, uint32[] calldata gateId, uint32[] calldata amount, bytes32[][] calldata proof)
+        external
+    {
         uint256 inputLength = proof.length;
         if (inputLength != gateId.length) revert Claim_IncorrectInput();
         if (inputLength != amount.length) revert Claim_IncorrectInput();
