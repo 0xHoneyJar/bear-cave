@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "solmate/auth/Owned.sol";
 import "solmate/utils/LibString.sol";
 
-import "ERC721A/extensions/ERC721AQueryable.sol";
+import {ERC721AQueryable, ERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
 
 import {IHoneyComb} from "./IHoneyComb.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
@@ -15,13 +15,16 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable {
 
     constructor(address gameRegistry_) ERC721A("Honey Comb", "HONEYCOMB") GameRegistryConsumer(gameRegistry_) {}
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "https://www.0xhoneyjar.xyz/";
+    // metadata URI
+    string private _baseTokenURI = "https://www.0xhoneyjar.xyz/";
+
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
     }
 
-    // function tokenURI(uint256 _id) public pure override returns (string memory) {
-    //     return string.concat(_baseURI(), "/honeycomb/", _id.toString());
-    // }
+    function setBaseURI(string calldata baseURI) external onlyRole(Constants.GAME_ADMIN) {
+        _baseTokenURI = baseURI;
+    }
 
     /// @notice create honeycomb for an address.
     /// @dev only callable by the MINTER role
@@ -41,6 +44,7 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable {
     }
 
     /// @notice burn the honeycomb tokens. Nothing will have the burn role upon initialization
+    /// @notice This will be used for future game-mechanics
     /// @dev only callable by the BURNER role
     function burn(uint256 _id) external override onlyRole(Constants.BURNER) {
         _burn(_id, true);
