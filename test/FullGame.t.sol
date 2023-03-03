@@ -20,7 +20,7 @@ import {Constants} from "src/GameLib.sol";
 import {console2} from "forge-std/console2.sol";
 
 // TODO: test bearCave claiming process
-contract BearCaveTest is Test, ERC1155TokenReceiver {
+contract FullGameTest is Test, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 

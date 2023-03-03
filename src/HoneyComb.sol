@@ -5,7 +5,7 @@ import "solmate/auth/Owned.sol";
 import "dual-ownership-nft/MultisigOwnable.sol";
 import "solmate/utils/LibString.sol";
 
-import {ERC721AQueryable, ERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
+import {ERC721AQueryable, ERC721A, IERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
 
 import {IHoneyComb} from "./IHoneyComb.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
@@ -17,7 +17,8 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, Multis
     constructor(address gameRegistry_) ERC721A("Honey Comb", "HONEYCOMB") GameRegistryConsumer(gameRegistry_) {}
 
     // metadata URI
-    string private _baseTokenURI = "https://www.0xhoneyjar.xyz/";
+    string public _baseTokenURI = "https://www.0xhoneyjar.xyz/";
+    bool public isGenerated; // once the token is generated we can append individual tokenIDs
 
     function _baseURI() internal view override returns (string memory) {
         return _baseTokenURI;
@@ -25,6 +26,13 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, Multis
 
     function setBaseURI(string calldata baseURI) external onlyRealOwner {
         _baseTokenURI = baseURI;
+    }
+
+    function tokenURI(uint256 tokenId) public view override(IERC721A, ERC721A) returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        string memory baseURI = _baseURI();
+        return isGenerated ? string.concat(baseURI, _toString(tokenId)) : baseURI;
     }
 
     /// @notice create honeycomb for an address.
