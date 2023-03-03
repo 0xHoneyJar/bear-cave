@@ -70,6 +70,7 @@ contract DeployScript is Script {
         // Identify tokenID to hibernate
         // Generate merkle roots..
         // add gates w/ appropriate roots & stages to gatekeeper to gatekeeper.
+        // gameRegistry.startGame(address(bearCave));
         // User hibernates bear:  calls start on gatekeeper.
 
         vm.stopBroadcast();

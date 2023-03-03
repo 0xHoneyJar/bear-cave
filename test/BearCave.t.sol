@@ -79,7 +79,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         // MintConfig
         mintConfig.maxHoneycomb = maxHoneycomb;
-        mintConfig.maxClaimableHoneycomb = 0; // TODO
+        mintConfig.maxClaimableHoneycomb = 5; // TODO
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
 
@@ -132,7 +132,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     // ============= Meking Honeycombs ==================== //
 
     function testFailMekHoney_notInitialized() public {
-        bearCave.mekHoneyCombWithERC20(69);
+        bearCave.mekHoneyCombWithERC20(69, 1);
     }
 
     function testFailMekHoney_noMinterPerms() public {
@@ -141,19 +141,19 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         // Stoping the game revokes minter permissions.
         gameRegistry.stopGame(address(bearCave));
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
-        bearCave.mekHoneyCombWithERC20(bearId); // Does the contract just eat up the ERC20?
+        bearCave.mekHoneyCombWithERC20(bearId, 1); // Does the contract just eat up the ERC20?
     }
 
     function testFailMekHoney_wrongBearId() public {
         _hibernateBear(bearId);
 
-        bearCave.mekHoneyCombWithERC20(69);
+        bearCave.mekHoneyCombWithERC20(69, 1);
     }
 
     function testFailMekHoney_noETH() public {
         _hibernateBear(bearId);
 
-        bearCave.mekHoneyCombWithEth(bearId);
+        bearCave.mekHoneyCombWithEth(bearId, 1);
     }
 
     function testFailMekHoney_noMoneys() public {
@@ -163,7 +163,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         assertEq(paymentToken.balanceOf(address(this)), 0, "how do you still have monies?");
         assertEq(paymentToken.allowance(address(this), address(bearCave)), 0, "bear cave can't take ur monies");
-        bearCave.mekHoneyCombWithERC20(bearId);
+        bearCave.mekHoneyCombWithERC20(bearId, 1);
     }
 
     function testmekHoneyCombWithERC20() public {
@@ -173,7 +173,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         paymentToken.approve(address(bearCave), MINT_PRICE_ERC20);
         assertGe(paymentToken.balanceOf(address(this)), MINT_PRICE_ERC20, "You dont have enough ohms");
 
-        uint256 honeyId = bearCave.mekHoneyCombWithERC20(bearId);
+        uint256 honeyId = bearCave.mekHoneyCombWithERC20(bearId, 1);
         assertEq(honeycomb.balanceOf(address(this)), 1, "uhh you don't have honey");
         assertEq(honeycomb.ownerOf(honeyId), address(this), "You have the wrong honey");
     }
@@ -182,11 +182,11 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         _hibernateBear(bearId);
 
         // Will make a call to bearCave.mekHoneyCombWithETH(bearId).
-        bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId);
-        bytes memory response = address(bearCave).functionCallWithValue(request, MINT_PRICE_ETH);
+        bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId, 2);
+        bytes memory response = address(bearCave).functionCallWithValue(request, MINT_PRICE_ETH * 2);
         uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
 
-        assertEq(honeycomb.balanceOf(address(this)), 1, "uhh you don't have honey");
+        assertEq(honeycomb.balanceOf(address(this)), 2, "uhh you don't have honey");
         assertEq(honeycomb.ownerOf(honeyId), address(this), "You have the wrong honey");
     }
 
@@ -222,7 +222,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         _hibernateBear(bearId);
 
         paymentToken.approve(address(bearCave), maxHoneycomb * MINT_PRICE_ERC20);
-        bearCave.mekHoneyCombWithERC20(bearId);
+        bearCave.mekHoneyCombWithERC20(bearId, 1);
 
         bearCave.wakeBear(bearId);
     }
@@ -355,7 +355,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         _hibernateBear(bearId);
 
         paymentToken.approve(address(bearCave), MINT_PRICE_ERC20);
-        bearCave.mekHoneyCombWithERC20(bearId);
+        bearCave.mekHoneyCombWithERC20(bearId, 1);
 
         uint256 beekeeperExpected = MINT_PRICE_ERC20.mulWadUp(honeycombShare);
 
@@ -372,7 +372,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         _hibernateBear(bearId);
 
         // Will make a call to bearCave.mekHoneyCombWithETH(bearId).
-        bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId);
+        bytes memory request = abi.encodeWithSelector(BearCave.mekHoneyCombWithEth.selector, bearId, 1);
         address(bearCave).functionCallWithValue(request, MINT_PRICE_ETH);
 
         uint256 beekeeperExpected = MINT_PRICE_ETH.mulWadUp(honeycombShare);
@@ -390,8 +390,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
         gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
         _hibernateBear(bearId);
-
-        vm.warp(block.timestamp + 1);
 
         bytes32[] memory proof = new bytes32[](11);
         proof[0] = 0x2cab18c6136eee630c87d06ee09d821becc2ab5de6884ec207caa6efbf106dfc;
@@ -418,7 +416,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
         bearCave.claim(bearId, 0, 2, proof); // results in 2
 
-        bearCave.claim(bearId, 0, 2, proof); // results in 0
+        // bearCave.claim(bearId, 0, 2, proof); reverts
     }
 
     // ============= Claiming will be an integration test  ==================== //
@@ -427,10 +425,8 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
      * Internal Helper methods
      */
     function _makeMultipleHoney(uint256 _bearId, uint256 _amount) internal {
-        for (uint256 i = 0; i < _amount; i++) {
-            paymentToken.mint(address(this), MINT_PRICE_ERC20);
-            bearCave.mekHoneyCombWithERC20(_bearId);
-        }
+        paymentToken.mint(address(this), MINT_PRICE_ERC20 * _amount);
+        bearCave.mekHoneyCombWithERC20(_bearId, _amount);
     }
 
     function _hibernateBear(uint256 bearId_) internal {

@@ -25,10 +25,10 @@ interface IBearCave {
 
     /// @notice Meks honey for `_bearID` that could wake it up. Will revert if user does not have the funds.
     /// @param _bearId ID of the bear the honey will wake up
-    function mekHoneyCombWithERC20(uint256 _bearId) external returns (uint256); // Makes honey for the bear
+    function mekHoneyCombWithERC20(uint256 _bearId, uint256 amount) external returns (uint256); // Makes honey for the bear
 
     /// @notice Same as `mekHoneyCombWithERC20` however this function accepts ETH payments
-    function mekHoneyCombWithEth(uint256 _bearId) external payable returns (uint256);
+    function mekHoneyCombWithEth(uint256 _bearId, uint256 amount) external payable returns (uint256);
 
     /// @notice Takes special honey to wake up the bear
     /// @param _bearId ID of the bear to wake up

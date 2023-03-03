@@ -30,7 +30,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     // Game state
     error BearAlreadyWoke(uint256 bearId);
     error GameInProgress();
-    error TooManyHoneyCombs(uint256 bearId);
+    error AlreadyTooManyHoneyCombs(uint256 bearId);
     error SpecialHoneyCombNotFound(uint256 bearId);
     error NotEnoughHoneyCombMinted(uint256 bearId);
     error GeneralMintNotOpen(uint256 bearId);
@@ -39,6 +39,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     error NotOwnerOfSpecialHoneyComb(uint256 bearId, uint256 honeycombId);
     error Claim_IncorrectInput();
     error Claim_InvalidProof();
+    error MekingTooManyHoneyCombs(uint256 bearId);
 
     /**
      * Events
@@ -150,100 +151,109 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         emit BearHibernated(_bearId);
     }
 
-    function _canMintHoneycomb(uint256 bearId_) internal view {
+    function _canMintHoneycomb(uint256 bearId_, uint256 amount_) internal view {
         if (!initialized) revert NotInitialized();
         HibernatingBear memory bear = bears[bearId_];
 
         require(bear.id == bearId_, "Da bear isn't hibernating");
         if (bear.isAwake) revert BearAlreadyWoke(bearId_);
-        if (honeyJar[bearId_].length > mintConfig.maxHoneycomb) revert TooManyHoneyCombs(bearId_);
+        if (honeyJar[bearId_].length > mintConfig.maxHoneycomb) revert AlreadyTooManyHoneyCombs(bearId_);
+        if (honeyJar[bearId_].length + amount_ > mintConfig.maxHoneycomb) revert MekingTooManyHoneyCombs(bearId_);
+        require(amount_ > 0, "why you tryna mint nothing");
     }
 
     function earlyMekHoneyCombWithERC20(
         uint256 bearId,
         uint32 gateId,
-        uint32 amount,
-        bytes32[] calldata proof
+        uint32 proofAmount,
+        bytes32[] calldata proof,
+        uint256 mintAmount
     ) external returns (uint256) {
-        _canMintHoneycomb(bearId);
+        require(mintAmount > 0, "why you tryna mint nothing");
+        _canMintHoneycomb(bearId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, amount, proof);
+        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
-        return _distributeERC20AndMintHoneycomb(bearId);
+        return _distributeERC20AndMintHoneycomb(bearId, mintAmount);
     }
 
     function earlyMekHoneyCombWithEth(
         uint256 bearId,
         uint32 gateId,
-        uint32 amount,
-        bytes32[] calldata proof
+        uint32 proofAmount,
+        bytes32[] calldata proof,
+        uint256 mintAmount
     ) external payable returns (uint256) {
-        _canMintHoneycomb(bearId);
+        _canMintHoneycomb(bearId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, amount, proof); // This shit needs to be bulletproof
+        bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
-        return _distributeETHAndMintHoneycomb(bearId);
+        return _distributeETHAndMintHoneycomb(bearId, mintAmount);
     }
 
     /// @inheritdoc IBearCave
-    function mekHoneyCombWithERC20(uint256 bearId_) external returns (uint256) {
-        _canMintHoneycomb(bearId_);
+    function mekHoneyCombWithERC20(uint256 bearId_, uint256 amount_) external returns (uint256) {
+        _canMintHoneycomb(bearId_, amount_);
         if (bears[bearId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bearId_);
-        return _distributeERC20AndMintHoneycomb(bearId_);
+        return _distributeERC20AndMintHoneycomb(bearId_, amount_);
     }
 
-    function mekHoneyCombWithEth(uint256 bearId_) external payable returns (uint256) {
-        _canMintHoneycomb(bearId_);
+    function mekHoneyCombWithEth(uint256 bearId_, uint256 amount_) external payable returns (uint256) {
+        _canMintHoneycomb(bearId_, amount_);
         if (bears[bearId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bearId_);
 
-        return _distributeETHAndMintHoneycomb(bearId_);
+        return _distributeETHAndMintHoneycomb(bearId_, amount_);
     }
 
     /// @dev internal helper function to collect payment and mint honeycomb
     /// @return tokenID of minted honeyComb
-    function _distributeERC20AndMintHoneycomb(uint256 bearId_) internal returns (uint256) {
+    function _distributeERC20AndMintHoneycomb(uint256 bearId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeycombPrice_ERC20;
         if (distributeWithMint) {
-            _distribute(price);
+            _distribute(price * amount_);
         } else {
-            paymentToken.safeTransferFrom(msg.sender, address(this), price); // will revert if there isn't enough
+            paymentToken.safeTransferFrom(msg.sender, address(this), price * amount_); // will revert if there isn't enough
             totalERC20Fees += price;
         }
         // Mint da honey
-        return _mintHoneyCombForBear(msg.sender, bearId_);
+        return _mintHoneyCombForBear(msg.sender, bearId_, amount_);
     }
 
     /// @dev internal helper function to collect payment and mint honeycomb
     /// @return tokenID of minted honeyComb
-    function _distributeETHAndMintHoneycomb(uint256 bearId_) internal returns (uint256) {
+    function _distributeETHAndMintHoneycomb(uint256 bearId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeycombPrice_ETH;
-        require(msg.value == price, "MekHoney::Exact eth pls");
+        require(msg.value == price * amount_, "MekHoney::Exact eth pls");
 
         if (distributeWithMint) {
             _distribute(0);
         } else {
-            totalETHfees += price;
+            totalETHfees += price * amount_;
         }
 
-        return _mintHoneyCombForBear(msg.sender, bearId_);
+        return _mintHoneyCombForBear(msg.sender, bearId_, amount_);
     }
 
     /// @notice internal method to mint for a particular user
     /// @param to user to mint to
     /// @param _bearId the bea being minted for
-    function _mintHoneyCombForBear(address to, uint256 _bearId) internal returns (uint256) {
-        uint256 tokenId = honeycomb.mint(to);
+    function _mintHoneyCombForBear(address to, uint256 _bearId, uint256 amount_) internal returns (uint256) {
+        uint256 tokenId = honeycomb.nextTokenId();
+        honeycomb.batchMint(to, amount_);
 
         // Have a unique tokenId for a given bearId
-        honeyJar[_bearId].push(tokenId);
-        honeycombToBear[tokenId] = _bearId;
+        for (uint256 i = 0; i < amount_; ++i) {
+            honeyJar[_bearId].push(tokenId);
+            honeycombToBear[tokenId] = _bearId;
+            ++tokenId;
+        }
 
         // Find the special honeycomb when the last honeyComb is minted.
         if (honeyJar[_bearId].length >= mintConfig.maxHoneycomb) {
             _findHoneyComb(_bearId);
         }
 
-        return tokenId;
+        return tokenId - 1; // returns the lastID created
     }
 
     /// @notice this function _should_ only be called in case of emergencies
@@ -379,7 +389,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * x
      */
     function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
-        _canMintHoneycomb(bearId_);
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.claim(bearId_, gateId, msg.sender, amount, proof);
@@ -393,12 +402,12 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
             numClaim = mintConfig.maxClaimableHoneycomb - claimedAmount;
         }
 
-        claimed[bearId_] += numClaim;
+        _canMintHoneycomb(bearId_, numClaim); // Validating here because numClaims can change
 
         // If for some reason this fails, GG no honeyComb for you
-        for (uint256 i = 0; i < numClaim; ++i) {
-            _mintHoneyCombForBear(msg.sender, bearId_);
-        }
+        _mintHoneyCombForBear(msg.sender, bearId_, amount);
+
+        claimed[bearId_] += numClaim;
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bearId_, gateId, numClaim, proof);
 

@@ -30,9 +30,13 @@ contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable {
         return _nextTokenId() - 1; // To get the latest mintID
     }
 
+    function nextTokenId() public view returns (uint256) {
+        return _nextTokenId();
+    }
+
     /// @notice mint multiple.
     /// @dev only callable by the MINTER role
-    function batchMint(address to, uint8 amount) external onlyRole(Constants.MINTER) {
+    function batchMint(address to, uint256 amount) external onlyRole(Constants.MINTER) {
         _mint(to, amount);
     }
 
