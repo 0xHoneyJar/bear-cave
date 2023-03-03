@@ -35,10 +35,6 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         return keccak256(abi.encodePacked(player, amount));
     }
 
-    function createAllowNode(address player) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(player));
-    }
-
     function getProof1(uint256 idx) private view returns (bytes32[] memory) {
         return merkleLib.getProof(data1, idx);
     }

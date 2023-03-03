@@ -16,6 +16,8 @@ import {IBearCave} from "./IBearCave.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
 import {Constants} from "./GameLib.sol";
 
+import "forge-std/console2.sol";
+
 // Example: https://opensea.io/0xd87fa9FeD90948cd7deA9f77c06b9168Ac07F407 :dafoe:
 contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, GameRegistryConsumer {
     using SafeTransferLib for ERC20;
@@ -119,10 +121,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         distributeWithMint = true;
     }
 
-    function initialize(bytes32 keyhash_, uint64 subId_, MintConfig calldata mintConfig_)
-        external
-        onlyRole(Constants.GAME_ADMIN)
-    {
+    function initialize(
+        bytes32 keyhash_,
+        uint64 subId_,
+        MintConfig calldata mintConfig_
+    ) external onlyRole(Constants.GAME_ADMIN) {
         if (initialized) revert AlreadyInitialized();
 
         initialized = true;
@@ -236,7 +239,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /// @notice internal method to mint for a particular user
     /// @param to user to mint to
     /// @param _bearId the bea being minted for
-    function _mintHoneyCombForBear(address to, uint256 _bearId, uint256 amount_) internal returns (uint256) {
+    function _mintHoneyCombForBear(
+        address to,
+        uint256 _bearId,
+        uint256 amount_
+    ) internal returns (uint256) {
         uint256 tokenId = honeycomb.nextTokenId();
         honeycomb.batchMint(to, amount_);
 
@@ -388,7 +395,12 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      *    - maxClaimable per gate
      * x
      */
-    function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
+    function claim(
+        uint256 bearId_,
+        uint32 gateId,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) public {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.claim(bearId_, gateId, msg.sender, amount, proof);
@@ -405,7 +417,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         _canMintHoneycomb(bearId_, numClaim); // Validating here because numClaims can change
 
         // If for some reason this fails, GG no honeyComb for you
-        _mintHoneyCombForBear(msg.sender, bearId_, amount);
+        _mintHoneyCombForBear(msg.sender, bearId_, numClaim);
 
         claimed[bearId_] += numClaim;
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
@@ -415,9 +427,12 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     // Helpfer function to claim all the free shit
-    function claimAll(uint256 bearId_, uint32[] calldata gateId, uint32[] calldata amount, bytes32[][] calldata proof)
-        external
-    {
+    function claimAll(
+        uint256 bearId_,
+        uint32[] calldata gateId,
+        uint32[] calldata amount,
+        bytes32[][] calldata proof
+    ) external {
         uint256 inputLength = proof.length;
         if (inputLength != gateId.length) revert Claim_IncorrectInput();
         if (inputLength != amount.length) revert Claim_IncorrectInput();
