@@ -18,10 +18,11 @@ contract DeployMainnet is Script {
     uint64 private VRF_SUBID = 670;
 
     // Already deployed:
-    // address private gameRegistry = 0x4208befD8f546282aB43A30085774513227B656C;
-    // address private honeycomb = 0x1DeB9157508316A24BC0527444B142f563705BD0;
+    address private gameRegistry = 0x21FDb00713C74147c2BB629De13531Ab51a94b8B;
+    address private honeycomb = 0xCB0477d1Af5b8b05795D89D59F4667b59eAE9244;
+    address private gatekeeper = 0x10b27a31AA4d7544F89898ccAf3Faf776F5671C4;
     address private erc1155 = 0x495f947276749Ce646f68AC8c248420045cb7b5e; // OpenSea
-    address private paymentToken = 0x495f947276749Ce646f68AC8c248420045cb7b5e; // OHm
+    address private paymentToken = 0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5; // OHm
 
     // Addresses
 
@@ -39,25 +40,25 @@ contract DeployMainnet is Script {
     function run() public {
         vm.startBroadcast();
 
-        // Game registry
-        GameRegistry gameRegistry = new GameRegistry();
-        gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
-        gameRegistry.setJani(jani);
-        gameRegistry.setBeekeeper(beekeeper);
+        // // Game registry
+        // GameRegistry gameRegistry = new GameRegistry();
+        // gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
+        // gameRegistry.setJani(jani);
+        // gameRegistry.setBeekeeper(beekeeper);
 
-        HoneyComb honeycomb = new HoneyComb(address(gameRegistry));
-        // TODO: honeycomb.transferRealOwnership(gameAdmin);
+        // HoneyComb honeycomb = new HoneyComb(address(gameRegistry));
+        // // TODO: honeycomb.transferRealOwnership(gameAdmin);
 
-        Gatekeeper gatekeeper = new Gatekeeper(address(gameRegistry));
+        // Gatekeeper gatekeeper = new Gatekeeper(address(gameRegistry));
 
         // BearCave
         BearCave bearCave = new BearCave(
             VRF_COORDINATOR,
-            address(gameRegistry),
-            address(honeycomb),
-            address(erc1155),
-            address(paymentToken),
-            address(gatekeeper),
+            gameRegistry,
+            honeycomb,
+            erc1155,
+            paymentToken,
+            gatekeeper,
             honeycombShare
         );
         bearCave.setJani(jani);
@@ -76,7 +77,7 @@ contract DeployMainnet is Script {
         });
 
         bearCave.initialize(VRF_KEYHASH, VRF_SUBID, mintConfig);
-        gameRegistry.registerGame(address(bearCave));
+        GameRegistry(gameRegistry).registerGame(address(bearCave));
 
         // Register game with gameRegistry
 
