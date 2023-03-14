@@ -16,8 +16,6 @@ import {IBearCave} from "./IBearCave.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
 import {Constants} from "./GameLib.sol";
 
-import "forge-std/console2.sol";
-
 // Example: https://opensea.io/0xd87fa9FeD90948cd7deA9f77c06b9168Ac07F407 :dafoe:
 contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, GameRegistryConsumer {
     using SafeTransferLib for ERC20;
@@ -423,7 +421,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bearId_, gateId, numClaim, proof);
 
-        emit HoneycombClaimed(bearId_, msg.sender, amount);
+        emit HoneycombClaimed(bearId_, msg.sender, numClaim);
     }
 
     // Helpfer function to claim all the free shit
