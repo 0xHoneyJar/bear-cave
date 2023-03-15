@@ -93,7 +93,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     uint256 public totalETHfees;
 
     /**
-     * Depenedncies
+     * Dependencies
      */
     Gatekeeper public gatekeeper;
     IHoneyComb public honeycomb;
@@ -103,7 +103,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Internal Storage
      */
     bool public initialized;
-    // TODO: Review usage & combine these mappings into a single struct where appropriate.
     mapping(uint256 => HibernatingBear) public bears; //  bearId --> hibernatingBear status
     mapping(uint256 => uint256[]) public honeyJar; //  bearId --> honeycomb that was made for it (honeyJar[bearId].length is # minted honeycomb)
     mapping(uint256 => uint256) public honeycombToBear; // Reverse mapping: honeyId -> bearId
@@ -294,8 +293,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     /// @notice helper function to set a random honeycomb as a winner
-    /// @param bearId self-explanatpry
-    /// @param randomNumber used to determine the index of the winnign number
+    /// @param bearId self-explanatory
+    /// @param randomNumber used to determine the index of the winning number
     function _setSpecialHoneyComb(uint256 bearId, uint256 randomNumber) internal {
         uint256 numHoneyCombs = honeyJar[bearId].length;
         uint256 specialHoneyIndex = randomNumber % numHoneyCombs;
