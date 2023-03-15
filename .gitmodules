@@ -23,3 +23,6 @@
 [submodule "lib/dual-ownership-nft"]
 	path = lib/dual-ownership-nft
 	url = https://github.com/tubby-cats/dual-ownership-nft
+[submodule "lib/solidity-examples"]
+	path = lib/solidity-examples
+	url = https://github.com/LayerZero-Labs/solidity-examples
