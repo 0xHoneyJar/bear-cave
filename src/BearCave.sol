@@ -27,6 +27,9 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     // Contract State
     error NotInitialized();
     error AlreadyInitialized();
+    error ZeroAddress(string key);
+    error ExpectedFlag(string key, bool value);
+
     // Game state
     error BearAlreadyWoke(uint256 bearId);
     error GameInProgress();
@@ -34,12 +37,18 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     error SpecialHoneyCombNotFound(uint256 bearId);
     error NotEnoughHoneyCombMinted(uint256 bearId);
     error GeneralMintNotOpen(uint256 bearId);
+    error BearNotHibernating(uint256 bearId);
+    error ZeroBalance();
 
     // User Errors
     error NotOwnerOfSpecialHoneyComb(uint256 bearId, uint256 honeycombId);
     error Claim_IncorrectInput();
     error Claim_InvalidProof();
     error MekingTooManyHoneyCombs(uint256 bearId);
+    error NoPermissions_ERC1155();
+    error ZeroMint();
+    error WrongAmount_ETH(uint256 expected, uint256 actual);
+    error Withdraw_NoPermissions();
 
     /**
      * Events
@@ -141,8 +150,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /// @inheritdoc IBearCave
     function hibernateBear(uint256 _bearId) external onlyRole(Constants.GAME_ADMIN) {
         // This is shitty, because theres only one permissions thing.
-        require(erc1155.isApprovedForAll(msg.sender, address(this)), "Gibb cave to permissions to hibernate your bear");
-
+        if (!erc1155.isApprovedForAll(msg.sender, address(this))) revert NoPermissions_ERC1155();
         erc1155.safeTransferFrom(msg.sender, address(this), _bearId, 1, "");
 
         bears[_bearId] = HibernatingBear(_bearId, 0, block.timestamp + 72 hours, false, false);
@@ -155,11 +163,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (!initialized) revert NotInitialized();
         HibernatingBear memory bear = bears[bearId_];
 
-        require(bear.id == bearId_, "Da bear isn't hibernating");
+        if (bear.id != bearId_) revert BearNotHibernating(bearId_);
         if (bear.isAwake) revert BearAlreadyWoke(bearId_);
         if (honeyJar[bearId_].length > mintConfig.maxHoneycomb) revert AlreadyTooManyHoneyCombs(bearId_);
         if (honeyJar[bearId_].length + amount_ > mintConfig.maxHoneycomb) revert MekingTooManyHoneyCombs(bearId_);
-        require(amount_ > 0, "why you tryna mint nothing");
+        if (amount_ == 0) revert ZeroMint();
     }
 
     function earlyMekHoneyCombWithERC20(
@@ -169,7 +177,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
-        require(mintAmount > 0, "why you tryna mint nothing");
+        if (mintAmount == 0) revert ZeroMint();
+
         _canMintHoneycomb(bearId, mintAmount);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bearId, gateId, msg.sender, proofAmount, proof);
@@ -223,7 +232,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /// @return tokenID of minted honeyComb
     function _distributeETHAndMintHoneycomb(uint256 bearId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeycombPrice_ETH;
-        require(msg.value == price * amount_, "MekHoney::Exact eth pls");
+        if (msg.value != price * amount_) revert WrongAmount_ETH(price * amount_, msg.value);
 
         if (distributeWithMint) {
             _distribute(0);
@@ -350,14 +359,14 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
     /// @notice should only get called in the event automatic distribution doesn't work
     function withdrawERC20() external nonReentrant returns (uint256) {
-        require(!distributeWithMint, "distriboot w/ mints should be false");
+        if (distributeWithMint) revert ExpectedFlag("distributeWithMint", false);
         // permissions check
-        require(_hasRole(Constants.JANI) || _hasRole(Constants.BEEKEEPER), "oogabooga you can't do that");
-        require(beekeeper != address(0), "withdrawFunds::beekeeper address not set");
-        require(jani != address(0), "withdrawFunds::jani address not set");
+        if (!_hasRole(Constants.JANI) && !_hasRole(Constants.BEEKEEPER)) revert Withdraw_NoPermissions();
+        if (beekeeper == address(0)) revert ZeroAddress("beekeeper");
+        if (jani == address(0)) revert ZeroAddress("jani");
 
         uint256 currBalance = paymentToken.balanceOf(address(this));
-        require(currBalance > 0, "oogabooga theres nothing here");
+        if (currBalance == 0) revert ZeroBalance();
 
         // xfer everything all at once so we don't have to worry about accounting
         uint256 beekeeperShare = _splitFee(currBalance);
@@ -369,10 +378,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
     /// @notice should only get called in the event automatic distribution doesn't work
     function withdrawETH() public nonReentrant returns (uint256) {
-        require(!distributeWithMint, "distriboot w/ mints should be false");
-        require(_hasRole(Constants.JANI) || _hasRole(Constants.BEEKEEPER), "oogabooga you can't do that");
-        require(beekeeper != address(0), "withdrawETH::beekeeper address not set");
-        require(jani != address(0), "withdrawFunds::jani address not set");
+        if (distributeWithMint) revert ExpectedFlag("distributeWithMint", false);
+
+        if (!_hasRole(Constants.JANI) && !_hasRole(Constants.BEEKEEPER)) revert Withdraw_NoPermissions();
+        if (beekeeper == address(0)) revert ZeroAddress("beekeeper");
+        if (jani == address(0)) revert ZeroAddress("jani");
 
         uint256 beekeeperShare = _splitFee(address(this).balance);
         SafeTransferLib.safeTransferETH(beekeeper, beekeeperShare);

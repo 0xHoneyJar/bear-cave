@@ -36,6 +36,17 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /**
+     * Errors
+     */
+
+    error TooMuchHoneyCombInGate(uint256 gateId);
+    error GatekeeperInvalidProof();
+    error NoGates();
+    error Gate_OutOfBounds(uint256 gateId);
+    error Gate_NotEnabled(uint256 gateId);
+    error Gate_NotActive(uint256 gateId, uint256 activeAt);
+
+    /**
      * Events when business logic is affects
      */
     event GateAdded(uint256 tokenId, uint256 gateId);
@@ -76,11 +87,11 @@ contract Gatekeeper is GameRegistryConsumer {
 
         Gate storage gate = tokenToGates[tokenId][index];
         uint32 claimedCount = gate.claimedCount;
-        require(claimedCount < gate.maxClaimable, "Too much honeycomb went through this gate");
+        if (claimedCount >= gate.maxClaimable) revert TooMuchHoneyCombInGate(index);
 
         claimAmount = amount;
         bool validProof = validateProof(tokenId, index, player, amount, proof);
-        require(validProof, "Not a valid proof bro");
+        if (!validProof) revert GatekeeperInvalidProof();
 
         if (amount + claimedCount > gate.maxClaimable) {
             claimAmount = gate.maxClaimable - claimedCount;
@@ -97,13 +108,13 @@ contract Gatekeeper is GameRegistryConsumer {
         bytes32[] calldata proof
     ) public view returns (bool validProof) {
         Gate[] storage gates = tokenToGates[tokenId];
-        require(gates.length > 0, "nogates fren");
-        require(index < gates.length, "Index too big bro");
-        require(proof.length > 0, "Invalid Proof");
+        if (gates.length == 0) revert NoGates();
+        if (index >= gates.length) revert Gate_OutOfBounds(index);
+        if (proof.length == 0) revert GatekeeperInvalidProof();
 
         Gate storage gate = gates[index];
-        require(gate.enabled, "gates closed bruh");
-        require(gate.activeAt <= block.timestamp, "gate isn't active");
+        if (!gate.enabled) revert Gate_NotEnabled(index);
+        if (gate.activeAt > block.timestamp) revert Gate_NotActive(index, gate.activeAt);
 
         bytes32 leaf = keccak256(abi.encodePacked(player, amount));
         validProof = MerkleProofLib.verify(proof, gate.gateRoot, leaf);
@@ -140,7 +151,7 @@ contract Gatekeeper is GameRegistryConsumer {
         uint8 stageIndex_
     ) external onlyRole(Constants.GAME_ADMIN) {
         // claimedCount = activeAt = 0
-        require(_getStages().length > stageIndex_, "addGate: stageIndex_ is out of bounds");
+        if (stageIndex_ >= _getStages().length) revert Gate_OutOfBounds(stageIndex_);
         tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
 
         emit GateAdded(tokenId, tokenToGates[tokenId].length - 1);

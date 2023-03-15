@@ -3,6 +3,21 @@ pragma solidity ^0.8.17;
 
 library Constants {
     // External permissions
+    enum GAME_ROLES {
+        GAME_ADMIN,
+        BEEKEEPER,
+        JANI,
+        GAME_INSTANCE,
+        BEAR_POUCH,
+        GATEKEEPER,
+        GATE,
+        MINTER,
+        BURNER
+    }
+
+    /**
+        Below is needed for existing honeycomb roles. 
+     */
     bytes32 internal constant GAME_ADMIN = "GAME_ADMIN";
     bytes32 internal constant BEEKEEPER = "BEEKEEPER";
     bytes32 internal constant JANI = "JANI";
