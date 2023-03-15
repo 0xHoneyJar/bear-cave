@@ -342,12 +342,12 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         uint256 beekeeperShareERC20 = amountERC20.mulWadUp(honeyCombShare);
         uint256 beekeeperShareETH = (msg.value).mulWadUp(honeyCombShare);
 
-        if (beekeeperShareERC20 > 0) {
+        if (beekeeperShareERC20 != 0) {
             paymentToken.safeTransferFrom(msg.sender, beekeeper, beekeeperShareERC20);
             paymentToken.safeTransferFrom(msg.sender, jani, amountERC20 - beekeeperShareERC20);
         }
 
-        if (beekeeperShareETH > 0) {
+        if (beekeeperShareETH != 0) {
             SafeTransferLib.safeTransferETH(beekeeper, beekeeperShareETH);
             SafeTransferLib.safeTransferETH(jani, msg.value - beekeeperShareETH);
         }
