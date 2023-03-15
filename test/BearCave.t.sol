@@ -17,7 +17,6 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-// TODO: test bearCave claiming process
 contract BearCaveTest is Test, ERC1155TokenReceiver {
     using Random for uint256;
     using FixedPointMathLib for uint256;
@@ -79,7 +78,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         // MintConfig
         mintConfig.maxHoneycomb = maxHoneycomb;
-        mintConfig.maxClaimableHoneycomb = 5; // TODO
+        mintConfig.maxClaimableHoneycomb = 5; 
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
 
@@ -280,7 +279,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testTwoSleepingBears() public {
-        // TODO: can make this test more robust by validating the mekHoneyCombWithERC20/findSpecial honey outputs.
+        //  can make this test more robust by validating the mekHoneyCombWithERC20/findSpecial honey outputs.
         uint256 secondBearId = 69420;
         erc1155.mint(address(this), secondBearId, 1, "");
 

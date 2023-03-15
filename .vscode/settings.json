@@ -4,5 +4,6 @@
     "solidity.linter": "solhint",
     "[solidity]": {
         "editor.defaultFormatter": "JuanBlanco.solidity"
-    }
+    },
+    "cSpell.enabled": true
 }

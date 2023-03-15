@@ -19,7 +19,6 @@ import {Constants} from "src/Constants.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-// TODO: test bearCave claiming process
 contract FullGameTest is Test, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
@@ -234,7 +233,7 @@ contract FullGameTest is Test, ERC1155TokenReceiver {
             Phase 3: early mint 
          */
 
-        // TODO validate jani/beekeeper balances
+        // Can also validate jani/beekeeper balances
 
         vm.startPrank(alfaHunter);
         paymentToken.approve(address(bearCave), 2 * MINT_PRICE_ERC20);

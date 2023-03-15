@@ -47,7 +47,7 @@ contract DeployMainnet is Script {
         // gameRegistry.setBeekeeper(beekeeper);
 
         // HoneyComb honeycomb = new HoneyComb(address(gameRegistry));
-        // // TODO: honeycomb.transferRealOwnership(gameAdmin);
+        // // honeycomb.transferRealOwnership(gameAdmin);
 
         // Gatekeeper gatekeeper = new Gatekeeper(address(gameRegistry));
 
@@ -83,7 +83,6 @@ contract DeployMainnet is Script {
 
         // Identify tokenID to hibernate
         // Generate merkle roots..
-        // TODO:
         // add gates w/ appropriate roots & stages to gatekeeper to gatekeeper.
         // gameRegistry.startGame(address(bearCave));
         // User hibernates bear:  calls start on gatekeeper.
