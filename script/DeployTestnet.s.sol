@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 import "forge-std/Script.sol";
 
-import {HoneyComb} from "src/HoneyComb.sol";
+import {HoneyComb} from "src/v1/HoneyComb.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {BearCave} from "src/BearCave.sol";

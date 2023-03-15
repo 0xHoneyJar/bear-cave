@@ -35,11 +35,10 @@ interface IBearCave {
     /// @param bearId_ ID of the bear to wake up
     function wakeBear(uint256 bearId_) external;
 
-
     /// @notice for claiming free honeycomb
     /// @param bearId_ the ERC1155 Token ID of the bong bear
     /// @param gateId index of the gate
     /// @param amount amount being claimed by the player
     /// @param proof that the player is elgible to claim.
-    function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) external {
+    function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) external;
 }

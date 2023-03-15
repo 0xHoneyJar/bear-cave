@@ -64,7 +64,7 @@ contract GameRegistry is AccessControl {
 
     /// @notice sets the beeKeeper role in the THJ game registry.
     function setBeekeeper(address beeKeeper_) external onlyRole(Constants.GAME_ADMIN) {
-        _grantRole(Constants.beeKeeper, beeKeeper_);
+        _grantRole(Constants.BEEKEEPER, beeKeeper_);
     }
 
     /// @notice If the stages need to be modified after this contract is created.

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 library Constants {
-    // External permissions
+    // External permissions --> can use enum but we're already using the bytes32.
     enum GAME_ROLES {
         GAME_ADMIN,
         BEEKEEPER,

@@ -11,7 +11,7 @@ import "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/VRFConsumerBaseV2.sol";
 
 import {Gatekeeper} from "./Gatekeeper.sol";
-import {IHoneyComb} from "./IHoneyComb.sol";
+import {IHoneyComb} from "./v1/IHoneyComb.sol";
 import {IBearCave} from "./IBearCave.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
@@ -160,12 +160,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (!erc1155.isApprovedForAll(msg.sender, address(this))) revert NoPermissions_ERC1155();
         erc1155.safeTransferFrom(msg.sender, address(this), bearId_, 1, "");
 
-        bears[_bearId] = HibernatingBear(bearId_, 0, block.timestamp + 72 hours, false, false);
+        bears[bearId_] = HibernatingBear(bearId_, 0, block.timestamp + 72 hours, false, false);
         gatekeeper.startGatesForToken(bearId_);
 
         emit BearHibernated(bearId_);
     }
-
 
     /// @dev internal helper function to perform conditional checks for minting state
     function _canMintHoneycomb(uint256 bearId_, uint256 amount_) internal view {

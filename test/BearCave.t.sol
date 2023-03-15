@@ -11,7 +11,7 @@ import "./utils/UserFactory.sol";
 import "./utils/Random.sol";
 
 import "src/BearCave.sol";
-import {HoneyComb} from "src/HoneyComb.sol";
+import {HoneyComb} from "src/v1/HoneyComb.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 
