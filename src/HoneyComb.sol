@@ -8,7 +8,7 @@ import "solmate/utils/LibString.sol";
 import {ERC721AQueryable, ERC721A, IERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
 
 import {IHoneyComb} from "./IHoneyComb.sol";
-import {GameRegistryConsumer} from "./GameRegistry.sol";
+import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
 
 contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, MultisigOwnable {

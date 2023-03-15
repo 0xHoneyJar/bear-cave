@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "solmate/utils/MerkleProofLib.sol";
 
-import {GameRegistryConsumer} from "./GameRegistry.sol";
+import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
 
 /**
