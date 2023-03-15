@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
@@ -47,7 +47,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     //Chainlink setup
     MockVRFCoordinator private vrfCoordinator;
-    uint96 private constant FUND_AMOUNT = 1 * 10 ** 18;
+    uint96 private constant FUND_AMOUNT = 1 * 10**18;
 
     // Initialize the test suite
     function setUp() public {
@@ -420,8 +420,14 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
         proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
 
-        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) =
-            gatekeeper.tokenToGates(bearId, 0);
+        (
+            bool enabled,
+            uint8 stageIndex,
+            uint32 claimedCount,
+            uint32 maxClaimable,
+            bytes32 gateRoot,
+            uint256 activeAt
+        ) = gatekeeper.tokenToGates(bearId, 0);
 
         vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
         bearCave.claim(bearId, 0, 2, proof); // results in 2

@@ -1,19 +1,19 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
 library Constants {
     // External permissions
-    bytes32 public constant GAME_ADMIN = "GAME_ADMIN";
-    bytes32 public constant BEEKEEPER = "BEEKEEPER";
-    bytes32 public constant JANI = "JANI";
+    bytes32 internal constant GAME_ADMIN = "GAME_ADMIN";
+    bytes32 internal constant BEEKEEPER = "BEEKEEPER";
+    bytes32 internal constant JANI = "JANI";
 
     // Contract instances
-    bytes32 public constant GAME_INSTANCE = "GAME_INSTANCE";
-    bytes32 public constant BEAR_POUCH = "BEAR_POUCH";
-    bytes32 public constant GATEKEEPER = "GATEKEEPER";
-    bytes32 public constant GATE = "GATE";
+    bytes32 internal constant GAME_INSTANCE = "GAME_INSTANCE";
+    bytes32 internal constant BEAR_POUCH = "BEAR_POUCH";
+    bytes32 internal constant GATEKEEPER = "GATEKEEPER";
+    bytes32 internal constant GATE = "GATE";
 
     // Special honeycomb permissions
-    bytes32 public constant MINTER = "MINTER";
-    bytes32 public constant BURNER = "BURNER";
+    bytes32 internal constant MINTER = "MINTER";
+    bytes32 internal constant BURNER = "BURNER";
 }
