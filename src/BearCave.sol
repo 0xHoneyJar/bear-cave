@@ -66,7 +66,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     ERC20 public paymentToken; // OHM
     ERC1155 public erc1155; //the openseaAddress (rip) for Bears
     MintConfig public mintConfig;
-    bool public distributeWithMint; // Feature Toggle... what if we just make a feature toggle lib...
     uint256 public publicMintingTime;
 
     /**
@@ -124,12 +123,19 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         paymentToken = ERC20(_paymentToken);
         gatekeeper = Gatekeeper(_gatekeeper);
         honeyCombShare = _honeyCombShare;
-        distributeWithMint = true;
     }
 
+    /// @notice additional parameters that are required to get the game running
+    /// @param keyhash_ from https://docs.chain.link/docs/vrf-contracts/#configurations
+    /// @param subId_ Subscription ID from vrf.chain.link
+    /// @param jani_ address for THJ rev
+    /// @param beekeeper_ address THJ rev-share
+    /// @param mintConfig_ needed for the specific game
     function initialize(
         bytes32 keyhash_,
         uint64 subId_,
+        address jani_,
+        address beekeeper_,
         MintConfig calldata mintConfig_
     ) external onlyRole(Constants.GAME_ADMIN) {
         if (initialized) revert AlreadyInitialized();
@@ -138,6 +144,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         keyHash = keyhash_;
         subId = subId_;
         mintConfig = mintConfig_;
+        jani = payable(jani_);
+        beekeeper = payable(beekeeper_);
         emit Initialized(mintConfig);
     }
 
@@ -147,17 +155,19 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     /// @inheritdoc IBearCave
-    function hibernateBear(uint256 _bearId) external onlyRole(Constants.GAME_ADMIN) {
+    function hibernateBear(uint256 bearId_) external onlyRole(Constants.GAME_ADMIN) {
         // This is shitty, because theres only one permissions thing.
         if (!erc1155.isApprovedForAll(msg.sender, address(this))) revert NoPermissions_ERC1155();
-        erc1155.safeTransferFrom(msg.sender, address(this), _bearId, 1, "");
+        erc1155.safeTransferFrom(msg.sender, address(this), bearId_, 1, "");
 
-        bears[_bearId] = HibernatingBear(_bearId, 0, block.timestamp + 72 hours, false, false);
-        gatekeeper.startGatesForToken(_bearId);
+        bears[_bearId] = HibernatingBear(bearId_, 0, block.timestamp + 72 hours, false, false);
+        gatekeeper.startGatesForToken(bearId_);
 
-        emit BearHibernated(_bearId);
+        emit BearHibernated(bearId_);
     }
 
+
+    /// @dev internal helper function to perform conditional checks for minting state
     function _canMintHoneycomb(uint256 bearId_, uint256 amount_) internal view {
         if (!initialized) revert NotInitialized();
         HibernatingBear memory bear = bears[bearId_];
@@ -169,6 +179,10 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         if (amount_ == 0) revert ZeroMint();
     }
 
+    /// @notice Allows players to mint honeycomb with a valid proof
+    /// @param proofAmount the amount of free claims you are entitled to in the claim
+    /// @param proof The proof from the gate that allows the player to mint
+    /// @param mintAmount actual amount of honeycombs you want to mint.
     function earlyMekHoneyCombWithERC20(
         uint256 bearId,
         uint32 gateId,
@@ -185,6 +199,10 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         return _distributeERC20AndMintHoneycomb(bearId, mintAmount);
     }
 
+    /// @notice Allows players to mint honeycomb with a valid proof (Taking ETH as payment)
+    /// @param proofAmount the amount of free claims you are entitled to in the claim
+    /// @param proof The proof from the gate that allows the player to mint
+    /// @param mintAmount actual amount of honeycombs you want to mint.
     function earlyMekHoneyCombWithEth(
         uint256 bearId,
         uint32 gateId,
@@ -206,6 +224,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         return _distributeERC20AndMintHoneycomb(bearId_, amount_);
     }
 
+    /// @inheritdoc IBearCave
     function mekHoneyCombWithEth(uint256 bearId_, uint256 amount_) external payable returns (uint256) {
         _canMintHoneycomb(bearId_, amount_);
         if (bears[bearId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bearId_);
@@ -217,12 +236,8 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /// @return tokenID of minted honeyComb
     function _distributeERC20AndMintHoneycomb(uint256 bearId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeycombPrice_ERC20;
-        if (distributeWithMint) {
-            _distribute(price * amount_);
-        } else {
-            paymentToken.safeTransferFrom(msg.sender, address(this), price * amount_); // will revert if there isn't enough
-            totalERC20Fees += price;
-        }
+        _distribute(price * amount_);
+
         // Mint da honey
         return _mintHoneyCombForBear(msg.sender, bearId_, amount_);
     }
@@ -233,11 +248,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         uint256 price = mintConfig.honeycombPrice_ETH;
         if (msg.value != price * amount_) revert WrongAmount_ETH(price * amount_, msg.value);
 
-        if (distributeWithMint) {
-            _distribute(0);
-        } else {
-            totalETHfees += price * amount_;
-        }
+        _distribute(0);
 
         return _mintHoneyCombForBear(msg.sender, bearId_, amount_);
     }
@@ -245,11 +256,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     /// @notice internal method to mint for a particular user
     /// @param to user to mint to
     /// @param _bearId the bea being minted for
-    function _mintHoneyCombForBear(
-        address to,
-        uint256 _bearId,
-        uint256 amount_
-    ) internal returns (uint256) {
+    function _mintHoneyCombForBear(address to, uint256 _bearId, uint256 amount_) internal returns (uint256) {
         uint256 tokenId = honeycomb.nextTokenId();
         honeycomb.batchMint(to, amount_);
 
@@ -356,40 +363,6 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         return currentBalance.mulWadUp(honeyCombShare);
     }
 
-    /// @notice should only get called in the event automatic distribution doesn't work
-    function withdrawERC20() external nonReentrant returns (uint256) {
-        if (distributeWithMint) revert ExpectedFlag("distributeWithMint", false);
-        // permissions check
-        if (!_hasRole(Constants.JANI) && !_hasRole(Constants.BEEKEEPER)) revert Withdraw_NoPermissions();
-        if (beekeeper == address(0)) revert ZeroAddress("beekeeper");
-        if (jani == address(0)) revert ZeroAddress("jani");
-
-        uint256 currBalance = paymentToken.balanceOf(address(this));
-        if (currBalance == 0) revert ZeroBalance();
-
-        // xfer everything all at once so we don't have to worry about accounting
-        uint256 beekeeperShare = _splitFee(currBalance);
-        paymentToken.safeTransfer(beekeeper, beekeeperShare);
-        paymentToken.safeTransfer(jani, paymentToken.balanceOf(address(this))); // This should be everything
-
-        return paymentToken.balanceOf(address(this));
-    }
-
-    /// @notice should only get called in the event automatic distribution doesn't work
-    function withdrawETH() public nonReentrant returns (uint256) {
-        if (distributeWithMint) revert ExpectedFlag("distributeWithMint", false);
-
-        if (!_hasRole(Constants.JANI) && !_hasRole(Constants.BEEKEEPER)) revert Withdraw_NoPermissions();
-        if (beekeeper == address(0)) revert ZeroAddress("beekeeper");
-        if (jani == address(0)) revert ZeroAddress("jani");
-
-        uint256 beekeeperShare = _splitFee(address(this).balance);
-        SafeTransferLib.safeTransferETH(beekeeper, beekeeperShare);
-        SafeTransferLib.safeTransferETH(jani, address(this).balance);
-
-        return address(this).balance;
-    }
-
     /**
      * Gatekeeper: for claiming free honeycomb
      * BearCave:
@@ -400,14 +373,11 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Gates:
      *    - maxHoneycombAvailable per gate
      *    - maxClaimable per gate
-     * x
+     *
      */
-    function claim(
-        uint256 bearId_,
-        uint32 gateId,
-        uint32 amount,
-        bytes32[] calldata proof
-    ) public {
+
+    /// @inheritdoc IBearCave
+    function claim(uint256 bearId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.claim(bearId_, gateId, msg.sender, amount, proof);
@@ -433,7 +403,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
         emit HoneycombClaimed(bearId_, msg.sender, numClaim);
     }
 
-    // Helpfer function to claim all the free shit
+    /// @dev Helper function to process all free cams. More client-sided computation.
     function claimAll(
         uint256 bearId_,
         uint32[] calldata gateId,
@@ -456,16 +426,15 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
      * Bear Pouch setters (needed for distribution)
      *  Currently separate from the permissioned roles in gameRegistry
      */
+
+    /// @notice THJ address
     function setJani(address jani_) external onlyRole(Constants.GAME_ADMIN) {
         jani = payable(jani_);
     }
 
+    /// @notice RevShare address
     function setBeeKeeper(address beekeeper_) external onlyRole(Constants.GAME_ADMIN) {
         beekeeper = payable(beekeeper_);
-    }
-
-    function setDistributeWithMint(bool distributeWithMint_) external onlyRole(Constants.GAME_ADMIN) {
-        distributeWithMint = distributeWithMint_;
     }
 
     /**
@@ -499,12 +468,13 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
 
     /**
      * Chainlink Setters
-     * @notice modifiable after initialization isn't a security risk. Just for VRF config.
      */
+    /// @notice Chainlink SubscriptionID
     function setSubId(uint64 subId_) external onlyRole(Constants.GAME_ADMIN) {
         subId = subId_;
     }
 
+    /// @notice Keyhash from https://docs.chain.link/docs/vrf-contracts/#configurations
     function setKeyHash(bytes32 keyHash_) external onlyRole(Constants.GAME_ADMIN) {
         keyHash = keyHash_;
     }

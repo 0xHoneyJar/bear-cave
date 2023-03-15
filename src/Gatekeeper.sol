@@ -124,8 +124,10 @@ contract Gatekeeper is GameRegistryConsumer {
      * Setters
      */
 
-    /// @notice  update accounting
-    /// @dev should only be called by a game
+    /// @notice Update internal accounting
+    /// @param numClaimed increases gate claimed count by this value
+    /// @param proof makes this proof as used
+    /// @dev should only be called by a game.
     function addClaimed(
         uint256 tokenId,
         uint256 gateId,
@@ -144,6 +146,8 @@ contract Gatekeeper is GameRegistryConsumer {
      * Gate admin methods
      */
 
+    /// @notice adds a gate to the gates array
+    /// @param stageIndex_ the corresponds to the stage array within the gameRegistry
     function addGate(
         uint256 tokenId,
         bytes32 root_,
@@ -157,6 +161,8 @@ contract Gatekeeper is GameRegistryConsumer {
         emit GateAdded(tokenId, tokenToGates[tokenId].length - 1);
     }
 
+    /// @notice Called by a game when a game is started to set times of gates opening.
+    /// @dev Uses the stages array within GameRegistry to program gate openings.
     function startGatesForToken(uint256 tokenId) external onlyRole(Constants.GAME_INSTANCE) {
         Gate[] storage gates = tokenToGates[tokenId];
         uint256[] memory stageTimes = _getStages(); // External Call
@@ -170,16 +176,13 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /// @notice Only to be used for emergency gate shutdown.
-    function setGateEnabled(
-        uint256 tokenId,
-        uint256 index,
-        bool enabled
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].enabled = enabled;
 
         emit GateSetEnabled(tokenId, index, enabled);
     }
 
+    /// @notice admin function that can increase / decreate the amount of free claims available for a specific gate
     function setGateMaxClaimable(
         uint256 tokenId,
         uint256 index,
@@ -189,11 +192,13 @@ contract Gatekeeper is GameRegistryConsumer {
         emit GetSetMaxClaimable(tokenId, index, maxClaimable_);
     }
 
+    /// @notice helper funciton to reset gate state for a game
     function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].claimedCount = 0;
         emit GateReset(tokenId, index);
     }
 
+    /// @notice helper function to reset all gates for a particular token
     function resetAllGates(uint256 tokenId) external onlyRole(Constants.GAME_ADMIN) {
         uint256 numGates = tokenToGates[tokenId].length;
         Gate[] storage tokenGates = tokenToGates[tokenId];

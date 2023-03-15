@@ -46,7 +46,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     //Chainlink setup
     MockVRFCoordinator private vrfCoordinator;
-    uint96 private constant FUND_AMOUNT = 1 * 10**18;
+    uint96 private constant FUND_AMOUNT = 1 * 10 ** 18;
 
     // Initialize the test suite
     function setUp() public {
@@ -78,7 +78,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
         // MintConfig
         mintConfig.maxHoneycomb = maxHoneycomb;
-        mintConfig.maxClaimableHoneycomb = 5; 
+        mintConfig.maxClaimableHoneycomb = 5;
         mintConfig.honeycombPrice_ERC20 = MINT_PRICE_ERC20;
         mintConfig.honeycombPrice_ETH = MINT_PRICE_ETH;
 
@@ -98,7 +98,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         bearCave.setSubId(subId);
         bearCave.setJani(jani);
         bearCave.setBeeKeeper(beekeeper);
-        bearCave.initialize(bytes32(""), subId, mintConfig);
+        bearCave.initialize(bytes32(""), subId, jani, beekeeper, mintConfig);
 
         vrfCoordinator.addConsumer(subId, address(bearCave));
         gameRegistry.registerGame(address(bearCave));
@@ -106,7 +106,7 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailBearcave_alreadyInitialized() public {
-        bearCave.initialize(bytes32(""), 1, mintConfig);
+        bearCave.initialize(bytes32(""), 1, address(1), address(2), mintConfig);
     }
 
     // ============= Hibernating Bear ==================== //
@@ -301,72 +301,11 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     // ============= Bear Pouch ==================== //
 
-    function testFailWithdrawFunds_noPerms() public {
-        vm.prank(anotherUser);
-        bearCave.setDistributeWithMint(false);
-
-        bearCave.withdrawERC20();
-    }
-
-    function testFailWithdrawFunds_noFunds() public {
-        vm.prank(jani);
-        bearCave.setDistributeWithMint(false);
-
-        bearCave.withdrawERC20();
-    }
-
-    function testFailWithdraw() public {
-        vm.prank(beekeeper);
-        bearCave.withdrawERC20();
-    }
-
-    function testWithdrawERC20() public {
-        // Setup: reset balances
-        bearCave.setDistributeWithMint(false);
-        paymentToken.burn(address(bearCave), paymentToken.balanceOf(address(bearCave)));
-        paymentToken.burn(address(this), paymentToken.balanceOf(address(this)));
-        paymentToken.burn(beekeeper, paymentToken.balanceOf(beekeeper));
-
-        uint256 ohmAmount = 10000;
-
-        paymentToken.mint(address(bearCave), ohmAmount);
-        assertEq(paymentToken.balanceOf(address(bearCave)), ohmAmount);
-
-        vm.prank(beekeeper);
-        uint256 amountLeft = bearCave.withdrawERC20();
-        assertEq(amountLeft, 0);
-
-        uint256 beekeeperExpected = ohmAmount.mulWadUp(honeycombShare);
-
-        assertEq(paymentToken.balanceOf(beekeeper), beekeeperExpected);
-        assertEq(paymentToken.balanceOf(jani), ohmAmount - beekeeperExpected);
-    }
-
-    function testWithdrawETH() public {
-        bearCave.setDistributeWithMint(false);
-
-        // check initial conditions
-        assertEq(beekeeper.balance, 0);
-        assertEq(jani.balance, 0);
-
-        uint256 ethAmount = 1 ether;
-        vm.deal(address(bearCave), ethAmount);
-
-        uint256 beekeeperExpected = ethAmount.mulWadUp(honeycombShare);
-        vm.prank(beekeeper);
-        uint256 amountLeft = bearCave.withdrawETH();
-        assertEq(amountLeft, 0, "bearcave still has money left in it");
-
-        assertEq(beekeeperExpected, beekeeper.balance);
-        assertEq(jani.balance, ethAmount - beekeeperExpected);
-    }
-
     function testDistributeWithMint_ERC20() public {
         // initial conditions
         assertEq(paymentToken.balanceOf(beekeeper), 0, "init: not zero");
         assertEq(paymentToken.balanceOf(jani), 0, "init: not zero");
 
-        bearCave.setDistributeWithMint(true);
         _hibernateBear(bearId);
 
         paymentToken.approve(address(bearCave), MINT_PRICE_ERC20);
@@ -383,7 +322,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
         assertEq(beekeeper.balance, 0, "init: not zero");
         assertEq(jani.balance, 0, "init: not zero");
 
-        bearCave.setDistributeWithMint(true);
         _hibernateBear(bearId);
 
         // Will make a call to bearCave.mekHoneyCombWithETH(bearId).
@@ -398,8 +336,6 @@ contract BearCaveTest is Test, ERC1155TokenReceiver {
 
     function testClaimHoneycomb() public {
         // initial conditions
-
-        bearCave.setDistributeWithMint(true);
 
         gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
         gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);

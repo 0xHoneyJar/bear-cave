@@ -62,7 +62,7 @@ contract DeployScript is Script {
             honeycombPrice_ETH: 99 * 1e6 * 1 gwei // 0.099 eth
         });
 
-        bearCave.initialize(keyhash, subId, mintConfig);
+        bearCave.initialize(keyhash, subId, address(this), address(this), mintConfig);
 
         // Register game with gameRegistry
         // gameRegistry.registerGame(address(bearCave));

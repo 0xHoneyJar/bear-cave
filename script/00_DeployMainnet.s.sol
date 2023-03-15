@@ -76,7 +76,7 @@ contract DeployMainnet is Script {
             honeycombPrice_ETH: honeycombPrice_ETH
         });
 
-        bearCave.initialize(VRF_KEYHASH, VRF_SUBID, mintConfig);
+        bearCave.initialize(VRF_KEYHASH, VRF_SUBID, jani, beekeeper, mintConfig);
         GameRegistry(gameRegistry).registerGame(address(bearCave));
 
         // Register game with gameRegistry

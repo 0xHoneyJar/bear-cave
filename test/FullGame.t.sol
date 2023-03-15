@@ -59,7 +59,7 @@ contract FullGameTest is Test, ERC1155TokenReceiver {
 
     //Chainlink setup
     MockVRFCoordinator private vrfCoordinator;
-    uint96 private constant FUND_AMOUNT = 1 * 10**18;
+    uint96 private constant FUND_AMOUNT = 1 * 10 ** 18;
 
     function createNode(address player, uint32 amount) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(player, amount));
@@ -137,7 +137,7 @@ contract FullGameTest is Test, ERC1155TokenReceiver {
 
         // Set up on VRF site
         vrfCoordinator.addConsumer(subId, address(bearCave));
-        bearCave.initialize("", subId, mintConfig);
+        bearCave.initialize("", subId, jani, beekeeper, mintConfig);
         gameRegistry.registerGame(address(bearCave));
 
         /**
@@ -152,21 +152,41 @@ contract FullGameTest is Test, ERC1155TokenReceiver {
 
         // Deployer doesn't have any perms after setup
         gameRegistry.renounceRole(Constants.GAME_ADMIN, address(this));
-    }
 
-    function testWorks() public {
-        assertTrue(true);
-    }
-
-    function testFullRun() public {
         // Game Admin Actions
         vm.startPrank(gameAdmin);
         gameRegistry.startGame(address(bearCave));
         erc1155.setApprovalForAll(address(bearCave), true);
         bearCave.hibernateBear(bearId);
         vm.stopPrank();
+    }
 
+    function testWorks() public {
+        assertTrue(true);
+    }
+
+    function testFailClaim_InvalidProof() public {
+        vm.startPrank(alfaHunter);
+        bytes32[] memory blankProof;
+        bearCave.claim(bearId, 0, 2, blankProof);
+    }
+
+    function testFail_earlyMekETH() public {
+        vm.startPrank(alfaHunter);
+        bytes32[] memory blankProof;
+        bearCave.earlyMekHoneyCombWithEth(bearId, 0, 2, blankProof, 2);
+    }
+
+    function testFail_earlyMekERC20() public {
+        vm.startPrank(alfaHunter);
+
+        bytes32[] memory blankProof;
+        bearCave.earlyMekHoneyCombWithERC20(bearId, 0, 2, blankProof, 2);
+    }
+
+    function testFullRun() public {
         // Get the first gate for validation
+
         (
             bool enabled,
             uint8 stageIndex,
@@ -247,9 +267,12 @@ contract FullGameTest is Test, ERC1155TokenReceiver {
         assertEq(honeycomb.balanceOf(bera), 5); //claimed 3, early minted 2
         vm.stopPrank();
 
+        vm.deal(clown, MINT_PRICE_ETH);
         vm.startPrank(clown);
         paymentToken.approve(address(bearCave), 3 * MINT_PRICE_ERC20);
-        bearCave.earlyMekHoneyCombWithERC20(bearId, 0, 3, getProof(2), 2);
+        bearCave.earlyMekHoneyCombWithERC20(bearId, 0, 3, getProof(2), 1);
+        bearCave.earlyMekHoneyCombWithEth{value: MINT_PRICE_ETH}(bearId, 0, 3, getProof(2), 1);
+
         assertEq(honeycomb.balanceOf(clown), 3); // claimed 1, earlyMinted 2
         vm.stopPrank();
 
