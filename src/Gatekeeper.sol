@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "solmate/utils/MerkleProofLib.sol";
 
 import {GameRegistryConsumer} from "./GameRegistry.sol";
-import {Constants} from "./GameLib.sol";
+import {Constants} from "./Constants.sol";
 
 /**
  * Bear GateKeeper

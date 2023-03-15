@@ -7,7 +7,7 @@ import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {BearCave} from "src/BearCave.sol";
 import {IBearCave} from "src/IBearCave.sol";
-import {Constants} from "src/GameLib.sol";
+import {Constants} from "src/Constants.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 

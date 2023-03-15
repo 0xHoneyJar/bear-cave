@@ -15,7 +15,7 @@ import "src/BearCave.sol";
 import {HoneyComb} from "src/HoneyComb.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
-import {Constants} from "src/GameLib.sol";
+import {Constants} from "src/Constants.sol";
 
 import {console2} from "forge-std/console2.sol";
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import {Constants} from "./GameLib.sol";
+import {Constants} from "./Constants.sol";
 
 /// @title GameRegistry
 /// @notice Central repository that tracks games and permissions.

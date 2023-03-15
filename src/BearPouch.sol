@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
 import {GameRegistryConsumer} from "./GameRegistry.sol";
-import {Constants} from "./GameLib.sol";
+import {Constants} from "./Constants.sol";
 
 /// @title BearPouch
 /// @notice A separate contract that an be used to manage funds/ accounting

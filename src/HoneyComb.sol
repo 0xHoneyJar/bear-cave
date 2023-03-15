@@ -9,7 +9,7 @@ import {ERC721AQueryable, ERC721A, IERC721A} from "ERC721A/extensions/ERC721AQue
 
 import {IHoneyComb} from "./IHoneyComb.sol";
 import {GameRegistryConsumer} from "./GameRegistry.sol";
-import {Constants} from "./GameLib.sol";
+import {Constants} from "./Constants.sol";
 
 contract HoneyComb is IHoneyComb, GameRegistryConsumer, ERC721AQueryable, MultisigOwnable {
     using LibString for uint256;
