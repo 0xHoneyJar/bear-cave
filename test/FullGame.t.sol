@@ -11,7 +11,7 @@ import "./mocks/MockVRFCoordinator.sol";
 import "./utils/UserFactory.sol";
 import "./utils/Random.sol";
 
-import "src/BearCave.sol";
+import "src/v1/BearCave.sol";
 import {HoneyComb} from "src/v1/HoneyComb.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";

@@ -2,21 +2,8 @@
 pragma solidity ^0.8.17;
 
 library Constants {
-    // External permissions --> can use enum but we're already using the bytes32.
-    enum GAME_ROLES {
-        GAME_ADMIN,
-        BEEKEEPER,
-        JANI,
-        GAME_INSTANCE,
-        BEAR_POUCH,
-        GATEKEEPER,
-        GATE,
-        MINTER,
-        BURNER
-    }
-
     /**
-        Below is needed for existing honeycomb roles. 
+      Could use ENUM however existing contracts are already using these so opting to keep things consistent. 
      */
     bytes32 internal constant GAME_ADMIN = "GAME_ADMIN";
     bytes32 internal constant BEEKEEPER = "BEEKEEPER";

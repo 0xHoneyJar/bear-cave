@@ -10,11 +10,11 @@ import "solmate/utils/ReentrancyGuard.sol";
 import "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/VRFConsumerBaseV2.sol";
 
-import {Gatekeeper} from "./Gatekeeper.sol";
-import {IHoneyComb} from "./v1/IHoneyComb.sol";
+import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
+import {Gatekeeper} from "src/Gatekeeper.sol";
+import {IHoneyComb} from "src/v1/IHoneyComb.sol";
+import {Constants} from "src/Constants.sol";
 import {IBearCave} from "./IBearCave.sol";
-import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
-import {Constants} from "./Constants.sol";
 
 // Example: https://opensea.io/0xd87fa9FeD90948cd7deA9f77c06b9168Ac07F407 :dafoe:
 contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, GameRegistryConsumer {
