@@ -3,6 +3,8 @@ pragma solidity ^0.8.17;
 
 import {GameRegistry} from "./GameRegistry.sol";
 
+/// @title GameRegistryConsumer
+/// @notice all contracts within the THJ universe should inherit from this contract.
 abstract contract GameRegistryConsumer {
     GameRegistry public gameRegistry;
 

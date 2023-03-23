@@ -1,30 +1,54 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "dual-ownership-nft/MultisigOwnable.sol";
-import "solmate/utils/LibString.sol";
+import {LibString} from "solmate/utils/LibString.sol";
+import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
+import {ONFT721} from "@layerzero/token/onft/ONFT721.sol";
 
-import {ERC721AQueryable, ERC721A, IERC721A} from "ERC721A/extensions/ERC721AQueryable.sol";
+import {Constants} from "./Constants.sol";
+import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 
-import {Constants} from "src/Constants.sol";
-import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
+import {IHoneyJar} from "./IHoneyJar.sol";
 
-// TODO: make this xChain compatible
-contract HoneyJar is GameRegistryConsumer, ERC721AQueryable, MultisigOwnable {
+/// @title HoneyJar
+/// @notice A stand-alone ERC721 compliant NFT
+/// @dev xChain functionality is abstracted away from NFT implementation into a separate contract
+/// @dev can safely be deployed along with HoneyJarPortal to every chain.
+contract HoneyJar is IERC721, GameRegistryConsumer, MultisigOwnable {
     using LibString for uint256;
 
-    constructor(address gameRegistry_) ERC721A("HoneyJar", "HONEYJAR") GameRegistryConsumer(gameRegistry_) {}
+    /**
+     * Errors
+     */
+    error MaxMintLimitReached(uint256 mintNum);
+    error URIQueryForNonexistentToken();
+
+    // Needed to prevent cross chain collisions
+    uint256 public nextTokenId;
+    uint256 public maxTokenId;
+
+    // TODO: segment & Document tokenID space based on Chains on roadmap
+    constructor(
+        address gameRegistry_,
+        address lzEndpoint_,
+        uint256 minGasToTransfer_,
+        uint256 startTokenId_,
+        uint256 mintAmount_
+    ) ONFT721("HoneyJar", "HONEYJAR", minGasToTransfer_, lzEndpoint_) GameRegistryConsumer(gameRegistry_) {
+        nextTokenId = startTokenId_;
+        maxTokenId = startTokenId_ + mintAmount_;
+    }
 
     // metadata URI
-    string public _baseTokenURI = "https://www.0xhoneyjar.xyz/";
+    string public baseTokenURI = "https://www.0xhoneyjar.xyz/";
     bool public isGenerated; // once the token is generated we can append individual tokenIDs
 
     function _baseURI() internal view override returns (string memory) {
-        return _baseTokenURI;
+        return baseTokenURI;
     }
 
-    function setBaseURI(string calldata baseURI) external onlyRealOwner {
-        _baseTokenURI = baseURI;
+    function setBaseURI(string calldata baseURI_) external onlyRealOwner {
+        baseTokenURI = baseURI_;
     }
 
     function setGenerated(bool generated_) external onlyRealOwner {
@@ -33,35 +57,40 @@ contract HoneyJar is GameRegistryConsumer, ERC721AQueryable, MultisigOwnable {
 
     /// @notice Token URI will be a generic URI at first.
     /// @notice When isGnerated is set to true, it will concat the baseURI & tokenID
-    function tokenURI(uint256 tokenId) public view override(IERC721A, ERC721A) returns (string memory) {
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _baseURI();
-        return isGenerated ? string.concat(baseURI, _toString(tokenId)) : baseURI;
+        return isGenerated ? string.concat(baseURI, tokenId.toString()) : baseURI;
     }
 
-    /// @notice create honeycomb for an address.
-    /// @dev only callable by the MINTER role
-    function mintOne(address to) external onlyRole(Constants.MINTER) returns (uint256) {
-        _mint(to, 1);
-        return _nextTokenId() - 1; // To get the latest mintID
+    /// @notice Mint your ONFT
+    function mintOne(address to) public onlyRole(Constants.MINTER) {
+        if (nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
+
+        uint256 newId = nextTokenId;
+        ++nextTokenId;
+
+        _safeMint(to, newId);
     }
 
-    /// @notice helper function for front-ends to see latest IDs
-    function nextTokenId() external view returns (uint256) {
-        return _nextTokenId();
+    /// @notice Used for xChain calls
+    function mintTokenId(address to, uint256 tokenId_) external onlyRole(Constants.MINTER) {
+        _safeMint(to, tokenId_);
     }
 
     /// @notice mint multiple.
     /// @dev only callable by the MINTER role
     function batchMint(address to, uint256 amount) external onlyRole(Constants.MINTER) {
-        _mint(to, amount);
+        for (uint256 i = 0; i < amount; ++i) {
+            mintOne(to);
+        }
     }
 
     /// @notice burn the honeycomb tokens. Nothing will have the burn role upon initialization
     /// @notice This will be used for future game-mechanics
     /// @dev only callable by the BURNER role
     function burn(uint256 _id) external onlyRole(Constants.BURNER) {
-        _burn(_id, true);
+        _burn(_id);
     }
 }

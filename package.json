@@ -7,7 +7,8 @@
     "devDependencies": {
         "prettier": "^2.8.1",
         "prettier-plugin-solidity": "^1.1.0",
-        "solhint": "^3.3.7"
+        "solhint": "^3.3.7",
+        "solhint-plugin-prettier": "^0.0.5"
     },
     "scripts": {
         "postinstall": "forge install && forge remappings > remappings.txt",
