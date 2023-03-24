@@ -6,7 +6,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 interface IHoneyJar is IERC721 {
     function mintOne(address to) external returns (uint256);
 
-    function mintToTokenId(address to, uint256 tokenId) external returns (uint256);
+    function mintTokenId(address to, uint256 tokenId) external;
 
     function batchMint(address to, uint256 amount) external;
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {LibString} from "solmate/utils/LibString.sol";
 import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
 import {ONFT721} from "@layerzero/token/onft/ONFT721.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import {Constants} from "./Constants.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
@@ -14,7 +15,7 @@ import {IHoneyJar} from "./IHoneyJar.sol";
 /// @notice A stand-alone ERC721 compliant NFT
 /// @dev xChain functionality is abstracted away from NFT implementation into a separate contract
 /// @dev can safely be deployed along with HoneyJarPortal to every chain.
-contract HoneyJar is IERC721, GameRegistryConsumer, MultisigOwnable {
+contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     using LibString for uint256;
 
     /**
@@ -30,11 +31,9 @@ contract HoneyJar is IERC721, GameRegistryConsumer, MultisigOwnable {
     // TODO: segment & Document tokenID space based on Chains on roadmap
     constructor(
         address gameRegistry_,
-        address lzEndpoint_,
-        uint256 minGasToTransfer_,
         uint256 startTokenId_,
         uint256 mintAmount_
-    ) ONFT721("HoneyJar", "HONEYJAR", minGasToTransfer_, lzEndpoint_) GameRegistryConsumer(gameRegistry_) {
+    ) ERC721("HoneyJar", "HONEYJAR") GameRegistryConsumer(gameRegistry_) {
         nextTokenId = startTokenId_;
         maxTokenId = startTokenId_ + mintAmount_;
     }
@@ -65,17 +64,18 @@ contract HoneyJar is IERC721, GameRegistryConsumer, MultisigOwnable {
     }
 
     /// @notice Mint your ONFT
-    function mintOne(address to) public onlyRole(Constants.MINTER) {
+    function mintOne(address to) public override onlyRole(Constants.MINTER) returns (uint256) {
         if (nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
 
         uint256 newId = nextTokenId;
         ++nextTokenId;
 
         _safeMint(to, newId);
+        return newId;
     }
 
     /// @notice Used for xChain calls
-    function mintTokenId(address to, uint256 tokenId_) external onlyRole(Constants.MINTER) {
+    function mintTokenId(address to, uint256 tokenId_) external override onlyRole(Constants.MINTER) {
         _safeMint(to, tokenId_);
     }
 
