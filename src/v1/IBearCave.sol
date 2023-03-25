@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 /// @title BearCave: Only one true honey can make a bear wake up
 interface IBearCave {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 import {LibString} from "solmate/utils/LibString.sol";
 import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";

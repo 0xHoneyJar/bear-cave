@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 // Switching to OZ for LZ compatibility
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -143,7 +143,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC721TokenReceiver, ERC1155TokenReceive
         address _jani,
         address _beekeeper,
         uint256 _honeyJarShare
-    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) ReentrancyGuard() {
+    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
         paymentToken = IERC20(_paymentToken);

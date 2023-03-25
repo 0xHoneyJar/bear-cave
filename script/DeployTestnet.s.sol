@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 import "forge-std/Script.sol";
 
 import {HoneyComb} from "src/v1/HoneyComb.sol";
