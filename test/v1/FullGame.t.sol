@@ -5,11 +5,11 @@ import "forge-std/Test.sol";
 import "murky/Merkle.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./mocks/MockERC1155.sol";
-import "./mocks/MockERC20.sol";
-import "./mocks/MockVRFCoordinator.sol";
-import "./utils/UserFactory.sol";
-import "./utils/Random.sol";
+import "test/mocks/MockERC1155.sol";
+import "test/mocks/MockERC20.sol";
+import "test/mocks/MockVRFCoordinator.sol";
+import "test/utils/UserFactory.sol";
+import "test/utils/Random.sol";
 
 import "src/v1/BearCave.sol";
 import {HoneyComb} from "src/v1/HoneyComb.sol";

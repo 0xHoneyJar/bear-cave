@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+// Switching to OZ for LZ compatibility
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
-
+import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
@@ -22,7 +23,13 @@ import {IHoneyJar} from "src/IHoneyJar.sol";
 
 /// @title HoneyBox
 /// @notice Revision of v1/BearCave.sol
-contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, GameRegistryConsumer {
+contract HoneyBox is
+    VRFConsumerBaseV2,
+    ERC721TokenReceiver,
+    ERC1155TokenReceiver,
+    ReentrancyGuard,
+    GameRegistryConsumer
+{
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
 
@@ -44,9 +51,10 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
     }
 
     // TODO: how does this config chage for xChain?
+    /// @notice Configuration for minting for games occuring at the same time.
     struct MintConfig {
-        uint32 maxHoneycomb; // Max # of generated honeys (Max of 4.2m)
-        uint32 maxClaimableHoneycomb; // # of honeyJars that can be claimed (total)
+        uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m)
+        uint32 maxClaimableHoneyJar; // # of honeyJars that can be claimed (total)
         uint256 honeyJarPrice_ERC20;
         uint256 honeyJarPrice_ETH;
     }
@@ -87,9 +95,9 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
     event Initialized(MintConfig mintConfig);
     event SlumberPartyStarted(uint8 bundleId);
     event SlumberPartyAdded(uint8 bundleId);
-    event SpecialHoneyJarFound(uint256 tokenId, uint256 honeyJarId);
+    event SpecialHoneyJarFound(uint8 bundleId, uint256 honeyJarId);
     event MintConfigChanged(MintConfig mintConfig);
-    event HoneycombClaimed(uint256 tokenId, address player, uint256 amount);
+    event HoneyJarClaimed(uint256 bundleId, address player, uint256 amount);
     event PartyAwoke(uint8 bundleId, address player);
 
     /**
@@ -116,14 +124,14 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
     /**
      * bearPouch
      */
-    address payable private beekeeper; // rev share 22.33%
+    address payable private beekeeper; // rev share
     address payable private jani;
     uint256 public honeyJarShare; // as a WAD
 
     /**
      * Dependencies
      */
-    Gatekeeper public gatekeeper;
+    Gatekeeper public gatekeeper; // TODO: this should be an interface
     IHoneyJar public honeyJar;
     VRFCoordinatorV2Interface internal vrfCoordinator;
 
@@ -132,10 +140,10 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
      */
     bool public initialized;
     SlumberParty[] public slumberPartyList; // list of slumberparties
-    mapping(uint8 => SlumberParty) public slumberParties; //  bundleId --> bundloor
+    mapping(uint8 => SlumberParty) public slumberParties; //  bundleId --> bundle
     mapping(uint8 => uint32) public claimed; // bundleId -> numClaimed (free claims)
     mapping(uint256 => uint8) public rng; // Chainlink VRF request ID => bundleID
-    mapping(uint256 => uint256) public honeyJarToParty;
+    mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle
     mapping(uint8 => uint256[]) public honeyJarShelf; // List of Honeyjars associated with a particular bundle (SlumberParty)
 
     constructor(
@@ -151,7 +159,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
         paymentToken = IERC20(_paymentToken);
-        gatekeeper = Gatekeeper(_gatekeeper); // TODO: change to interface
+        gatekeeper = Gatekeeper(_gatekeeper);
         jani = payable(_jani);
         beekeeper = payable(_beekeeper);
         honeyJarShare = _honeyJarShare;
@@ -196,8 +204,8 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
             }
         }
 
-        // TODO: should be reading from config?
-        slumberParty.publicMintTime = block.timestamp + 72 hours;
+        // TODO: should be reading publicMintOffset from config?
+        slumberParties[bundleId_].publicMintTime = block.timestamp + 72 hours;
         gatekeeper.startGatesForToken(bundleId_);
         emit SlumberPartyStarted(bundleId_);
     }
@@ -208,7 +216,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         address[] calldata tokenAddresses_,
         uint256[] calldata tokenIds_,
         bool[] calldata isERC1155_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
         if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length)
             revert InvalidInput("addBundle");
@@ -216,25 +224,28 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
 
         // Add to the bundle mapping & list
-        SlumberParty storage slumberParty = slumberPartyList.push();
-        slumberParties[bundleId] = slumberParty;
+        SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
             slumberParty.sleepoors.push(SleepingNFT(tokenAddresses_[i], tokenIds_[i], isERC1155_[i]));
         }
+
+        slumberParties[bundleId] = slumberParty; // Save to mapping
+
+        return bundleId;
     }
 
     /// @dev internal helper function to perform conditional checks for minting state
-    function _canMintHoneycomb(uint8 bundleId_, uint256 amount_) internal view {
+    function _canMintHoneyJar(uint8 bundleId_, uint256 amount_) internal view {
         if (!initialized) revert NotInitialized();
         SlumberParty memory party = slumberParties[bundleId_];
 
         if (party.bundleId != bundleId_) revert NotSleeping(bundleId_);
         if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
-        if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneycomb) revert AlreadyTooManyHoneyJars(bundleId_);
-        if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneycomb)
+        if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
+        if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar)
             revert MekingTooManyHoneyJars(bundleId_);
         if (amount_ == 0) revert ZeroMint();
     }
@@ -252,11 +263,11 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
     ) external returns (uint256) {
         if (mintAmount == 0) revert ZeroMint();
 
-        _canMintHoneycomb(bundleId, mintAmount);
+        _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
-        return _distributeERC20AndMintHoneycomb(bundleId, mintAmount);
+        return _distributeERC20AndMintHoneyjar(bundleId, mintAmount);
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof (Taking ETH as payment)
@@ -270,29 +281,29 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external payable returns (uint256) {
-        _canMintHoneycomb(bundleId, mintAmount);
+        _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
-        return _distributeETHAndMintHoneycomb(bundleId, mintAmount);
+        return _distributeETHAndMintHoneyJar(bundleId, mintAmount);
     }
 
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
-        _canMintHoneycomb(bundleId_, amount_);
+        _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
-        return _distributeERC20AndMintHoneycomb(bundleId_, amount_);
+        return _distributeERC20AndMintHoneyjar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external returns (uint256) {
-        _canMintHoneycomb(bundleId_, amount_);
+        _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        return _distributeETHAndMintHoneycomb(bundleId_, amount_);
+        return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
 
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
-    function _distributeERC20AndMintHoneycomb(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+    function _distributeERC20AndMintHoneyjar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeyJarPrice_ERC20;
         _distribute(price * amount_);
 
@@ -302,7 +313,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
 
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
-    function _distributeETHAndMintHoneycomb(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+    function _distributeETHAndMintHoneyJar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeyJarPrice_ETH;
         if (msg.value != price * amount_) revert WrongAmount_ETH(price * amount_, msg.value);
 
@@ -326,7 +337,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         }
 
         // Find the special honeyJar when the last honeyJar is minted.
-        if (honeyJarShelf[bundleId_].length >= mintConfig.maxHoneycomb) {
+        if (honeyJarShelf[bundleId_].length >= mintConfig.maxHoneyJar) {
             _findHoneyJar(bundleId_);
         }
 
@@ -336,8 +347,8 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
     /// @notice this function _should_ only be called in case of emergencies
     /// @notice if the honeyJars are minted but the VRF called failed.
     /// @dev kicks off another VRF request
-    function forceHoneycombSearch(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
-        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneycomb) revert NotEnoughHoneyJarMinted(bundleId_);
+    function forceHoneyJarSearch(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
+        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
         _findHoneyJar(bundleId_);
     }
 
@@ -371,18 +382,19 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         uint256 specialHoneyIndex = randomNumber % numHoneyJars;
         uint256 specialHoneyJarId = honeyJarShelf[bundleId][specialHoneyIndex];
 
-        SlumberParty memory party = slumberParties[bundleId];
+        SlumberParty storage party = slumberParties[bundleId];
         party.specialHoneyJarFound = true;
         party.specialHoneyJar = specialHoneyJarId;
 
         emit SpecialHoneyJarFound(bundleId, specialHoneyJarId);
     }
 
-    function openBox(uint8 bundleId_) external {
-        // Check that msg.sender has the special honeyJar to wake up bear
+    /// @notice transfers sleeping NFTs to msg.sender if they hold the special honeyJar
+    function openHotBox(uint8 bundleId_) external {
+        // Check that msg.sender has the special honeyJar
         SlumberParty memory party = slumberParties[bundleId_];
 
-        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneycomb) revert NotEnoughHoneyJarMinted(bundleId_);
+        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
         if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
         if (!party.specialHoneyJarFound) revert SpecialHoneyJarNotFound(bundleId_);
 
@@ -406,6 +418,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
             }
         }
 
+        slumberParties[bundleId_].isAwake = true;
         emit PartyAwoke(bundleId_, msg.sender);
     }
 
@@ -446,7 +459,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
      *    - maxClaimableHoneyJar per Bear
      * Gatekeeper: (per bear)
      * Gates:
-     *    - maxHoneycombAvailable per gate
+     *    - maxhoneyJarAvailable per gate
      *    - maxClaimable per gate
      *
      */
@@ -461,11 +474,11 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
 
         // Track per bear freeClaims
         uint32 claimedAmount = claimed[bundleId_];
-        if (numClaim + claimedAmount > mintConfig.maxClaimableHoneycomb) {
-            numClaim = mintConfig.maxClaimableHoneycomb - claimedAmount;
+        if (numClaim + claimedAmount > mintConfig.maxClaimableHoneyJar) {
+            numClaim = mintConfig.maxClaimableHoneyJar - claimedAmount;
         }
 
-        _canMintHoneycomb(bundleId_, numClaim); // Validating here because numClaims can change
+        _canMintHoneyJar(bundleId_, numClaim); // Validating here because numClaims can change
 
         // If for some reason this fails, GG no honeyJar for you
         _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
@@ -474,7 +487,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
 
-        emit HoneycombClaimed(bundleId_, msg.sender, numClaim);
+        emit HoneyJarClaimed(bundleId_, msg.sender, numClaim);
     }
 
     /// @dev Helper function to process all free cams. More client-sided computation.
@@ -517,9 +530,9 @@ contract HoneyBox is VRFConsumerBaseV2, ERC1155TokenReceiver, ReentrancyGuard, G
      */
 
     /// @notice Sets the max number NFTs (honeyJar) that can be generated from the deposit of a bear (asset)
-    function setMaxHoneycomb(uint32 _maxHoneycomb) external onlyRole(Constants.GAME_ADMIN) {
+    function setMaxhoneyJar(uint32 _maxhoneyJar) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
-        mintConfig.maxHoneycomb = _maxHoneycomb;
+        mintConfig.maxHoneyJar = _maxhoneyJar;
 
         emit MintConfigChanged(mintConfig);
     }

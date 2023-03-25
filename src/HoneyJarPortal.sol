@@ -15,7 +15,7 @@ import {IHoneyJar} from "./IHoneyJar.sol";
 
 /// @title HoneyJarPortal
 /// @dev Modeled off of @layerzero/token/onft/extension/ProxyONFT721.sol
-/// @dev This control will Is subject to change with v3 development
+/// @dev Is subject to change with v3 development
 contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
     using ERC165Checker for address;
 
