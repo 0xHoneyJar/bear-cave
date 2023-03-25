@@ -11,9 +11,7 @@ library Constants {
 
     // Contract instances
     bytes32 internal constant GAME_INSTANCE = "GAME_INSTANCE";
-    bytes32 internal constant BEAR_POUCH = "BEAR_POUCH";
     bytes32 internal constant GATEKEEPER = "GATEKEEPER";
-    bytes32 internal constant GATE = "GATE";
 
     // Special ERC permissions
     bytes32 internal constant MINTER = "MINTER";

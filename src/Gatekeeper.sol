@@ -26,7 +26,7 @@ contract Gatekeeper is GameRegistryConsumer {
     struct Gate {
         bool enabled;
         uint8 stageIndex; // stage from [0-3]
-        uint32 claimedCount; // # of claims already happend
+        uint32 claimedCount; // # of claims already happened
         uint32 maxClaimable; // # of claims per gate
         bytes32 gateRoot;
         uint256 activeAt; // timestamp when active.
@@ -179,7 +179,7 @@ contract Gatekeeper is GameRegistryConsumer {
         emit GateSetEnabled(tokenId, index, enabled);
     }
 
-    /// @notice admin function that can increase / decreate the amount of free claims available for a specific gate
+    /// @notice admin function that can increase / decrease the amount of free claims available for a specific gate
     function setGateMaxClaimable(
         uint256 tokenId,
         uint256 index,
@@ -189,7 +189,7 @@ contract Gatekeeper is GameRegistryConsumer {
         emit GetSetMaxClaimable(tokenId, index, maxClaimable_);
     }
 
-    /// @notice helper funciton to reset gate state for a game
+    /// @notice helper function to reset gate state for a game
     function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
         delete tokenToGates[tokenId][index];
 

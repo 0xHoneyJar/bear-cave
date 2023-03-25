@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import {LibString} from "solmate/utils/LibString.sol";
 import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
-import {ONFT721} from "@layerzero/token/onft/ONFT721.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import {Constants} from "./Constants.sol";
@@ -26,7 +25,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     // Needed to prevent cross chain collisions
     uint256 public nextTokenId;
-    uint256 public maxTokenId;
+    uint256 public immutable maxTokenId;
 
     // Remember to segment and document tokenID space.
     constructor(
@@ -55,7 +54,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     }
 
     /// @notice Token URI will be a generic URI at first.
-    /// @notice When isGnerated is set to true, it will concat the baseURI & tokenID
+    /// @notice When isGenerated is set to true, it will concat the baseURI & tokenID
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 

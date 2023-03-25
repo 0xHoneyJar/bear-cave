@@ -11,7 +11,6 @@ import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
@@ -24,13 +23,7 @@ import {IHoneyJar} from "src/IHoneyJar.sol";
 /// @title HoneyBox
 /// @notice Revision of v1/BearCave.sol
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
-contract HoneyBox is
-    VRFConsumerBaseV2,
-    ERC721TokenReceiver,
-    ERC1155TokenReceiver,
-    ReentrancyGuard,
-    GameRegistryConsumer
-{
+contract HoneyBox is VRFConsumerBaseV2, ERC721TokenReceiver, ERC1155TokenReceiver, GameRegistryConsumer {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
 
@@ -51,7 +44,7 @@ contract HoneyBox is
         SleepingNFT[] sleepoors;
     }
 
-    /// @notice Configuration for minting for games occuring at the same time.
+    /// @notice Configuration for minting for games occurring at the same time.
     struct MintConfig {
         uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m)
         uint32 maxClaimableHoneyJar; // # of honeyJars that can be claimed (total)
@@ -181,7 +174,10 @@ contract HoneyBox is
         return slumberParties[_bundleId];
     }
 
-    /// @notice Bundles need to be preconfigured using addBundle from gameAdmin
+    /// @notice Once a bundle is configured, transfers the configured assets into this contract.
+    /// @notice Starts the gates within the Gatekeeper, which determine who is allowed early access and free claims
+    /// @dev Bundles need to be preconfigured using addBundle from gameAdmin
+    /// @dev publicMintTime is hardcoded to be 72 hours after calling this method.
     function puffPuffPassOut(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
         SlumberParty memory slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
         uint256 sleeperCount = slumberParty.sleepoors.length;
@@ -213,7 +209,7 @@ contract HoneyBox is
     ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
         if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length)
-            revert("addBundle");
+            revert InvalidInput("addBundle");
 
         uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
 
@@ -262,7 +258,7 @@ contract HoneyBox is
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
-        return _distributeERC20AndMintHoneyjar(bundleId, mintAmount);
+        return _distributeERC20AndMintHoneyJar(bundleId, mintAmount);
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof (Taking ETH as payment)
@@ -286,7 +282,7 @@ contract HoneyBox is
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
         _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
-        return _distributeERC20AndMintHoneyjar(bundleId_, amount_);
+        return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external returns (uint256) {
@@ -298,7 +294,7 @@ contract HoneyBox is
 
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
-    function _distributeERC20AndMintHoneyjar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+    function _distributeERC20AndMintHoneyJar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
         uint256 price = mintConfig.honeyJarPrice_ERC20;
         _distribute(price * amount_);
 
@@ -445,9 +441,9 @@ contract HoneyBox is
     /**
      * Gatekeeper: for claiming free honeyJar
      * BearCave:
-     *    - maxMintableHoneyJar per Bear
-     *    - claimedHoneyJar per Bear // free
-     *    - maxClaimableHoneyJar per Bear
+     *    - maxMintableHoneyJar per bundle
+     *    - claimedHoneyJar per bundle // free
+     *    - maxClaimableHoneyJar per bundle
      * Gatekeeper: (per bear)
      * Gates:
      *    - maxhoneyJarAvailable per gate
@@ -455,6 +451,11 @@ contract HoneyBox is
      *
      */
 
+    /// @notice Allows a player to claim free HoneyJar based on elegibility (FCFS)
+    /// @dev free claims are determined by the gatekeeper and the accounting is done in this method
+    /// @param gateId id of gate from Gatekeeper.
+    /// @param amount amount player is claiming
+    /// @param proof valid proof that entitles msg.sender to amount.
     function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
@@ -533,7 +534,7 @@ contract HoneyBox is
      * Chainlink Setters
      */
 
-    /// @notice Set approriately https://docs.chain.link/docs/vrf-contracts/#configurations
+    /// @notice Set from the following docs: https://docs.chain.link/docs/vrf-contracts/#configurations
     function setVRFConfig(VRFConfig calldata vrfConfig_) external onlyRole(Constants.GAME_ADMIN) {
         vrfConfig = vrfConfig_;
         emit VRFConfigChanged(vrfConfig);

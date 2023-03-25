@@ -7,8 +7,6 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {ONFT721Core} from "@layerzero/token/onft/ONFT721Core.sol";
 
-import {LibString} from "solmate/utils/LibString.sol";
-import {Constants} from "./Constants.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 
 import {IHoneyJar} from "./IHoneyJar.sol";
@@ -20,7 +18,7 @@ import {IHoneyJar} from "./IHoneyJar.sol";
 contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
     using ERC165Checker for address;
 
-    IHoneyJar public honeyJar;
+    IHoneyJar public immutable honeyJar;
 
     // Errors
     error InvalidToken(address tokenAddress);
