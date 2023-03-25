@@ -15,7 +15,7 @@ library Constants {
     bytes32 internal constant GATEKEEPER = "GATEKEEPER";
     bytes32 internal constant GATE = "GATE";
 
-    // Special honeycomb permissions
+    // Special ERC permissions
     bytes32 internal constant MINTER = "MINTER";
     bytes32 internal constant BURNER = "BURNER";
 }

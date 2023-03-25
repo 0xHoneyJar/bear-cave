@@ -6,7 +6,7 @@ import {GameRegistry} from "./GameRegistry.sol";
 /// @title GameRegistryConsumer
 /// @notice all contracts within the THJ universe should inherit from this contract.
 abstract contract GameRegistryConsumer {
-    GameRegistry public gameRegistry;
+    GameRegistry public immutable gameRegistry;
 
     error GameRegistry_NoPermissions(string role, address user);
     error GameRegistry_StageOutOfBounds(uint8 index);

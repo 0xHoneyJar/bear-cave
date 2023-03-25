@@ -28,7 +28,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     uint256 public nextTokenId;
     uint256 public maxTokenId;
 
-    // TODO: segment & Document tokenID space based on Chains on roadmap
+    // Remember to segment and document tokenID space.
     constructor(
         address gameRegistry_,
         uint256 startTokenId_,

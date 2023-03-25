@@ -23,6 +23,7 @@ import {IHoneyJar} from "src/IHoneyJar.sol";
 
 /// @title HoneyBox
 /// @notice Revision of v1/BearCave.sol
+/// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
 contract HoneyBox is
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
@@ -50,7 +51,6 @@ contract HoneyBox is
         SleepingNFT[] sleepoors;
     }
 
-    // TODO: how does this config chage for xChain?
     /// @notice Configuration for minting for games occuring at the same time.
     struct MintConfig {
         uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m)
@@ -65,8 +65,6 @@ contract HoneyBox is
     // Contract State
     error NotInitialized();
     error AlreadyInitialized();
-    error ZeroAddress(string key);
-    error ExpectedFlag(string key, bool value);
 
     // Game state
     error PartyAlreadyWoke(uint8 bundleId);
@@ -76,18 +74,14 @@ contract HoneyBox is
     error NotEnoughHoneyJarMinted(uint8 bundleId);
     error GeneralMintNotOpen(uint8 bundleId);
     error NotSleeping(uint8 bundleId);
-    error ZeroBalance();
 
     // User Errors
     error NotOwnerOfSpecialHoneyJar(uint8 bundleId, uint256 honeyJarId);
     error InvalidInput(string method);
-    error Claim_IncorrectInput();
     error Claim_InvalidProof();
     error MekingTooManyHoneyJars(uint8 bundleId);
-    error NoPermissions_ERC1155();
     error ZeroMint();
     error WrongAmount_ETH(uint256 expected, uint256 actual);
-    error Withdraw_NoPermissions();
 
     /**
      * Events
@@ -97,13 +91,14 @@ contract HoneyBox is
     event SlumberPartyAdded(uint8 bundleId);
     event SpecialHoneyJarFound(uint8 bundleId, uint256 honeyJarId);
     event MintConfigChanged(MintConfig mintConfig);
+    event VRFConfigChanged(VRFConfig vrfConfig);
     event HoneyJarClaimed(uint256 bundleId, address player, uint256 amount);
     event PartyAwoke(uint8 bundleId, address player);
 
     /**
      * Configuration
      */
-    IERC20 public paymentToken; // OHM
+    IERC20 public immutable paymentToken; // OHM
     MintConfig public mintConfig;
 
     /**
@@ -124,16 +119,16 @@ contract HoneyBox is
     /**
      * bearPouch
      */
-    address payable private beekeeper; // rev share
-    address payable private jani;
-    uint256 public honeyJarShare; // as a WAD
+    address payable private immutable beekeeper; // rev share
+    address payable private immutable jani;
+    uint256 public immutable honeyJarShare; // as a WAD
 
     /**
      * Dependencies
      */
-    Gatekeeper public gatekeeper; // TODO: this should be an interface
-    IHoneyJar public honeyJar;
-    VRFCoordinatorV2Interface internal vrfCoordinator;
+    Gatekeeper public immutable gatekeeper; // TODO: this should be an interface
+    IHoneyJar public immutable honeyJar;
+    VRFCoordinatorV2Interface internal immutable vrfCoordinator;
 
     /**
      * Internal Storage
@@ -204,7 +199,6 @@ contract HoneyBox is
             }
         }
 
-        // TODO: should be reading publicMintOffset from config?
         slumberParties[bundleId_].publicMintTime = block.timestamp + 72 hours;
         gatekeeper.startGatesForToken(bundleId_);
         emit SlumberPartyStarted(bundleId_);
@@ -219,7 +213,7 @@ contract HoneyBox is
     ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
         if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length)
-            revert InvalidInput("addBundle");
+            revert("addBundle");
 
         uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
 
@@ -234,6 +228,7 @@ contract HoneyBox is
 
         slumberParties[bundleId] = slumberParty; // Save to mapping
 
+        emit SlumberPartyAdded(bundleId);
         return bundleId;
     }
 
@@ -366,7 +361,7 @@ contract HoneyBox is
     }
 
     /// @notice the callback method that is called when VRF completes
-    /// @param requestId requestId that is generated when initiaully calling VRF
+    /// @param requestId requestId that is generated when initially calling VRF
     /// @param randomness an array of random numbers based on `numWords` config
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override {
         /// use requestID to get bundleId
@@ -447,10 +442,6 @@ contract HoneyBox is
         }
     }
 
-    function _splitFee(uint256 currentBalance) internal view returns (uint256) {
-        return currentBalance.mulWadUp(honeyJarShare);
-    }
-
     /**
      * Gatekeeper: for claiming free honeyJar
      * BearCave:
@@ -498,8 +489,8 @@ contract HoneyBox is
         bytes32[][] calldata proof
     ) external {
         uint256 inputLength = proof.length;
-        if (inputLength != gateId.length) revert Claim_IncorrectInput();
-        if (inputLength != amount.length) revert Claim_IncorrectInput();
+        if (inputLength != gateId.length) revert InvalidInput("claimAll");
+        if (inputLength != amount.length) revert InvalidInput("claimAll");
 
         for (uint256 i = 0; i < inputLength; ++i) {
             if (proof[i].length == 0) continue; // Don't nomad yourself
@@ -508,21 +499,6 @@ contract HoneyBox is
     }
 
     //=============== SETTERS ================//
-
-    /**
-     * Bear Pouch setters (needed for distribution)
-     *  Currently separate from the permissioned roles in gameRegistry
-     */
-
-    /// @notice THJ address
-    function setJani(address jani_) external onlyRole(Constants.GAME_ADMIN) {
-        jani = payable(jani_);
-    }
-
-    /// @notice RevShare address
-    function setBeeKeeper(address beekeeper_) external onlyRole(Constants.GAME_ADMIN) {
-        beekeeper = payable(beekeeper_);
-    }
 
     /**
      * Game setters
@@ -560,5 +536,6 @@ contract HoneyBox is
     /// @notice Set approriately https://docs.chain.link/docs/vrf-contracts/#configurations
     function setVRFConfig(VRFConfig calldata vrfConfig_) external onlyRole(Constants.GAME_ADMIN) {
         vrfConfig = vrfConfig_;
+        emit VRFConfigChanged(vrfConfig);
     }
 }

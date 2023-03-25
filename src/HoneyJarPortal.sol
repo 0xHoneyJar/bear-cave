@@ -14,6 +14,7 @@ import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {IHoneyJar} from "./IHoneyJar.sol";
 
 /// @title HoneyJarPortal
+/// @notice Manages cross chain business logic and interactions with HoneyJar NFT
 /// @dev Modeled off of @layerzero/token/onft/extension/ProxyONFT721.sol
 /// @dev Is subject to change with v3 development
 contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
@@ -21,13 +22,17 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
 
     IHoneyJar public honeyJar;
 
+    // Errors
+    error InvalidToken(address tokenAddress);
+    error HoneyJarNotInPortal(uint256 tokenId);
+
     constructor(
         uint256 _minGasToTransfer,
         address _lzEndpoint,
         address _honeyJar,
         address _gameRegistry
     ) ONFT721Core(_minGasToTransfer, _lzEndpoint) GameRegistryConsumer(_gameRegistry) {
-        require(_honeyJar.supportsInterface(type(IERC721).interfaceId), "ProxyONFT721: invalid ERC721 token");
+        if (!_honeyJar.supportsInterface(type(IERC721).interfaceId)) revert InvalidToken(_honeyJar);
         honeyJar = IHoneyJar(_honeyJar);
     }
 
@@ -35,13 +40,13 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
         return interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    // TODO: Revisit debit logic, could BURN.  _creditTo would be able to  ignore existence check
+    // Revisit debit logic, could BURN.  _creditTo would be able to  ignore existence check
     function _debitFrom(address _from, uint16, bytes memory, uint _tokenId) internal override {
         honeyJar.safeTransferFrom(_from, address(this), _tokenId); // Performs the owner & approval checks
     }
 
     function _creditTo(uint16, address _toAddress, uint _tokenId) internal override {
-        require(!_exists(_tokenId) || (_exists(_tokenId) && honeyJar.ownerOf(_tokenId) == address(this)));
+        if (_exists(_tokenId) && honeyJar.ownerOf(_tokenId) != address(this)) revert HoneyJarNotInPortal(_tokenId);
         if (!_exists(_tokenId)) {
             honeyJar.mintTokenId(_toAddress, _tokenId); //HoneyJar Portal should have MINTER Perms on HoneyJar
         } else {

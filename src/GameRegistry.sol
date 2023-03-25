@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Constants} from "./Constants.sol";
 
 /// @title GameRegistry
 /// @notice Central repository that tracks games and permissions.
 /// @dev All game contracts should use extend `GameRegistryConsumer` to have consistent permissioning
 contract GameRegistry is AccessControl {
-    struct Game {
-        bool enabled;
-    }
+    uint256[] internal stageTimes;
 
-    uint256[] public stageTimes;
+    // Events
+    event GameRegistered(address game);
+    event GameStarted(address game);
+    event GameStopped(address game);
+    event StageTimesSet(uint256[] stageTimes);
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -25,28 +27,31 @@ contract GameRegistry is AccessControl {
         stageTimes.push(72 hours);
     }
 
-    mapping(address => Game) public games;
+    mapping(address => bool) public games; // Address -> enabled
 
     /// @notice registers the game with the GameRegistry and "enables it"
     /// @notice enabling the game means that the game is in "progress"
     function registerGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.GAME_INSTANCE, game_);
-        games[game_] = Game(true);
+        emit GameRegistered(game_);
     }
 
     /// @notice starts the game which grants it the minterRole within the THJ ecosystem
     function startGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.MINTER, game_);
+        games[game_] = true;
+        emit GameStarted(game_);
     }
 
     /// @notice stops the game which removes the mintor role and sets enable = false
     function stopGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _revokeRole(Constants.MINTER, game_);
-        games[game_].enabled = false;
+        games[game_] = false;
+        emit GameStopped(game_);
     }
 
     /**
-     * Gettors
+     * Getters
      */
     function getStageTimes() external view returns (uint256[] memory) {
         return stageTimes;
@@ -68,7 +73,8 @@ contract GameRegistry is AccessControl {
     }
 
     /// @notice If the stages need to be modified after this contract is created.
-    function setStageTimes(uint24[] calldata _stageTimes) external onlyRole(Constants.GAME_ADMIN) {
+    function setStageTimes(uint256[] calldata _stageTimes) external onlyRole(Constants.GAME_ADMIN) {
         stageTimes = _stageTimes;
+        emit StageTimesSet(stageTimes);
     }
 }

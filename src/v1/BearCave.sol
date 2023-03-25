@@ -314,7 +314,7 @@ contract BearCave is IBearCave, VRFConsumerBaseV2, ERC1155TokenReceiver, Reentra
     }
 
     /// @inheritdoc IBearCave
-    /// @dev erc1155.safeTransferFrom is requires a reciever.
+    /// @dev erc1155.safeTransferFrom is requires a receiver.
     function wakeBear(uint256 _bearId) external {
         // Check that msg.sender has the special honeycomb to wake up bear
         HibernatingBear memory bear = bears[_bearId];

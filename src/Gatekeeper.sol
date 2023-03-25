@@ -5,10 +5,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "solmate/utils/MerkleProofLib.sol";
+import {MerkleProofLib} from "solmate/utils/MerkleProofLib.sol";
 
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
@@ -194,7 +191,13 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice helper funciton to reset gate state for a game
     function resetGate(uint256 tokenId, uint256 index) external onlyRole(Constants.GAME_ADMIN) {
-        tokenToGates[tokenId][index].claimedCount = 0;
+        delete tokenToGates[tokenId][index];
+
+        uint256 numProofs = consumedProofsList[index].length;
+        for (uint256 i = 0; i < numProofs; ++i) {
+            delete consumedProofs[index][consumedProofsList[index][i]];
+        }
+
         emit GateReset(tokenId, index);
     }
 
@@ -210,7 +213,7 @@ contract Gatekeeper is GameRegistryConsumer {
             numProofs = consumedProofsList[i].length;
             for (uint256 j = 0; j < numProofs; ++j) {
                 // Step through all proofs from a particular gate.
-                consumedProofs[i][consumedProofsList[i][j]] = false;
+                delete consumedProofs[i][consumedProofsList[i][j]];
             }
         }
     }
