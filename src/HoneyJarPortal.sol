@@ -23,6 +23,7 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
     // Errors
     error InvalidToken(address tokenAddress);
     error HoneyJarNotInPortal(uint256 tokenId);
+    error OwnerNotCaller();
 
     constructor(
         uint256 _minGasToTransfer,
@@ -40,6 +41,7 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
 
     // Revisit debit logic, could BURN.  _creditTo would be able to  ignore existence check
     function _debitFrom(address _from, uint16, bytes memory, uint _tokenId) internal override {
+        if (_from != _msgSender()) revert OwnerNotCaller();
         honeyJar.safeTransferFrom(_from, address(this), _tokenId); // Performs the owner & approval checks
     }
 
