@@ -73,6 +73,7 @@ contract HoneyBox is
     error SpecialHoneyJarNotFound(uint8 bundleId);
     error NotEnoughHoneyJarMinted(uint8 bundleId);
     error GeneralMintNotOpen(uint8 bundleId);
+    error InvalidBundle(uint8 bundleId);
     error NotSleeping(uint8 bundleId);
 
     // User Errors
@@ -240,7 +241,8 @@ contract HoneyBox is
         if (!initialized) revert NotInitialized();
         SlumberParty memory party = slumberParties[bundleId_];
 
-        if (party.bundleId != bundleId_) revert NotSleeping(bundleId_);
+        if (party.bundleId != bundleId_) revert InvalidBundle(bundleId_);
+        if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
         if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
         if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
         if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar)
