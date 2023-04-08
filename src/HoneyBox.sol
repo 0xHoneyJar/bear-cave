@@ -10,6 +10,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 
@@ -75,6 +76,7 @@ contract HoneyBox is
     error GeneralMintNotOpen(uint8 bundleId);
     error InvalidBundle(uint8 bundleId);
     error NotSleeping(uint8 bundleId);
+    error TooManyBundles();
 
     // User Errors
     error NotOwnerOfSpecialHoneyJar(uint8 bundleId, uint256 honeyJarId);
@@ -219,7 +221,8 @@ contract HoneyBox is
         if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length)
             revert InvalidInput("addBundle");
 
-        uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
+        if (slumberPartyList.length > 255) revert TooManyBundles();
+        uint8 bundleId = SafeCastLib.safeCastTo8(slumberPartyList.length); // Will fail if we have >255 bundles
 
         // Add to the bundle mapping & list
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
