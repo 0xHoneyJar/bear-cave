@@ -11,6 +11,7 @@ import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
@@ -23,7 +24,13 @@ import {IHoneyJar} from "src/IHoneyJar.sol";
 /// @title HoneyBox
 /// @notice Revision of v1/BearCave.sol
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
-contract HoneyBox is VRFConsumerBaseV2, ERC721TokenReceiver, ERC1155TokenReceiver, GameRegistryConsumer {
+contract HoneyBox is
+    VRFConsumerBaseV2,
+    ERC721TokenReceiver,
+    ERC1155TokenReceiver,
+    GameRegistryConsumer,
+    ReentrancyGuard
+{
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
 
@@ -456,7 +463,7 @@ contract HoneyBox is VRFConsumerBaseV2, ERC721TokenReceiver, ERC1155TokenReceive
     /// @param gateId id of gate from Gatekeeper.
     /// @param amount amount player is claiming
     /// @param proof valid proof that entitles msg.sender to amount.
-    function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public {
+    function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public nonReentrant {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.claim(bundleId_, gateId, msg.sender, amount, proof);
@@ -469,13 +476,15 @@ contract HoneyBox is VRFConsumerBaseV2, ERC721TokenReceiver, ERC1155TokenReceive
         if (numClaim + claimedAmount > mintConfig.maxClaimableHoneyJar) {
             numClaim = mintConfig.maxClaimableHoneyJar - claimedAmount;
         }
-
+        // Check if the HoneyJars can be minted
         _canMintHoneyJar(bundleId_, numClaim); // Validating here because numClaims can change
+
+        // Update the amount minted.
+        claimed[bundleId_] += numClaim;
 
         // If for some reason this fails, GG no honeyJar for you
         _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
 
-        claimed[bundleId_] += numClaim;
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
 
