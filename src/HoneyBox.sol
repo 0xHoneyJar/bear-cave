@@ -189,10 +189,10 @@ contract HoneyBox is
     /// @dev Bundles need to be preconfigured using addBundle from gameAdmin
     /// @dev publicMintTime is hardcoded to be 72 hours after calling this method.
     function puffPuffPassOut(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
-        SlumberParty memory slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
+        SlumberParty storage slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
         uint256 sleeperCount = slumberParty.sleepoors.length;
-        SleepingNFT[] memory sleepoors = slumberParty.sleepoors;
-        SleepingNFT memory sleepoor;
+        SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
+        SleepingNFT storage sleepoor;
         for (uint256 i = 0; i < sleeperCount; ++i) {
             sleepoor = sleepoors[i];
 
@@ -242,7 +242,7 @@ contract HoneyBox is
     /// @dev internal helper function to perform conditional checks for minting state
     function _canMintHoneyJar(uint8 bundleId_, uint256 amount_) internal view {
         if (!initialized) revert NotInitialized();
-        SlumberParty memory party = slumberParties[bundleId_];
+        SlumberParty storage party = slumberParties[bundleId_];
 
         if (party.bundleId != bundleId_) revert InvalidBundle(bundleId_);
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
@@ -543,6 +543,6 @@ contract HoneyBox is
     /// @notice Set from the following docs: https://docs.chain.link/docs/vrf-contracts/#configurations
     function setVRFConfig(VRFConfig calldata vrfConfig_) external onlyRole(Constants.GAME_ADMIN) {
         vrfConfig = vrfConfig_;
-        emit VRFConfigChanged(vrfConfig);
+        emit VRFConfigChanged(vrfConfig_);
     }
 }

@@ -38,7 +38,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     }
 
     // metadata URI
-    string public baseTokenURI = "https://www.0xhoneyjar.xyz/";
+    string internal baseTokenURI = "https://www.0xhoneyjar.xyz/";
     bool public isGenerated; // once the token is generated we can append individual tokenIDs
 
     function _baseURI() internal view override returns (string memory) {

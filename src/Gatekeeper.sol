@@ -25,7 +25,7 @@ import {Constants} from "./Constants.sol";
 contract Gatekeeper is GameRegistryConsumer {
     struct Gate {
         bool enabled;
-        uint8 stageIndex; // stage from [0-3]
+        uint8 stageIndex; // stage from [0-3] (range defined within GameRegistry)
         uint32 claimedCount; // # of claims already happened
         uint32 maxClaimable; // # of claims per gate
         bytes32 gateRoot;
@@ -42,6 +42,7 @@ contract Gatekeeper is GameRegistryConsumer {
     error Gate_OutOfBounds(uint256 gateId);
     error Gate_NotEnabled(uint256 gateId);
     error Gate_NotActive(uint256 gateId, uint256 activeAt);
+    error Stage_OutOfBounds(uint256 stageId);
 
     /**
      * Events when business logic is affects
@@ -151,8 +152,8 @@ contract Gatekeeper is GameRegistryConsumer {
         uint32 maxClaimable_,
         uint8 stageIndex_
     ) external onlyRole(Constants.GAME_ADMIN) {
-        // claimedCount = activeAt = 0
-        if (stageIndex_ >= _getStages().length) revert Gate_OutOfBounds(stageIndex_);
+        if (stageIndex_ >= _getStages().length) revert Stage_OutOfBounds(stageIndex_);
+        // ClaimedCount = 0, activeAt = 0 (updated when gates are started)
         tokenToGates[tokenId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
 
         emit GateAdded(tokenId, tokenToGates[tokenId].length - 1);
@@ -172,7 +173,7 @@ contract Gatekeeper is GameRegistryConsumer {
         }
     }
 
-    /// @notice Only to be used for emergency gate shutdown.
+    /// @notice Only to be used for emergency gate shutdown/start
     function setGateEnabled(uint256 tokenId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[tokenId][index].enabled = enabled;
 
