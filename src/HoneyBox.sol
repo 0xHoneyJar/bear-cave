@@ -344,14 +344,6 @@ contract HoneyBox is
         return tokenId - 1; // returns the lastID created
     }
 
-    /// @notice this function _should_ only be called in case of emergencies
-    /// @notice if the honeyJars are minted but the VRF called failed.
-    /// @dev kicks off another VRF request
-    function forceHoneyJarSearch(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
-        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
-        _findHoneyJar(bundleId_);
-    }
-
     /// @notice Forcing function to find a bear.
     /// @notice Should only be called when the last honeyJars is minted.
     function _findHoneyJar(uint8 bundleId_) internal {
