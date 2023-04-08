@@ -294,7 +294,7 @@ contract HoneyBox is
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
-    function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external returns (uint256) {
+    function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
         _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 

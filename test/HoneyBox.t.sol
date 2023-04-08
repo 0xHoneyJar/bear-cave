@@ -307,9 +307,11 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
          */
         vm.warp(block.timestamp + 72 hours);
 
+        vm.deal(bera, MINT_PRICE_ETH);
         vm.startPrank(bera);
-        paymentToken.approve(address(honeyBox), 3 * MINT_PRICE_ERC20);
-        honeyBox.mekHoneyJarWithERC20(bundleId, 3);
+        paymentToken.approve(address(honeyBox), 2 * MINT_PRICE_ERC20);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 2);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH}(bundleId, 1);
         assertEq(honeyJar.balanceOf(bera), 3 + 2 + 3); //claimed 3, early minted 2, mint 3
         vm.stopPrank();
 
