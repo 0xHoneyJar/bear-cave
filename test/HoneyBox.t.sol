@@ -187,6 +187,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
     }
 
     function testFailAlreadyInitialized() public {
+        vm.prank(address(gameAdmin));
         honeyBox.initialize(HoneyBox.VRFConfig("", 0, 0, 0), mintConfig);
     }
 
