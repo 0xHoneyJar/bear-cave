@@ -23,6 +23,12 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     error MaxMintLimitReached(uint256 mintNum);
     error URIQueryForNonexistentToken();
 
+    /**
+     * Events
+     */
+    event SetGenerated(bool generated);
+    event BaseURISet(string uri);
+
     // Needed to prevent cross chain collisions
     uint256 public immutable startingTokenId;
     uint256 public immutable maxTokenId;
@@ -54,10 +60,12 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     function setBaseURI(string calldata baseURI_) external onlyRealOwner {
         baseTokenURI = baseURI_;
+        BaseURISet(baseURI_);
     }
 
     function setGenerated(bool generated_) external onlyRealOwner {
         isGenerated = generated_;
+        SetGenerated(generated_);
     }
 
     /// @notice Token URI will be a generic URI at first.
