@@ -40,12 +40,12 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
     }
 
     // Revisit debit logic, could BURN.  _creditTo would be able to  ignore existence check
-    function _debitFrom(address _from, uint16, bytes memory, uint _tokenId) internal override {
+    function _debitFrom(address _from, uint16, bytes memory, uint256 _tokenId) internal override {
         if (_from != _msgSender()) revert OwnerNotCaller();
         honeyJar.safeTransferFrom(_from, address(this), _tokenId); // Performs the owner & approval checks
     }
 
-    function _creditTo(uint16, address _toAddress, uint _tokenId) internal override {
+    function _creditTo(uint16, address _toAddress, uint256 _tokenId) internal override {
         if (_exists(_tokenId) && honeyJar.ownerOf(_tokenId) != address(this)) revert HoneyJarNotInPortal(_tokenId);
         if (!_exists(_tokenId)) {
             honeyJar.mintTokenId(_toAddress, _tokenId); //HoneyJar Portal should have MINTER Perms on HoneyJar
