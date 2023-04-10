@@ -193,6 +193,9 @@ contract HoneyBox is
         uint256 sleeperCount = slumberParty.sleepoors.length;
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
         SleepingNFT storage sleepoor;
+
+        slumberParties[bundleId_].publicMintTime = block.timestamp + 72 hours;
+
         for (uint256 i = 0; i < sleeperCount; ++i) {
             sleepoor = sleepoors[i];
 
@@ -205,7 +208,6 @@ contract HoneyBox is
             }
         }
 
-        slumberParties[bundleId_].publicMintTime = block.timestamp + 72 hours;
         gatekeeper.startGatesForToken(bundleId_);
         emit SlumberPartyStarted(bundleId_);
     }
@@ -397,6 +399,8 @@ contract HoneyBox is
             revert NotOwnerOfSpecialHoneyJar(bundleId_, party.specialHoneyJar);
         }
 
+        slumberParties[bundleId_].isAwake = true;
+
         SleepingNFT[] memory sleepoors = party.sleepoors;
         uint256 sleeperCount = sleepoors.length;
 
@@ -413,7 +417,6 @@ contract HoneyBox is
             }
         }
 
-        slumberParties[bundleId_].isAwake = true;
         emit PartyAwoke(bundleId_, msg.sender);
     }
 
