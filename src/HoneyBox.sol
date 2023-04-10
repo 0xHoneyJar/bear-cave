@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-// Switching to OZ for LZ compatibility
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -141,7 +140,7 @@ contract HoneyBox is
     mapping(uint8 => SlumberParty) public slumberParties; //  bundleId --> bundle
     mapping(uint8 => uint32) public claimed; // bundleId -> numClaimed (free claims)
     mapping(uint256 => uint8) public rng; // Chainlink VRF request ID => bundleID
-    mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle
+    mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
     mapping(uint8 => uint256[]) public honeyJarShelf; // List of Honeyjars associated with a particular bundle (SlumberParty)
 
     constructor(
@@ -235,7 +234,7 @@ contract HoneyBox is
             slumberParty.sleepoors.push(SleepingNFT(tokenAddresses_[i], tokenIds_[i], isERC1155_[i]));
         }
 
-        slumberParties[bundleId] = slumberParty; // Save to mapping
+        slumberParties[bundleId] = slumberParty;
 
         emit SlumberPartyAdded(bundleId);
         return bundleId;
@@ -266,8 +265,6 @@ contract HoneyBox is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
-        if (mintAmount == 0) revert ZeroMint();
-
         _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
@@ -503,7 +500,6 @@ contract HoneyBox is
         if (inputLength != amount.length) revert InvalidInput("claimAll");
 
         for (uint256 i = 0; i < inputLength; ++i) {
-            if (proof[i].length == 0) continue; // Don't nomad yourself
             claim(bundleId_, gateId[i], amount[i], proof[i]);
         }
     }
