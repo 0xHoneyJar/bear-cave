@@ -3,16 +3,15 @@ pragma solidity 0.8.17;
 
 import "forge-std/Test.sol";
 import "murky/Merkle.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
-import "test/mocks/MockERC1155.sol";
-import "test/mocks/MockERC20.sol";
-import "test/mocks/MockERC721.sol";
-import "test/mocks/MockVRFCoordinator.sol";
-import "test/utils/UserFactory.sol";
-import "test/utils/Random.sol";
+import {MockERC1155, ERC1155TokenReceiver} from "test/mocks/MockERC1155.sol";
+import {MockERC20} from "test/mocks/MockERC20.sol";
+import {MockERC721, ERC721TokenReceiver} from "test/mocks/MockERC721.sol";
+import {MockVRFCoordinator} from "test/mocks/MockVRFCoordinator.sol";
 
-import "src/HoneyBox.sol";
+import {HoneyBox} from "src/HoneyBox.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
@@ -20,7 +19,7 @@ import {Constants} from "src/Constants.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-contract HoneyBoxTest is Test, ERC1155TokenReceiver {
+contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -107,6 +106,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         paymentToken.mint(alfaHunter, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(bera, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(clown, MINT_PRICE_ERC20 * 100);
+        paymentToken.mint(address(this), MINT_PRICE_ERC20 * 5);
 
         // Chainlink setup
         vrfCoordinator = new MockVRFCoordinator();
@@ -208,6 +208,35 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
 
         bytes32[] memory blankProof;
         honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 2, blankProof, 2);
+    }
+
+    function testFailMekHoney_InvalidBundle() public {
+        honeyBox.mekHoneyJarWithERC20(69, 1);
+    }
+
+    function testFail_mekHJNotGenMint_ERC20() public {
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1);
+    }
+
+    function testFail_mekHJNotGenMint_ETH() public {
+        honeyBox.mekHoneyJarWithETH(bundleId, 1);
+    }
+
+    function testFail_mekWrongETHValue() public {
+        vm.warp(block.timestamp + 72 hours);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH - 1}(bundleId, 1);
+    }
+
+    function test_mekWithETH() public {
+        vm.warp(block.timestamp + 72 hours);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH}(bundleId, 1);
+    }
+
+    function test_mekWithERC20() public {
+        vm.warp(block.timestamp + 72 hours);
+
+        paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 3);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 3);
     }
 
     function testFullRun() public {
