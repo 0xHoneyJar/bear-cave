@@ -24,8 +24,9 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     error URIQueryForNonexistentToken();
 
     // Needed to prevent cross chain collisions
-    uint256 public nextTokenId;
+    uint256 public immutable startingTokenId;
     uint256 public immutable maxTokenId;
+    uint256 internal _nextTokenId;
 
     // Remember to segment and document tokenID space.
     constructor(
@@ -33,8 +34,14 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
         uint256 startTokenId_,
         uint256 mintAmount_
     ) ERC721("HoneyJar", "HONEYJAR") GameRegistryConsumer(gameRegistry_) {
-        nextTokenId = startTokenId_;
+        startingTokenId = startTokenId_;
+        _nextTokenId = startTokenId_;
         maxTokenId = startTokenId_ + mintAmount_;
+    }
+
+    /// @notice view function for frontend
+    function nextTokenId() external override {
+        return _nextTokenId;
     }
 
     // metadata URI
@@ -80,7 +87,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     /// @notice mint multiple.
     /// @dev only callable by the MINTER role
-    function batchMint(address to, uint256 amount) external onlyRole(Constants.MINTER) {
+    function batchMint(address to, uint256 amount) external override onlyRole(Constants.MINTER) {
         for (uint256 i = 0; i < amount; ++i) {
             mintOne(to);
         }
@@ -89,7 +96,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     /// @notice burn the honeycomb tokens. Nothing will have the burn role upon initialization
     /// @notice This will be used for future game-mechanics
     /// @dev only callable by the BURNER role
-    function burn(uint256 _id) external onlyRole(Constants.BURNER) {
+    function burn(uint256 _id) external override onlyRole(Constants.BURNER) {
         _burn(_id);
     }
 }
