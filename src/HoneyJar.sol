@@ -46,7 +46,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     }
 
     /// @notice view function for frontend
-    function nextTokenId() external override {
+    function nextTokenId() external view override returns (uint256) {
         return _nextTokenId;
     }
 
@@ -60,12 +60,12 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     function setBaseURI(string calldata baseURI_) external onlyRealOwner {
         baseTokenURI = baseURI_;
-        BaseURISet(baseURI_);
+        emit BaseURISet(baseURI_);
     }
 
     function setGenerated(bool generated_) external onlyRealOwner {
         isGenerated = generated_;
-        SetGenerated(generated_);
+        emit SetGenerated(generated_);
     }
 
     /// @notice Token URI will be a generic URI at first.
@@ -79,10 +79,10 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     /// @notice Mint your ONFT
     function mintOne(address to) public override onlyRole(Constants.MINTER) returns (uint256) {
-        if (nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
+        if (_nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
 
-        uint256 newId = nextTokenId;
-        ++nextTokenId;
+        uint256 newId = _nextTokenId;
+        ++_nextTokenId;
 
         _safeMint(to, newId);
         return newId;
