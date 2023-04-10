@@ -165,11 +165,23 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         gatekeeper.addClaimed(TOKENID, 69, MAX_CLAIMABLE + 1, proof);
     }
 
+    function testFail_GateNotEnabled() public {
+        uint32 userIdx = 1;
+        uint32 gateIdx = 0;
+        bytes32[] memory proof = getProof1(userIdx);
+        gameRegistry.registerGame(address(this));
+
+        gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1, proof);
+    }
+
     function testNoMoreLeft() public {
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
         gameRegistry.registerGame(address(this));
+        gameRegistry.startGame(address(this));
+        gatekeeper.startGatesForToken(TOKENID);
+
         bytes32[] memory proof = getProof1(userIdx);
 
         gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1, proof);
