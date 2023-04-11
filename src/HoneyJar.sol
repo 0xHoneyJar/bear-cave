@@ -35,11 +35,10 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     uint256 internal _nextTokenId;
 
     // Remember to segment and document tokenID space.
-    constructor(
-        address gameRegistry_,
-        uint256 startTokenId_,
-        uint256 mintAmount_
-    ) ERC721("HoneyJar", "HONEYJAR") GameRegistryConsumer(gameRegistry_) {
+    constructor(address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
+        ERC721("HoneyJar", "HONEYJAR")
+        GameRegistryConsumer(gameRegistry_)
+    {
         startingTokenId = startTokenId_;
         _nextTokenId = startTokenId_;
         maxTokenId = startTokenId_ + mintAmount_;

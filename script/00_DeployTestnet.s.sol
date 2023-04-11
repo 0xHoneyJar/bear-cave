@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
+
 import "forge-std/Script.sol";
 
 import {HoneyJar} from "src/HoneyJar.sol";
@@ -86,12 +87,6 @@ contract DeployScript is Script {
 
         // Register game with gameRegistry
         gameRegistry.registerGame(address(honeyBox));
-
-        // Identify tokenID to hibernate
-        // Generate merkle roots..
-        // add gates w/ appropriate roots & stages to gatekeeper to gatekeeper.
-        // gameRegistry.startGame(address(bearCave));
-        // User hibernates bear:  calls start on gatekeeper.
 
         vm.stopBroadcast();
     }

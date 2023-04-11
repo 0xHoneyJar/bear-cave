@@ -77,7 +77,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     }
 
     function testAddingGates() public {
-        (bool active, , , uint32 maxClaimable, , ) = gatekeeper.tokenToGates(TOKENID, 0);
+        (bool active,,, uint32 maxClaimable,,) = gatekeeper.tokenToGates(TOKENID, 0);
         assertEq(maxClaimable, MAX_CLAIMABLE);
         assertEq(active, false);
     }
@@ -85,10 +85,10 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     function testStartingGates() public {
         gameRegistry.registerGame(address(this));
         gatekeeper.startGatesForToken(TOKENID);
-        (bool active, , , , , ) = gatekeeper.tokenToGates(TOKENID, 0);
+        (bool active,,,,,) = gatekeeper.tokenToGates(TOKENID, 0);
         assertEq(active, true);
 
-        (, , , , , uint256 activeAt) = gatekeeper.tokenToGates(TOKENID, 1);
+        (,,,,, uint256 activeAt) = gatekeeper.tokenToGates(TOKENID, 1);
         assertGt(activeAt, block.timestamp);
     }
 
