@@ -192,7 +192,11 @@ contract HoneyBox is
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
         SleepingNFT storage sleepoor;
 
-        slumberParties[bundleId_].publicMintTime = block.timestamp + 72 hours;
+
+        uint256[] memory allStages = _getStages();
+        uint256 publicMintOffset = allStages[allStages.length - 1];
+
+        slumberParties[bundleId_].publicMintTime = block.timestamp + publicMintOffset;
         gatekeeper.startGatesForToken(bundleId_);
 
         for (uint256 i = 0; i < sleeperCount; ++i) {
