@@ -54,6 +54,7 @@ contract DeployScript is Script {
         erc1155.mint(gameAdmin, 2, 1, "");
 
         MockERC20 paymentToken = new MockERC20("OHM", "OHM", 9);
+        paymentToken.mint(gameAdmin, 99 * 1e8 * 100);
 
         GameRegistry gameRegistry = new GameRegistry();
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
