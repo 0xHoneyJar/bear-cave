@@ -1,5 +1,5 @@
 {
     "editor.formatOnSave": true,
     "solidity.linter": "solhint",
-    "solidity.formatter": "forge"
+    "solidity.formatter": "forge",
 }
