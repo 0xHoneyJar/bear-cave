@@ -242,14 +242,8 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     function testFullRun() public {
         // Get the first gate for validation
 
-        (
-            bool enabled,
-            uint8 stageIndex,
-            uint32 claimedCount,
-            uint32 maxClaimable,
-            bytes32 _gateRoot,
-            uint256 activeAt
-        ) = gatekeeper.tokenToGates(bundleId, 0);
+        (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 _gateRoot, uint256 activeAt)
+        = gatekeeper.tokenToGates(bundleId, 0);
 
         assertTrue(enabled);
         assertEq(stageIndex, 0);
@@ -259,7 +253,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(activeAt, block.timestamp); // should be active now.
 
         /**
-            Phase 1: claim available
+         * Phase 1: claim available
          */
 
         assertEq(gatekeeper.claim(bundleId, 0, alfaHunter, 2, getProof(0)), 2);
@@ -281,13 +275,13 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Gate claimable is > game claimable.
         // Game claimable clamps number of allowed mints.
         assertEq(honeyBox.claimed(bundleId), 6);
-        (, , claimedCount, maxClaimable, , ) = gatekeeper.tokenToGates(bundleId, 0);
+        (,, claimedCount, maxClaimable,,) = gatekeeper.tokenToGates(bundleId, 0);
         assertEq(claimedCount, 6);
         assertEq(maxClaimable, 7);
 
         /**
-            Phase 2: do it again:
-            Do it again, and validate nothing changes.
+         * Phase 2: do it again:
+         *         Do it again, and validate nothing changes.
          */
 
         vm.startPrank(alfaHunter);
@@ -305,7 +299,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(honeyJar.balanceOf(clown), 1);
         vm.stopPrank();
         /**
-            Phase 3: early mint 
+         * Phase 3: early mint
          */
 
         // Can also validate jani/beekeeper balances
@@ -332,7 +326,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.stopPrank();
 
         /**
-            Phase 4: general Mint
+         * Phase 4: general Mint
          */
         vm.warp(block.timestamp + 72 hours);
 
@@ -351,20 +345,19 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.stopPrank();
 
         /**
-            Phase 5: End of Game
+         * Phase 5: End of Game
          */
         // Simulate VRF (RequestID = 1)
         vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
-        (uint256 id, uint256 specialhoneyJarId, , bool specialhoneyJarFound, bool isAwake) = honeyBox.slumberParties(
-            bundleId
-        );
+        (uint256 id, uint256 specialhoneyJarId,, bool specialhoneyJarFound, bool isAwake) =
+            honeyBox.slumberParties(bundleId);
 
         assertTrue(specialhoneyJarFound);
         assertFalse(isAwake);
         console2.log("id: ", id);
         console2.log("specialhoneyJarId: ", specialhoneyJarId);
         /**
-            Phase 6: Wake Bear
+         * Phase 6: Wake Bear
          */
 
         address winningAddress = honeyJar.ownerOf(specialhoneyJarId);

@@ -115,6 +115,7 @@ contract HoneyBox is
         uint16 minConfirmations; // Default is 3
         uint32 callbackGasLimit; // enough for ~5 words
     }
+
     VRFConfig private vrfConfig;
 
     /**
@@ -164,10 +165,10 @@ contract HoneyBox is
     /// @notice additional parameters that are required to get the game running
     /// @param vrfConfig_ Chainlink  configuration
     /// @param mintConfig_ needed for the specific game
-    function initialize(
-        VRFConfig calldata vrfConfig_,
-        MintConfig calldata mintConfig_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function initialize(VRFConfig calldata vrfConfig_, MintConfig calldata mintConfig_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         if (initialized) revert AlreadyInitialized();
 
         initialized = true;
@@ -192,7 +193,6 @@ contract HoneyBox is
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
         SleepingNFT storage sleepoor;
 
-
         uint256[] memory allStages = _getStages();
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
@@ -215,14 +215,15 @@ contract HoneyBox is
 
     /// @notice method stores the configuration for the sleeping NFTs
     // bundleId --> bundle --> []nfts
-    function addBundle(
-        address[] calldata tokenAddresses_,
-        uint256[] calldata tokenIds_,
-        bool[] calldata isERC1155_
-    ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
+    function addBundle(address[] calldata tokenAddresses_, uint256[] calldata tokenIds_, bool[] calldata isERC1155_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+        returns (uint8)
+    {
         uint256 inputLength = tokenAddresses_.length;
-        if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length)
+        if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length) {
             revert InvalidInput("addBundle");
+        }
 
         if (slumberPartyList.length > 255) revert TooManyBundles();
         uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
@@ -251,8 +252,9 @@ contract HoneyBox is
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
         if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
         if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
-        if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar)
+        if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar) {
             revert MekingTooManyHoneyJars(bundleId_);
+        }
         if (amount_ == 0) revert ZeroMint();
     }
 
@@ -352,11 +354,7 @@ contract HoneyBox is
     /// @notice Should only be called when the last honeyJars is minted.
     function _findHoneyJar(uint8 bundleId_) internal {
         uint256 requestId = vrfCoordinator.requestRandomWords(
-            vrfConfig.keyHash,
-            vrfConfig.subId,
-            vrfConfig.minConfirmations,
-            vrfConfig.callbackGasLimit,
-            2
+            vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, 2
         );
         rng[requestId] = bundleId_;
     }
@@ -491,12 +489,9 @@ contract HoneyBox is
     }
 
     /// @dev Helper function to process all free cams. More client-sided computation.
-    function claimAll(
-        uint8 bundleId_,
-        uint32[] calldata gateId,
-        uint32[] calldata amount,
-        bytes32[][] calldata proof
-    ) external {
+    function claimAll(uint8 bundleId_, uint32[] calldata gateId, uint32[] calldata amount, bytes32[][] calldata proof)
+        external
+    {
         uint256 inputLength = proof.length;
         if (inputLength != gateId.length) revert InvalidInput("claimAll");
         if (inputLength != amount.length) revert InvalidInput("claimAll");

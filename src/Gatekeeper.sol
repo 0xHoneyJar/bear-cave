@@ -68,13 +68,11 @@ contract Gatekeeper is GameRegistryConsumer {
     /// @param index the gate index we're claiming
     /// @param amount number between 0-maxClaimable you a player wants to claim
     /// @param proof merkle proof
-    function claim(
-        uint256 bundleId,
-        uint256 index,
-        address player,
-        uint32 amount,
-        bytes32[] calldata proof
-    ) external view returns (uint32 claimAmount) {
+    function claim(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
+        external
+        view
+        returns (uint32 claimAmount)
+    {
         // If proof was already used within the gate, there are 0 left to claim
         bytes32 proofHash = keccak256(abi.encode(proof));
         if (consumedProofs[index][proofHash]) return 0;
@@ -94,13 +92,11 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice Validates proof
     /// @dev relies on gates being enabled
-    function validateProof(
-        uint256 bundleId,
-        uint256 index,
-        address player,
-        uint32 amount,
-        bytes32[] calldata proof
-    ) public view returns (bool validProof) {
+    function validateProof(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
+        public
+        view
+        returns (bool validProof)
+    {
         Gate[] storage gates = tokenToGates[bundleId];
         if (gates.length == 0) revert NoGates();
         if (index >= gates.length) revert Gate_OutOfBounds(index);
@@ -122,12 +118,10 @@ contract Gatekeeper is GameRegistryConsumer {
     /// @param numClaimed increases gate claimed count by this value
     /// @param proof makes this proof as used
     /// @dev should only be called by a game.
-    function addClaimed(
-        uint256 bundleId,
-        uint256 gateId,
-        uint32 numClaimed,
-        bytes32[] calldata proof
-    ) external onlyRole(Constants.GAME_INSTANCE) {
+    function addClaimed(uint256 bundleId, uint256 gateId, uint32 numClaimed, bytes32[] calldata proof)
+        external
+        onlyRole(Constants.GAME_INSTANCE)
+    {
         Gate storage gate = tokenToGates[bundleId][gateId];
         bytes32 proofHash = keccak256(abi.encode(proof));
 
@@ -147,12 +141,10 @@ contract Gatekeeper is GameRegistryConsumer {
 
     /// @notice adds a gate to the gates array
     /// @param stageIndex_ the corresponds to the stage array within the gameRegistry
-    function addGate(
-        uint256 bundleId,
-        bytes32 root_,
-        uint32 maxClaimable_,
-        uint8 stageIndex_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         if (stageIndex_ >= _getStages().length) revert Stage_OutOfBounds(stageIndex_);
         // ClaimedCount = 0, activeAt = 0 (updated when gates are started)
         tokenToGates[bundleId].push(Gate(false, stageIndex_, 0, maxClaimable_, root_, 0));
@@ -183,11 +175,10 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /// @notice admin function that can increase / decrease the amount of free claims available for a specific gate
-    function setGateMaxClaimable(
-        uint256 bundleId,
-        uint256 index,
-        uint32 maxClaimable_
-    ) external onlyRole(Constants.GAME_ADMIN) {
+    function setGateMaxClaimable(uint256 bundleId, uint256 index, uint32 maxClaimable_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         tokenToGates[bundleId][index].maxClaimable = maxClaimable_;
         emit GetSetMaxClaimable(bundleId, index, maxClaimable_);
     }

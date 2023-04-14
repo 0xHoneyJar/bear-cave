@@ -25,12 +25,10 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
     error HoneyJarNotInPortal(uint256 tokenId);
     error OwnerNotCaller();
 
-    constructor(
-        uint256 _minGasToTransfer,
-        address _lzEndpoint,
-        address _honeyJar,
-        address _gameRegistry
-    ) ONFT721Core(_minGasToTransfer, _lzEndpoint) GameRegistryConsumer(_gameRegistry) {
+    constructor(uint256 _minGasToTransfer, address _lzEndpoint, address _honeyJar, address _gameRegistry)
+        ONFT721Core(_minGasToTransfer, _lzEndpoint)
+        GameRegistryConsumer(_gameRegistry)
+    {
         if (!_honeyJar.supportsInterface(type(IERC721).interfaceId)) revert InvalidToken(_honeyJar);
         honeyJar = IHoneyJar(_honeyJar);
     }
@@ -54,7 +52,12 @@ contract HoneyJarPortal is GameRegistryConsumer, ONFT721Core, IERC721Receiver {
         }
     }
 
-    function onERC721Received(address _operator, address, uint, bytes memory) public view override returns (bytes4) {
+    function onERC721Received(address _operator, address, uint256, bytes memory)
+        public
+        view
+        override
+        returns (bytes4)
+    {
         // only allow `this` to transfer token from others
         if (_operator != address(this)) return bytes4(0);
         return IERC721Receiver.onERC721Received.selector;
