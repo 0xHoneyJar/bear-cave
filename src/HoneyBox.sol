@@ -479,11 +479,11 @@ contract HoneyBox is
         // Update the amount minted.
         claimed[bundleId_] += numClaim;
 
-        // If for some reason this fails, GG no honeyJar for you
-        _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
-
         // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
+
+        // If for some reason this fails, GG no honeyJar for you
+        _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
 
         emit HoneyJarClaimed(bundleId_, msg.sender, numClaim);
     }
