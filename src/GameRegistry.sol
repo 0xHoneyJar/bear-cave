@@ -22,9 +22,8 @@ contract GameRegistry is AccessControl {
 
         // Initial 4 stages
         stageTimes.push(0 hours);
-        stageTimes.push(24 hours);
-        stageTimes.push(48 hours);
-        stageTimes.push(72 hours);
+        stageTimes.push(2 hours);
+        stageTimes.push(4 hours);
     }
 
     mapping(address => bool) public games; // Address -> enabled
