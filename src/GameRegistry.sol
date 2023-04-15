@@ -29,14 +29,14 @@ contract GameRegistry is AccessControl {
 
     mapping(address => bool) public games; // Address -> enabled
 
-    /// @notice registers the game with the GameRegistry and "enables it"
-    /// @notice enabling the game means that the game is in "progress"
+    /// @notice registers the game with the GameRegistry
     function registerGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.GAME_INSTANCE, game_);
         emit GameRegistered(game_);
     }
 
-    /// @notice starts the game which grants it the minterRole within the THJ ecosystem
+    /// @notice starts the game which grants it the minterRole within the THJ ecosystem and enables it.
+    /// @notice enabling the game means that the game is in "progress"
     function startGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.MINTER, game_);
         games[game_] = true;

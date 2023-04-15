@@ -23,22 +23,34 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     error MaxMintLimitReached(uint256 mintNum);
     error URIQueryForNonexistentToken();
 
+    /**
+     * Events
+     */
+    event SetGenerated(bool generated);
+    event BaseURISet(string uri);
+
     // Needed to prevent cross chain collisions
-    uint256 public nextTokenId;
+    uint256 public immutable startingTokenId;
     uint256 public immutable maxTokenId;
+    uint256 internal _nextTokenId;
 
     // Remember to segment and document tokenID space.
-    constructor(
-        address gameRegistry_,
-        uint256 startTokenId_,
-        uint256 mintAmount_
-    ) ERC721("HoneyJar", "HONEYJAR") GameRegistryConsumer(gameRegistry_) {
-        nextTokenId = startTokenId_;
+    constructor(address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
+        ERC721("HoneyJar", "HONEYJAR")
+        GameRegistryConsumer(gameRegistry_)
+    {
+        startingTokenId = startTokenId_;
+        _nextTokenId = startTokenId_;
         maxTokenId = startTokenId_ + mintAmount_;
     }
 
+    /// @notice view function for frontend
+    function nextTokenId() external view override returns (uint256) {
+        return _nextTokenId;
+    }
+
     // metadata URI
-    string public baseTokenURI = "https://www.0xhoneyjar.xyz/";
+    string internal baseTokenURI = "https://www.0xhoneyjar.xyz/";
     bool public isGenerated; // once the token is generated we can append individual tokenIDs
 
     function _baseURI() internal view override returns (string memory) {
@@ -47,10 +59,12 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     function setBaseURI(string calldata baseURI_) external onlyRealOwner {
         baseTokenURI = baseURI_;
+        emit BaseURISet(baseURI_);
     }
 
     function setGenerated(bool generated_) external onlyRealOwner {
         isGenerated = generated_;
+        emit SetGenerated(generated_);
     }
 
     /// @notice Token URI will be a generic URI at first.
@@ -64,10 +78,10 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     /// @notice Mint your ONFT
     function mintOne(address to) public override onlyRole(Constants.MINTER) returns (uint256) {
-        if (nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
+        if (_nextTokenId > maxTokenId) revert MaxMintLimitReached(maxTokenId);
 
-        uint256 newId = nextTokenId;
-        ++nextTokenId;
+        uint256 newId = _nextTokenId;
+        ++_nextTokenId;
 
         _safeMint(to, newId);
         return newId;
@@ -80,7 +94,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
 
     /// @notice mint multiple.
     /// @dev only callable by the MINTER role
-    function batchMint(address to, uint256 amount) external onlyRole(Constants.MINTER) {
+    function batchMint(address to, uint256 amount) external override onlyRole(Constants.MINTER) {
         for (uint256 i = 0; i < amount; ++i) {
             mintOne(to);
         }
@@ -89,7 +103,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     /// @notice burn the honeycomb tokens. Nothing will have the burn role upon initialization
     /// @notice This will be used for future game-mechanics
     /// @dev only callable by the BURNER role
-    function burn(uint256 _id) external onlyRole(Constants.BURNER) {
+    function burn(uint256 _id) external override onlyRole(Constants.BURNER) {
         _burn(_id);
     }
 }
