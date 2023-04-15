@@ -84,7 +84,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
 
     function testStartingGates() public {
         gameRegistry.registerGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
         (bool active,,,,,) = gatekeeper.tokenToGates(TOKENID, 0);
         assertEq(active, true);
 
@@ -92,32 +92,38 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         assertGt(activeAt, block.timestamp);
     }
 
+    function testFailStartingGates_NoGates() public {
+        uint256 newTokenId = TOKENID + 1;
+        gameRegistry.registerGame(address(this));
+        gatekeeper.startGatesForBundle(newTokenId);
+    }
+
     function testFail_NotStarted() public view {
-        gatekeeper.claim(TOKENID, 1, address(0), 1, getProof1(1));
+        gatekeeper.calculateClaimable(TOKENID, 1, address(0), 1, getProof1(1));
     }
 
     function testFail_NotActive() public {
         gatekeeper.setGateEnabled(TOKENID, 1, true);
-        gatekeeper.claim(TOKENID, 1, address(0), 1, getProof1(1));
+        gatekeeper.calculateClaimable(TOKENID, 1, address(0), 1, getProof1(1));
     }
 
     function testFailClaim_NotActiveYet() public {
         gameRegistry.registerGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
         uint32 gateIdx = 1;
-        gatekeeper.claim(TOKENID, gateIdx, address(0), 1, getProof2(1));
+        gatekeeper.calculateClaimable(TOKENID, gateIdx, address(0), 1, getProof2(1));
     }
 
     function testClaim() public {
         gameRegistry.registerGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
 
         uint32 userIdx = 5; // also the amount to claim
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
 
         bytes32[] memory proof = getProof1(userIdx);
-        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        uint32 claimedAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, userIdx);
         gatekeeper.addClaimed(TOKENID, gateIdx, userIdx, proof);
 
@@ -125,37 +131,37 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         userIdx = 10;
         proof = getProof1(userIdx);
         player = gate1Users[userIdx];
-        claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        claimedAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, MAX_CLAIMABLE - 5); // 5 is the original claimed
     }
 
     function testClaim_onlyMax() public {
         gameRegistry.registerGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
 
         uint32 userIdx = MAX_CLAIMABLE + 1;
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
 
         bytes32[] memory proof = getProof1(userIdx);
-        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        uint32 claimedAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, MAX_CLAIMABLE);
     }
 
     function testClaim_alreadyClaimed() public {
         gameRegistry.registerGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
 
         uint32 userIdx = 5;
         uint32 gateIdx = 0;
         address player = gate1Users[userIdx];
 
         bytes32[] memory proof = getProof1(userIdx);
-        uint32 claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        uint32 claimedAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, userIdx, "uwot");
 
         gatekeeper.addClaimed(TOKENID, gateIdx, userIdx, proof);
-        claimedAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        claimedAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimedAmount, 0, "you shouldn't be able to claim anymore");
     }
 
@@ -180,13 +186,13 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         address player = gate1Users[userIdx];
         gameRegistry.registerGame(address(this));
         gameRegistry.startGame(address(this));
-        gatekeeper.startGatesForToken(TOKENID);
+        gatekeeper.startGatesForBundle(TOKENID);
 
         bytes32[] memory proof = getProof1(userIdx);
 
         gatekeeper.addClaimed(TOKENID, gateIdx, MAX_CLAIMABLE + 1, proof);
 
-        uint256 claimAmount = gatekeeper.claim(TOKENID, gateIdx, player, userIdx, proof);
+        uint256 claimAmount = gatekeeper.calculateClaimable(TOKENID, gateIdx, player, userIdx, proof);
         assertEq(claimAmount, 0);
     }
 }

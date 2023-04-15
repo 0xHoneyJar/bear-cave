@@ -16,9 +16,9 @@ import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2I
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
-import {Gatekeeper} from "src/Gatekeeper.sol";
-import {Constants} from "src/Constants.sol";
+import {IGatekeeper} from "src/IGatekeeper.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
+import {Constants} from "src/Constants.sol";
 
 /// @title HoneyBox
 /// @notice Revision of v1/BearCave.sol
@@ -128,7 +128,7 @@ contract HoneyBox is
     /**
      * Dependencies
      */
-    Gatekeeper public immutable gatekeeper; // TODO: this should be an interface
+    IGatekeeper public immutable gatekeeper; // TODO: this should be an interface
     IHoneyJar public immutable honeyJar;
     VRFCoordinatorV2Interface internal immutable vrfCoordinator;
 
@@ -156,7 +156,7 @@ contract HoneyBox is
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
         paymentToken = IERC20(_paymentToken);
-        gatekeeper = Gatekeeper(_gatekeeper);
+        gatekeeper = IGatekeeper(_gatekeeper);
         jani = payable(_jani);
         beekeeper = payable(_beekeeper);
         honeyJarShare = _honeyJarShare;
@@ -197,7 +197,7 @@ contract HoneyBox is
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
         slumberParties[bundleId_].publicMintTime = block.timestamp + publicMintOffset;
-        gatekeeper.startGatesForToken(bundleId_);
+        gatekeeper.startGatesForBundle(bundleId_);
 
         for (uint256 i = 0; i < sleeperCount; ++i) {
             sleepoor = sleepoors[i];
@@ -463,7 +463,7 @@ contract HoneyBox is
     function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public nonReentrant {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
-        uint32 numClaim = gatekeeper.claim(bundleId_, gateId, msg.sender, amount, proof);
+        uint32 numClaim = gatekeeper.calculateClaimable(bundleId_, gateId, msg.sender, amount, proof);
         if (numClaim == 0) {
             return;
         }

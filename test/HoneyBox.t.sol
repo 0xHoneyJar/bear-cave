@@ -256,7 +256,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
          * Phase 1: claim available
          */
 
-        assertEq(gatekeeper.claim(bundleId, 0, alfaHunter, 2, getProof(0)), 2);
+        assertEq(gatekeeper.calculateClaimable(bundleId, 0, alfaHunter, 2, getProof(0)), 2);
         vm.startPrank(alfaHunter);
         honeyBox.claim(bundleId, 0, 2, getProof(0));
         assertEq(honeyJar.balanceOf(alfaHunter), 2);

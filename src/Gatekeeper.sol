@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import {MerkleProofLib} from "solmate/utils/MerkleProofLib.sol";
 
+import {IGatekeeper} from "./IGatekeeper.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
 
@@ -18,16 +19,7 @@ import {Constants} from "./Constants.sol";
  *  @notice state needs to be reset after each game.
  *  @notice tracks claims per player, and claims per gate.
  */
-contract Gatekeeper is GameRegistryConsumer {
-    struct Gate {
-        bool enabled;
-        uint8 stageIndex; // stage from [0-3] (range defined within GameRegistry)
-        uint32 claimedCount; // # of claims already happened
-        uint32 maxClaimable; // # of claims per gate
-        bytes32 gateRoot;
-        uint256 activeAt; // timestamp when active.
-    }
-
+contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     /**
      * Errors
      */
@@ -63,16 +55,14 @@ contract Gatekeeper is GameRegistryConsumer {
     /// @notice admin is the address that is set as the owner.
     constructor(address gameRegistry_) GameRegistryConsumer(gameRegistry_) {}
 
-    /// @notice validate how much you can claim for a particular token and gate. (not a real claim)
-    /// @param bundleId the ID of the bear in the game.
-    /// @param index the gate index we're claiming
-    /// @param amount number between 0-maxClaimable you a player wants to claim
-    /// @param proof merkle proof
-    function claim(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
-        external
-        view
-        returns (uint32 claimAmount)
-    {
+    /// @inheritdoc IGatekeeper
+    function calculateClaimable(
+        uint256 bundleId,
+        uint256 index,
+        address player,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) external view returns (uint32 claimAmount) {
         // If proof was already used within the gate, there are 0 left to claim
         bytes32 proofHash = keccak256(abi.encode(proof));
         if (consumedProofs[index][proofHash]) return 0;
@@ -90,8 +80,7 @@ contract Gatekeeper is GameRegistryConsumer {
         }
     }
 
-    /// @notice Validates proof
-    /// @dev relies on gates being enabled
+    /// @inheritdoc IGatekeeper
     function validateProof(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
         public
         view
@@ -111,13 +100,10 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /**
-     * Setters
+     * State modifiers
      */
 
-    /// @notice Update internal accounting
-    /// @param numClaimed increases gate claimed count by this value
-    /// @param proof makes this proof as used
-    /// @dev should only be called by a game.
+    /// @inheritdoc IGatekeeper
     function addClaimed(uint256 bundleId, uint256 gateId, uint32 numClaimed, bytes32[] calldata proof)
         external
         onlyRole(Constants.GAME_INSTANCE)
@@ -139,8 +125,7 @@ contract Gatekeeper is GameRegistryConsumer {
      * Gate admin methods
      */
 
-    /// @notice adds a gate to the gates array
-    /// @param stageIndex_ the corresponds to the stage array within the gameRegistry
+    /// @inheritdoc IGatekeeper
     function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
         external
         onlyRole(Constants.GAME_ADMIN)
@@ -152,12 +137,13 @@ contract Gatekeeper is GameRegistryConsumer {
         emit GateAdded(bundleId, tokenToGates[bundleId].length - 1);
     }
 
-    /// @notice Called by a game when a game is started to set times of gates opening.
-    /// @dev Uses the stages array within GameRegistry to program gate openings.
-    function startGatesForToken(uint256 bundleId) external onlyRole(Constants.GAME_INSTANCE) {
+    /// @inheritdoc IGatekeeper
+    function startGatesForBundle(uint256 bundleId) external onlyRole(Constants.GAME_INSTANCE) {
         Gate[] storage gates = tokenToGates[bundleId];
         uint256[] memory stageTimes = _getStages(); // External Call
         uint256 numGates = gates.length;
+
+        if (numGates == 0) revert NoGates(); // Require at least one gate
 
         for (uint256 i = 0; i < numGates; i++) {
             if (gates[i].enabled) continue;
@@ -168,6 +154,7 @@ contract Gatekeeper is GameRegistryConsumer {
     }
 
     /// @notice Only to be used for emergency gate shutdown/start
+    /// @dev if the gate was never enabled by a call to startGatesForBundle, the gates will be enabled immediately.
     function setGateEnabled(uint256 bundleId, uint256 index, bool enabled) external onlyRole(Constants.GAME_ADMIN) {
         tokenToGates[bundleId][index].enabled = enabled;
 
