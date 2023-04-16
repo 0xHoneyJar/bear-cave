@@ -2,4 +2,7 @@
     "editor.formatOnSave": true,
     "solidity.linter": "solhint",
     "solidity.formatter": "forge",
+    "solidity.compileUsingRemoteVersion": "v0.8.17+commit.8df45f5f",
+    "solidity.packageDefaultDependenciesContractsDirectory": "src",
+    "solidity.packageDefaultDependenciesDirectory": "lib"
 }
