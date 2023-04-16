@@ -128,7 +128,7 @@ contract HoneyBox is
     /**
      * Dependencies
      */
-    IGatekeeper public immutable gatekeeper; // TODO: this should be an interface
+    IGatekeeper public immutable gatekeeper;
     IHoneyJar public immutable honeyJar;
     VRFCoordinatorV2Interface internal immutable vrfCoordinator;
 
