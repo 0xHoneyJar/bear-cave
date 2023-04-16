@@ -8,14 +8,7 @@ import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 import {Constants} from "./Constants.sol";
 
 /**
- * Bear GateKeeper
- *      In order to remain gas-efficient gates will be calculated off-chain
- *      BearGate: owning bears
- *      CrownGate: every single one of the digital collectible articles, then they get a free claim in every game
- *      HoneyGate: Genesis mint & n-1 can mint
- *      FrenGate: owning particular assets
- *      PartnerGate: being on a traditional allowlist
- *      Since gates are merkle trees, the per-player amounts will be set off-chain in the root.
+ * GateKeeper
  *  @notice state needs to be reset after each game.
  *  @notice tracks claims per player, and claims per gate.
  */
@@ -47,13 +40,19 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
      */
     mapping(uint256 => Gate[]) public tokenToGates; // bundle -> Gates[]
     mapping(uint256 => mapping(bytes32 => bool)) public consumedProofs; // gateId --> proof --> boolean
-    mapping(uint256 => bytes32[]) public consumedProofsList; // gateId
+    mapping(uint256 => bytes32[]) public consumedProofsList; // gateId --> consumed proofs (needed for resets)
 
     /**
      * Dependencies
      */
     /// @notice admin is the address that is set as the owner.
     constructor(address gameRegistry_) GameRegistryConsumer(gameRegistry_) {}
+
+    /// @notice helper function for FE to
+    /// @dev if activeAt is 0 this method will also return true
+    function isGateOpen(uint256 bundleId, uint256 gateId) external view returns (bool) {
+        return block.timestamp > tokenToGates[bundleId][gateId].activeAt;
+    }
 
     /// @inheritdoc IGatekeeper
     function calculateClaimable(
@@ -196,6 +195,8 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
                 // Step through all proofs from a particular gate.
                 delete consumedProofs[i][consumedProofsList[i][j]];
             }
+
+            emit GateReset(bundleId, i);
         }
     }
 }

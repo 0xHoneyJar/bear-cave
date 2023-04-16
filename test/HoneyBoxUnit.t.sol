@@ -2,13 +2,17 @@
 pragma solidity 0.8.17;
 
 import "forge-std/Test.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 
-import "test/mocks/MockERC1155.sol";
-import "test/mocks/MockERC20.sol";
-import "test/mocks/MockVRFCoordinator.sol";
-import "test/utils/UserFactory.sol";
-import "test/utils/Random.sol";
+import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
+import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
+import {MockERC1155} from "test/mocks/MockERC1155.sol";
+import {MockERC721} from "test/mocks/MockERC721.sol";
+import {MockERC20} from "test/mocks/MockERC20.sol";
+import {MockVRFCoordinator} from "test/mocks/MockVRFCoordinator.sol";
+import {UserFactory} from "test/utils/UserFactory.sol";
+import {Random} from "test/utils/Random.sol";
 
 import "src/HoneyBox.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
@@ -17,20 +21,19 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-contract HoneyBoxTest is Test, ERC1155TokenReceiver {
-    using Random for uint256;
+contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 
-    uint256 private constant MAX_RANDOM = 69420782347;
     uint256 private constant MINT_PRICE_ERC20 = 9.9 * 1e9;
     uint256 private constant MINT_PRICE_ETH = 0.099 ether;
 
-    uint32 private maxHoneycomb = 4;
+    uint32 private maxHoneyJar = 4;
     uint256 private honeyJarShare = 2233 * 1e14; // In WAD (.2233)
 
-    uint256 private bearId;
+    uint8 private bundleId;
     MockERC1155 private erc1155;
+    MockERC721 private erc721;
     MockERC20 private paymentToken;
     Gatekeeper private gatekeeper;
 
@@ -51,8 +54,8 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
     // Initialize the test suite
     function setUp() public {
         // Deploy the ERC1155 token contract
-        bearId = MAX_RANDOM.randomFromMax();
         erc1155 = new MockERC1155();
+        erc721 = new MockERC721("OOGA", "BOOGA");
         paymentToken = new MockERC20("OHM", "OHM", 9);
         paymentToken.mint(address(this), MINT_PRICE_ERC20); // Only mint enough for 1 honeys
 
@@ -60,8 +63,9 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         jani = payable(makeAddr("definitelyNotJani"));
         anotherUser = makeAddr("ngmi");
 
-        // Mint a bear to us
-        erc1155.mint(address(this), bearId, 1, "");
+        // Mint NFTs to us
+        erc1155.mint(address(this), 0, 1, "");
+        erc721.mint(address(this), 0);
 
         // Game Registry
         gameRegistry = new GameRegistry();
@@ -74,14 +78,17 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         vrfCoordinator.fundSubscription(subId, FUND_AMOUNT);
 
         // deploy HoneyJar
-        honeyJar = new HoneyJar(address(gameRegistry));
+        honeyJar = new HoneyJar(address(gameRegistry), 0, 1e9);
 
         // MintConfig
-        mintConfig.maxHoneycomb = maxHoneycomb;
-        mintConfig.maxClaimableHoneycomb = 5;
-        mintConfig.honeyJarPrice_ERC20 = MINT_PRICE_ERC20;
-        mintConfig.honeyJarPrice_ETH = MINT_PRICE_ETH;
+        mintConfig = HoneyBox.MintConfig({
+            maxHoneyJar: maxHoneyJar,
+            maxClaimableHoneyJar: 5,
+            honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
+            honeyJarPrice_ETH: MINT_PRICE_ETH // 0.099 eth
+        });
 
+        // Gatekeeper
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
         // Deploy the honeyBox
@@ -89,115 +96,116 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
             address(vrfCoordinator),
             address(gameRegistry),
             address(honeyJar),
-            address(erc1155),
             address(paymentToken),
             address(gatekeeper),
+            address(jani),
+            address(beekeeper),
             honeyJarShare
         );
 
-        honeyBox.setSubId(subId);
-        honeyBox.setJani(jani);
-        honeyBox.setBeeKeeper(beekeeper);
-        honeyBox.initialize(bytes32(""), subId, jani, beekeeper, mintConfig);
-
         vrfCoordinator.addConsumer(subId, address(honeyBox));
+        honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
+        // HoneyBox needs at least one gate to function.
+        gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
+
         gameRegistry.registerGame(address(honeyBox));
         gameRegistry.startGame(address(honeyBox));
+        bundleId = _addBundle(0);
     }
 
-    function testFailBearcave_alreadyInitialized() public {
-        honeyBox.initialize(bytes32(""), 1, address(1), address(2), mintConfig);
+    function testFail_alreadyInitialized() public {
+        honeyBox.initialize(HoneyBox.VRFConfig("", 1, 3, 10000000), mintConfig);
     }
 
-    // ============= Hibernating Bear ==================== //
+    // ============= Hibernating  ==================== //
 
-    function testFailHibernateBear_noPermissions() public {
-        assertEq(erc1155.balanceOf(address(this), bearId), 1, "wtf you didn't mint a bear");
-        erc1155.mint(beekeeper, bearId + 1, 1, "");
+    function testFail_unauthorized() public {
+        assertEq(erc1155.balanceOf(address(this), bundleId), 1, "wtf you didn't mint a bear");
+        erc1155.mint(beekeeper, bundleId + 1, 1, "");
 
         // Beekeeper is unauthorized
         vm.startPrank(beekeeper);
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
     }
 
-    function testHibernateBear() public {
-        erc1155.setApprovalForAll(address(honeyBox), true);
-        assertEq(erc1155.balanceOf(address(this), bearId), 1, "wtf you didn't mint a bear");
-        honeyBox.hibernateBear(bearId);
-        assertEq(erc1155.balanceOf(address(this), bearId), 0, "wtf you didn't hibernate it");
-        assertEq(erc1155.balanceOf(address(honeyBox), bearId), 1, "wtf the bear got lost");
+    function testFailPuffPuffPassOut_NoBundle() public {
+        honeyBox.puffPuffPassOut(bundleId);
+    }
+
+    function testAddBundle() public {
+        _addBundle(0);
     }
 
     // ============= Meking Honeycombs ==================== //
 
-    function testFailMekHoney_notInitialized() public {
-        honeyBox.mekHoneyJarWithERC20(69, 1);
+    function testFailMekHoney_notSleeping() public {
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1);
     }
 
     function testFailMekHoney_noMinterPerms() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
         // Stoping the game revokes minter permissions.
         gameRegistry.stopGame(address(honeyBox));
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        honeyBox.mekHoneyJarWithERC20(bearId, 1); // Does the contract just eat up the ERC20?
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1); // Does the contract just eat up the ERC20?
     }
 
-    function testFailMekHoney_wrongBearId() public {
-        _hibernateBear(bearId);
+    function testFailMekHoney_wrongBundleId() public {
+        _puffPuffPassOut(bundleId);
 
         honeyBox.mekHoneyJarWithERC20(69, 1);
     }
 
     function testFailMekHoney_noETH() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
-        honeyBox.mekHoneyJarWithEth(bearId, 1);
+        honeyBox.mekHoneyJarWithETH(bundleId, 1);
     }
 
     function testFailMekHoney_noMoneys() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
         paymentToken.burn(address(this), MINT_PRICE_ERC20);
 
         assertEq(paymentToken.balanceOf(address(this)), 0, "how do you still have monies?");
         assertEq(paymentToken.allowance(address(this), address(honeyBox)), 0, "bear cave can't take ur monies");
-        honeyBox.mekHoneyJarWithERC20(bearId, 1);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1);
     }
 
     function testmekHoneyJarWithERC20() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
         assertEq(honeyJar.balanceOf(address(this)), 0, "how do you already have honey?");
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20);
         assertGe(paymentToken.balanceOf(address(this)), MINT_PRICE_ERC20, "You dont have enough ohms");
 
-        uint256 honeyId = honeyBox.mekHoneyJarWithERC20(bearId, 1);
+        uint256 honeyId = honeyBox.mekHoneyJarWithERC20(bundleId, 1);
         assertEq(honeyJar.balanceOf(address(this)), 1, "uhh you don't have honey");
         assertEq(honeyJar.ownerOf(honeyId), address(this), "You have the wrong honey");
     }
 
     function testMekManyHoneycombWithERC20() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
         uint32 mintAmount = 500;
         paymentToken.mint(address(this), MINT_PRICE_ERC20 * mintAmount);
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * mintAmount);
 
         // increase mint limits
         gameRegistry.stopGame(address(honeyBox));
-        honeyBox.setMaxHoneycomb(mintAmount + 1);
+        honeyBox.setMaxHoneyJar(mintAmount + 1);
         gameRegistry.startGame(address(honeyBox));
 
-        honeyBox.mekHoneyJarWithERC20(bearId, mintAmount);
+        honeyBox.mekHoneyJarWithERC20(bundleId, mintAmount);
 
         assertEq(honeyJar.balanceOf(address(this)), mintAmount, "mint amount doesn't match honeyJars");
     }
 
     function testMekHoneyJarWithETH() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
-        // Will make a call to honeyBox.mekHoneyJarWithETH(bearId).
-        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithEth.selector, bearId, 2);
+        // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
+        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithETH.selector, bundleId, 2);
         bytes memory response = address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH * 2);
         uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
 
@@ -205,98 +213,105 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         assertEq(honeyJar.ownerOf(honeyId), address(this), "You have the wrong honey");
     }
 
-    function _simulateVRF(uint256 bearId_) private {
+    function _simulateVRF(uint256 bundleId_) private {
         // Gotta manually do this to simulate VRF working.
-        for (uint256 i = 0; i < 5; ++i) {
-            if (honeyBox.rng(i) != bearId_) continue;
+        for (uint256 i = 1; i < 5; ++i) {
+            if (honeyBox.rng(i) != bundleId_) continue;
             vrfCoordinator.fulfillRandomWords(i, address(honeyBox));
             break;
         }
     }
 
     function testFindSpecialHoney() public {
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        _makeMultipleHoney(bearId, maxHoneycomb);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
 
-        _simulateVRF(bearId);
+        _simulateVRF(bundleId);
+        (,,, bool specialHoneyJarFound,) = honeyBox.slumberParties(bundleId);
 
-        assertEq(honeyBox.getBear(bearId).specialHoneycombFound, true, "special honey is not found");
+        assertEq(specialHoneyJarFound, true, "special honey is not found");
     }
 
-    // ============= Waking Bear ==================== //
+    // ============= Waking Slumber Party ==================== //
 
-    function testFailWakeBear_noBear() public {
-        // Will give the same error as "not enough honeyJars"
-        honeyBox.wakeBear(69);
+    function testFailOpenHotBox() public {
+        // Returns NotEnoughHoneyJarMinted
+        honeyBox.openHotBox(bundleId);
     }
 
     function testFailWakeBear_notEnoughHoney() public {
         // Same as the bear is sleeping
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        honeyBox.mekHoneyJarWithERC20(bearId, 1);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1);
 
-        honeyBox.wakeBear(bearId);
+        honeyBox.openHotBox(bundleId);
     }
 
-    function testFailWakeBear_wrongUser() public {
-        _hibernateBear(bearId);
+    function testFailOpenHotBox_wrongUser() public {
+        _puffPuffPassOut(bundleId);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        _makeMultipleHoney(bearId, maxHoneycomb);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
 
-        _simulateVRF(bearId);
+        _simulateVRF(bundleId);
 
         vm.prank(anotherUser);
-        honeyBox.wakeBear(bearId);
+        honeyBox.openHotBox(bundleId);
     }
 
-    function testFailWakeBear_allHoneyJarNoVRF() public {
-        _hibernateBear(bearId);
+    function testFailOpenHotBox_allHoneyJarNoVRF() public {
+        _puffPuffPassOut(bundleId);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        _makeMultipleHoney(bearId, maxHoneycomb);
-        honeyBox.wakeBear(bearId);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+        honeyBox.openHotBox(bundleId); // SpecialHoneyJar not found
     }
 
-    function testWakeBear() public {
-        _hibernateBear(bearId);
+    function testWakeParty() public {
+        _puffPuffPassOut(bundleId);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20);
-        _makeMultipleHoney(bearId, maxHoneycomb);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
 
-        _simulateVRF(bearId);
+        _simulateVRF(bundleId);
 
-        honeyBox.wakeBear(bearId);
-        assertEq(erc1155.balanceOf(address(this), bearId), 1, "the bear didn't wake up");
+        honeyBox.openHotBox(bundleId);
+        assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
+        assertEq(erc721.balanceOf(address(this)), 1, "the bear didn't wake up");
     }
 
     function testWorks() public {
         assertTrue(true, "fuckin goteeem. r u even reading this?");
     }
 
-    function testTwoSleepingBears() public {
+    function testTwoSlumberParties() public {
         //  can make this test more robust by validating the mekHoneyJarWithERC20/findSpecial honey outputs.
-        uint256 secondBearId = 69420;
-        erc1155.mint(address(this), secondBearId, 1, "");
+        uint8 secondBundleId = _addBundle(2);
+        gatekeeper.addGate(secondBundleId, 0x00000000000000, 6969, 0);
 
-        _hibernateBear(bearId);
-        _hibernateBear(secondBearId);
+        erc1155.mint(address(this), 2, 1, "");
+        erc721.mint(address(this), 2);
 
-        paymentToken.approve(address(honeyBox), maxHoneycomb * MINT_PRICE_ERC20 * 2);
-        _makeMultipleHoney(bearId, maxHoneycomb);
-        _makeMultipleHoney(secondBearId, maxHoneycomb);
+        _puffPuffPassOut(bundleId);
+        _puffPuffPassOut(secondBundleId);
 
-        _simulateVRF(bearId);
-        _simulateVRF(secondBearId);
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20 * 2);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+        _makeMultipleHoney(secondBundleId, maxHoneyJar);
 
-        honeyBox.wakeBear(bearId);
-        honeyBox.wakeBear(secondBearId);
+        _simulateVRF(bundleId);
+        _simulateVRF(secondBundleId);
 
-        assertEq(erc1155.balanceOf(address(this), bearId), 1, "the bear didn't wake up");
+        honeyBox.openHotBox(bundleId);
+        honeyBox.openHotBox(secondBundleId);
+
+        assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
+        assertEq(erc1155.balanceOf(address(this), 2), 1, "the bear didn't wake up");
+        assertEq(erc721.balanceOf(address(this)), 2, "the Nft didn't wake up");
     }
 
     // ============= Bear Pouch ==================== //
@@ -306,10 +321,10 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         assertEq(paymentToken.balanceOf(beekeeper), 0, "init: not zero");
         assertEq(paymentToken.balanceOf(jani), 0, "init: not zero");
 
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20);
-        honeyBox.mekHoneyJarWithERC20(bearId, 1);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 1);
 
         uint256 beekeeperExpected = MINT_PRICE_ERC20.mulWadUp(honeyJarShare);
 
@@ -322,10 +337,10 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         assertEq(beekeeper.balance, 0, "init: not zero");
         assertEq(jani.balance, 0, "init: not zero");
 
-        _hibernateBear(bearId);
+        _puffPuffPassOut(bundleId);
 
-        // Will make a call to honeyBox.mekHoneyJarWithETH(bearId).
-        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithEth.selector, bearId, 1);
+        // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
+        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithETH.selector, bundleId, 1);
         address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH);
 
         uint256 beekeeperExpected = MINT_PRICE_ETH.mulWadUp(honeyJarShare);
@@ -337,10 +352,10 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
     function testClaimHoneycomb() public {
         // initial conditions
 
-        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
-        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
-        gatekeeper.addGate(bearId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
-        _hibernateBear(bearId);
+        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
+        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
+        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
+        _puffPuffPassOut(bundleId);
 
         bytes32[] memory proof = new bytes32[](11);
         proof[0] = 0x2cab18c6136eee630c87d06ee09d821becc2ab5de6884ec207caa6efbf106dfc;
@@ -355,13 +370,14 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
         proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
         proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
 
+        // The first gate is a blank one, skip it for this test.
         (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) =
-            gatekeeper.tokenToGates(bearId, 0);
+            gatekeeper.tokenToGates(bundleId, 1);
 
         vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
-        honeyBox.claim(bearId, 0, 2, proof); // results in 2
+        honeyBox.claim(bundleId, 1, 2, proof); // results in 2
 
-        // honeyBox.claim(bearId, 0, 2, proof); reverts
+        // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }
 
     // ============= Claiming will be an integration test  ==================== //
@@ -369,14 +385,29 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver {
     /**
      * Internal Helper methods
      */
-    function _makeMultipleHoney(uint256 _bearId, uint256 _amount) internal {
+    function _makeMultipleHoney(uint8 _bundleId, uint256 _amount) internal {
         paymentToken.mint(address(this), MINT_PRICE_ERC20 * _amount);
-        honeyBox.mekHoneyJarWithERC20(_bearId, _amount);
+        honeyBox.mekHoneyJarWithERC20(_bundleId, _amount);
     }
 
-    function _hibernateBear(uint256 bearId_) internal {
+    function _puffPuffPassOut(uint8 bundleId_) internal {
         erc1155.setApprovalForAll(address(honeyBox), true);
-        honeyBox.hibernateBear(bearId_);
+        erc721.setApprovalForAll(address(honeyBox), true);
+
+        honeyBox.puffPuffPassOut(bundleId_);
         vm.warp(block.timestamp + 73 hours); // Test in the public mint area
+    }
+
+    function _addBundle(uint256 tokenId_) internal returns (uint8) {
+        address[] memory tokenAddresses = new address[](2);
+        tokenAddresses[0] = address(erc1155);
+        tokenAddresses[1] = address(erc721);
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = tokenId_;
+        tokenIds[1] = tokenId_;
+        bool[] memory isERC1155 = new bool[](2);
+        isERC1155[0] = true;
+        isERC1155[1] = false;
+        return honeyBox.addBundle(tokenAddresses, tokenIds, isERC1155);
     }
 }

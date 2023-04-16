@@ -189,8 +189,10 @@ contract HoneyBox is
     /// @dev publicMintTime is hardcoded to be 72 hours after calling this method.
     function puffPuffPassOut(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
         SlumberParty storage slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
-        uint256 sleeperCount = slumberParty.sleepoors.length;
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
+        uint256 sleeperCount = sleepoors.length;
+        if (sleeperCount == 0) revert InvalidBundle(bundleId_);
+
         SleepingNFT storage sleepoor;
 
         uint256[] memory allStages = _getStages();
@@ -489,15 +491,22 @@ contract HoneyBox is
     }
 
     /// @dev Helper function to process all free cams. More client-sided computation.
-    function claimAll(uint8 bundleId_, uint32[] calldata gateId, uint32[] calldata amount, bytes32[][] calldata proof)
-        external
-    {
-        uint256 inputLength = proof.length;
-        if (inputLength != gateId.length) revert InvalidInput("claimAll");
-        if (inputLength != amount.length) revert InvalidInput("claimAll");
+    /// @param bundleId_ the bundle to claim tokens for.
+    /// @param gateIds the list of gates to claim. The txn will revert if an ID for an inactive gate is included.
+    /// @param amounts the list of amounts being claimed for the repsective gates.
+    /// @param proofs the list of proofs associated with the respective gates
+    function claimAll(
+        uint8 bundleId_,
+        uint32[] calldata gateIds,
+        uint32[] calldata amounts,
+        bytes32[][] calldata proofs
+    ) external {
+        uint256 inputLength = proofs.length;
+        if (inputLength != gateIds.length) revert InvalidInput("claimAll");
+        if (inputLength != amounts.length) revert InvalidInput("claimAll");
 
         for (uint256 i = 0; i < inputLength; ++i) {
-            claim(bundleId_, gateId[i], amount[i], proof[i]);
+            claim(bundleId_, gateIds[i], amounts[i], proofs[i]);
         }
     }
 
@@ -509,7 +518,7 @@ contract HoneyBox is
      */
 
     /// @notice Sets the max number NFTs (honeyJar) that can be generated from the deposit of a bear (asset)
-    function setMaxhoneyJar(uint32 _maxhoneyJar) external onlyRole(Constants.GAME_ADMIN) {
+    function setMaxHoneyJar(uint32 _maxhoneyJar) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
         mintConfig.maxHoneyJar = _maxhoneyJar;
 
