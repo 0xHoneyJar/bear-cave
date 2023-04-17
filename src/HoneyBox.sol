@@ -93,7 +93,7 @@ contract HoneyBox is
     event SpecialHoneyJarFound(uint8 bundleId, uint256 honeyJarId);
     event MintConfigChanged(MintConfig mintConfig);
     event VRFConfigChanged(VRFConfig vrfConfig);
-    event HoneyJarClaimed(uint256 bundleId, address player, uint256 amount);
+    event HoneyJarClaimed(uint256 bundleId, uint32 gateId, address player, uint256 amount);
     event PartyAwoke(uint8 bundleId, address player);
 
     /**
@@ -487,7 +487,7 @@ contract HoneyBox is
         // If for some reason this fails, GG no honeyJar for you
         _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
 
-        emit HoneyJarClaimed(bundleId_, msg.sender, numClaim);
+        emit HoneyJarClaimed(bundleId_, gateId, msg.sender, numClaim);
     }
 
     /// @dev Helper function to process all free cams. More client-sided computation.

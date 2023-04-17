@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "forge-std/Script.sol";
+import {THJScriptBase} from "./THJScriptBase.sol";
 
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
@@ -13,7 +13,7 @@ import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
-contract DeployScript is Script {
+contract DeployScript is THJScriptBase {
     // Goerli deps
     address private VRF_COORDINATOR = 0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D;
     bytes32 private VRF_KEYHASH = 0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15;
