@@ -11,8 +11,8 @@ import {HoneyBox} from "src/HoneyBox.sol";
 // Calls honeyBox.addBundle
 
 contract BundleTokens is THJScriptBase {
-    uint256 private SFT_ID = 2;
-    uint256 private NFT_ID = 2;
+    uint256 private SFT_ID = 3;
+    uint256 private NFT_ID = 3;
 
     HoneyBox private hb;
     ERC721 private nft;

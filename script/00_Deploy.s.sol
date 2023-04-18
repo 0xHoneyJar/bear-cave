@@ -43,6 +43,13 @@ contract DeployScript is THJScriptBase {
         // Dependencies
         paymentToken = ERC20(_readAddress("ERC20_ADDRESS"));
 
+        // If a deployment fails uncomment lines of existing deployments
+
+        // gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
+        // gatekeeper = Gatekeeper(_readAddress("GATEKEEPER_ADDRESS"));
+        // honeyJar = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
+        // honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+
         gameAdmin = _readAddress("GAMEADMIN_ADDRESS");
         jani = _readAddress("JANI_ADDRESS");
         beekeeper = _readAddress("BEEKEEPER_ADDRESS");

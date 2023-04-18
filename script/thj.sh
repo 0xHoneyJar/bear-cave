@@ -111,7 +111,7 @@ echo ""
 case "$method" in
   "test")
     echo "Forge Params ${forge_params}"
-    forge script script/TestScript.s.sol:TestScript 
+    forge script script/TestScript.s.sol:TestScript
     ;;
   "testnetDeps")
     echo "Running testnetDeps"
