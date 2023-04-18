@@ -78,7 +78,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         vrfCoordinator.fundSubscription(subId, FUND_AMOUNT);
 
         // deploy HoneyJar
-        honeyJar = new HoneyJar(address(gameRegistry), 0, 1e9);
+        honeyJar = new HoneyJar(address(this), address(gameRegistry), 0, 1e9);
 
         // MintConfig
         mintConfig = HoneyBox.MintConfig({

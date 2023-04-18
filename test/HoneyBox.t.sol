@@ -122,7 +122,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.setJani(jani);
         gameRegistry.setBeekeeper(beekeeper);
 
-        honeyJar = new HoneyJar(address(gameRegistry), 69, 69);
+        honeyJar = new HoneyJar(address(this), address(gameRegistry), 69, 69);
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
         honeyBox = new HoneyBox(

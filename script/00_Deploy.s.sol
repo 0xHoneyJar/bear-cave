@@ -12,6 +12,7 @@ import {Constants} from "src/Constants.sol";
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 contract DeployScript is THJScriptBase {
     // Chainlink Config
@@ -36,6 +37,7 @@ contract DeployScript is THJScriptBase {
     address private gameAdmin;
     address private jani;
     address private beekeeper;
+    address private deployer;
 
     function setUp() public {
         // Dependencies
@@ -47,6 +49,7 @@ contract DeployScript is THJScriptBase {
 
         // Read chainlink config
         vrfCoordinator = _readAddress("VRF_COORDINATOR");
+        deployer = vm.parseAddress("0xF951bA8107D7BF63733188E64D7E07bD27b46Af7");
     }
 
     function run() public {
@@ -62,7 +65,13 @@ contract DeployScript is THJScriptBase {
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
         // Deploy HoneyJar with Create2
-        honeyJar = new HoneyJar(address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
+        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarOogaBooga"));
+        bytes memory creationCode = type(HoneyJar).creationCode;
+        bytes memory constructorArgs = abi.encode(deployer, address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
+        address honeyJarAddress = Create2.deploy(0, salt, abi.encodePacked(creationCode, constructorArgs));
+        honeyJar = HoneyJar(honeyJarAddress);
+
+        // honeyJar = new HoneyJar(address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
 
         // Deploy HoneyBox
         honeyBox = new HoneyBox(

@@ -2,7 +2,9 @@
 pragma solidity 0.8.17;
 
 import {LibString} from "solmate/utils/LibString.sol";
-import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
+// import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
+import {Create2Ownable} from "src/Create2Ownable.sol";
+
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import {Constants} from "./Constants.sol";
@@ -14,7 +16,7 @@ import {IHoneyJar} from "./IHoneyJar.sol";
 /// @notice A stand-alone ERC721 compliant NFT
 /// @dev xChain functionality is abstracted away from NFT implementation into a separate contract
 /// @dev can safely be deployed along with HoneyJarPortal to every chain.
-contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
+contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
     using LibString for uint256;
 
     /**
@@ -34,14 +36,15 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, MultisigOwnable {
     uint256 public immutable maxTokenId;
     uint256 internal _nextTokenId;
 
-    // Remember to segment and document tokenID space.
-    constructor(address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
+    /// @notice The tokenID space needs to be segmented for each chain
+    constructor(address owner_, address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
         ERC721("HoneyJar", "HONEYJAR")
         GameRegistryConsumer(gameRegistry_)
+        Create2Ownable(owner_)
     {
         startingTokenId = startTokenId_;
         _nextTokenId = startTokenId_;
-        maxTokenId = startTokenId_ + mintAmount_;
+        maxTokenId = startTokenId_ + mintAmount_ - 1;
     }
 
     /// @notice view function for frontend
