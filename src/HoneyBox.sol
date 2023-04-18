@@ -525,6 +525,14 @@ contract HoneyBox is
         emit MintConfigChanged(mintConfig);
     }
 
+    /// @notice sets the number of global free claims available
+    function setMaxClaimableHoneyJar(uint32 _maxClaimableHoneyJar) external onlyRole(Constants.GAME_ADMIN) {
+        if (_isEnabled(address(this))) revert GameInProgress();
+        mintConfig.maxClaimableHoneyJar = _maxClaimableHoneyJar;
+
+        emit MintConfigChanged(mintConfig);
+    }
+
     /// @notice sets the price of the honeyJar in `paymentToken`
     function setHoneyJarPrice_ERC20(uint256 _honeyJarPrice) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();

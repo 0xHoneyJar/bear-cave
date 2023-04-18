@@ -46,8 +46,8 @@ contract ConfigureGame is THJScriptBase {
 
         // TODO: read rest of config from json/env
         mintConfig = HoneyBox.MintConfig({
-            maxHoneyJar: 69,
-            maxClaimableHoneyJar: 4,
+            maxHoneyJar: 10926, // Should be Generation Max
+            maxClaimableHoneyJar: 1708, // Should be sum(gates.maxClaimable)
             honeyJarPrice_ERC20: 16 * 1e9, // 16 OHM
             honeyJarPrice_ETH: 11 * 1e7 * 1 gwei // 0.11 eth
         });
