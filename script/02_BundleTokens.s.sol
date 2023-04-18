@@ -3,24 +3,18 @@ pragma solidity 0.8.17;
 
 import "./THJScriptBase.sol";
 
-import {HoneyJar} from "src/HoneyJar.sol";
-import {GameRegistry} from "src/GameRegistry.sol";
-import {Gatekeeper} from "src/Gatekeeper.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
-import {Constants} from "src/Constants.sol";
-
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract BundleTokens is THJScriptBase {
-    uint256 private SFT_ID = 1;
-    uint256 private NFT_ID = 1;
+import {HoneyBox} from "src/HoneyBox.sol";
+// Calls honeyBox.addBundle
 
-    Gatekeeper private gk;
-    HoneyJar private hj;
+contract BundleTokens is THJScriptBase {
+    uint256 private SFT_ID = 2;
+    uint256 private NFT_ID = 2;
+
     HoneyBox private hb;
-    GameRegistry private gr;
     ERC721 private nft;
     ERC1155 private sft;
     ERC20 private token;
@@ -30,10 +24,9 @@ contract BundleTokens is THJScriptBase {
         sft = ERC1155(_readAddress("ERC1155_ADDRESS"));
         token = ERC20(_readAddress("ERC20_ADDRESS"));
 
-        gk = Gatekeeper(_readAddress("GATEKEEPER_ADDRESS"));
-        gr = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-        hj = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
         hb = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+
+        // TODO: read SFT_ID, NFT_ID from config
     }
 
     function run() public {
