@@ -14,7 +14,7 @@ remappings = [
 
 fs_permissions = [
     {access = "write", path = "./deployments/"},
-    {access = "read", path = "./src/scripts/"}
+    {access = "read", path = "./script/"}
 ]
 
 

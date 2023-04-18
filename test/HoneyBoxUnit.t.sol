@@ -136,7 +136,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _addBundle(0);
     }
 
-    // ============= Meking Honeycombs ==================== //
+    // ============= Meking HoneyJar ==================== //
 
     function testFailMekHoney_notSleeping() public {
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
@@ -185,7 +185,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         assertEq(honeyJar.ownerOf(honeyId), address(this), "You have the wrong honey");
     }
 
-    function testMekManyHoneycombWithERC20() public {
+    function testMekManyHoneyJarWithERC20() public {
         _puffPuffPassOut(bundleId);
         uint32 mintAmount = 500;
         paymentToken.mint(address(this), MINT_PRICE_ERC20 * mintAmount);
@@ -349,7 +349,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         assertEq(jani.balance, MINT_PRICE_ETH - beekeeperExpected, "jani not paid the right amount");
     }
 
-    function testClaimHoneycomb() public {
+    function testClaimHoneyJar() public {
         // initial conditions
 
         gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);

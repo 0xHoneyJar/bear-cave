@@ -102,7 +102,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
         }
     }
 
-    /// @notice burn the honeycomb tokens. Nothing will have the burn role upon initialization
+    /// @notice burn the honeyjar tokens. Nothing will have the burn role upon initialization
     /// @notice This will be used for future game-mechanics
     /// @dev only callable by the BURNER role
     function burn(uint256 _id) external override onlyRole(Constants.BURNER) {

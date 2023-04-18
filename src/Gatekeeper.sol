@@ -17,7 +17,7 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
      * Errors
      */
 
-    error TooMuchHoneyCombInGate(uint256 gateId);
+    error TooMuchHoneyJarInGate(uint256 gateId);
     error GatekeeperInvalidProof();
     error NoGates();
     error Gate_OutOfBounds(uint256 gateId);
@@ -68,7 +68,7 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
 
         Gate storage gate = tokenToGates[bundleId][index];
         uint32 claimedCount = gate.claimedCount;
-        if (claimedCount >= gate.maxClaimable) revert TooMuchHoneyCombInGate(index);
+        if (claimedCount >= gate.maxClaimable) revert TooMuchHoneyJarInGate(index);
 
         claimAmount = amount;
         bool validProof = validateProof(bundleId, index, player, amount, proof);

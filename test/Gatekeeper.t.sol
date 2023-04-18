@@ -28,7 +28,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     address[] private gate1Users;
     address[] private gate2Users;
 
-    MockERC721 private honeyComb;
+    MockERC721 private honeyJar;
     MockERC1155 private mockBear;
 
     function createNode(address player, uint32 amount) private pure returns (bytes32) {
@@ -47,7 +47,7 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         gate1Users = userFactory.create(15);
         gate2Users = userFactory.create(17);
 
-        honeyComb = new MockERC721("honeycomb", "honeycomb");
+        honeyJar = new MockERC721("honeyJar", "honeyJar");
 
         // Game Registry
         gameRegistry = new GameRegistry();
