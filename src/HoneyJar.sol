@@ -2,7 +2,6 @@
 pragma solidity 0.8.17;
 
 import {LibString} from "solmate/utils/LibString.sol";
-// import {MultisigOwnable} from "dual-ownership-nft/MultisigOwnable.sol";
 import {Create2Ownable} from "src/Create2Ownable.sol";
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
