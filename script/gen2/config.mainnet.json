@@ -5,9 +5,21 @@
         "beekeeper": "0x67EDbbF1531b28551f2075223D8a30a9AE457ECa",
         "paymentToken": "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"
     },
+    "mintConfig": {
+        "maxHoneyJar": 10926,
+        "maxHoneyJar_claimable": 1708,
+        "price_ERC20": 16000000000,
+        "price_ETH": 110000000000000000
+    },
+    "honeyJar": {
+        "startIndex": 0,
+        "maxMintableForChain": 20000
+    },
+    "revShare": 223300000000000000,
     "vrf": {
         "coordinator": "0x271682DEB8C4E0901D1a1550aD2e64D568E69909",
-        "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92"
+        "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
+        "subId": 670
     },
     "bundleTokens": [
         {

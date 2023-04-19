@@ -3,11 +3,10 @@ pragma solidity 0.8.17;
 
 import "./THJScriptBase.sol";
 
-import {HoneyJar} from "src/HoneyJar.sol";
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
+
 import {GameRegistry} from "src/GameRegistry.sol";
-import {Gatekeeper} from "src/Gatekeeper.sol";
 import {HoneyBox} from "src/HoneyBox.sol";
-import {Constants} from "src/Constants.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
@@ -16,10 +15,12 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 // Sets up HoneyBox as a game
 contract ConfigureGame is THJScriptBase {
     using stdJson for string;
+    using SafeCastLib for uint256;
 
     // Chainlink Config
     address private vrfCoordinator;
     bytes32 private vrfKeyhash;
+    uint64 private vrfSubId;
 
     // Dependencies
     ERC721 private nft;
@@ -30,10 +31,6 @@ contract ConfigureGame is THJScriptBase {
 
     HoneyBox private honeyBox;
     GameRegistry private gameRegistry;
-
-    // Config
-    bytes32 private keyhash;
-    uint64 private subId = 9;
 
     HoneyBox.MintConfig private mintConfig;
     HoneyBox.VRFConfig private vrfConfig;
@@ -49,7 +46,8 @@ contract ConfigureGame is THJScriptBase {
 
         // Chainlink VRF Config
         vrfKeyhash = json.readBytes32(".vrf.keyhash");
-        vrfConfig = HoneyBox.VRFConfig(vrfKeyhash, subId, 3, 10000000);
+        vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
+        vrfConfig = HoneyBox.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
 
         // MintConfig
         bytes memory rawMintConfig = json.parseRaw(".mintConfig");

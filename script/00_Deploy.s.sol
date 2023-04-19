@@ -30,7 +30,7 @@ contract DeployScript is THJScriptBase {
     GameRegistry private gameRegistry;
 
     // Config
-    uint256 private honeyJarShare;
+    uint256 private revShare;
     uint256 private honeyJarStartIndex;
     uint256 private honeyJarAmount;
 
@@ -63,7 +63,7 @@ contract DeployScript is THJScriptBase {
         beekeeper = json.readAddress(".addresses.beekeeper");
         vrfCoordinator = json.readAddress(".addresses.vrfCoordinator");
 
-        honeyJarShare = json.readUint(".honeyJar.honeyJarShare");
+        revShare = json.readUint(".revShare");
         honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
         honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
 
@@ -94,7 +94,7 @@ contract DeployScript is THJScriptBase {
             address(gatekeeper),
             jani,
             beekeeper,
-            honeyJarShare
+            revShare
         );
 
         vm.stopBroadcast();

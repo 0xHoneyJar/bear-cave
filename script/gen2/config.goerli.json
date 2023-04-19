@@ -13,12 +13,13 @@
     },
     "honeyJar": {
         "startIndex": 0,
-        "maxMintableForChain": 69,
-        "honeyJarShare": 223300000000000000
+        "maxMintableForChain": 69
     },
+    "revShare": 223300000000000000,
     "vrf": {
         "coordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
-        "keyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15"
+        "keyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
+        "subId": 9
     },
     "bundleId": 0,
     "bundleTokens": [

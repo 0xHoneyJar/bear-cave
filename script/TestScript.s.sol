@@ -8,7 +8,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {HoneyBox} from "src/HoneyBox.sol";
 // Calls honeyBox.addBundle
 
-/// @notice this script is only meant to test
+/// @notice this script is only meant to test do not use for production
 contract TestScript is THJScriptBase {
     using stdJson for string;
 
