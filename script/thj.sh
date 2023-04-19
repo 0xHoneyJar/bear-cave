@@ -111,7 +111,7 @@ echo ""
 case "$method" in
   "test")
     echo "Forge Params ${forge_params}"
-    forge script script/TestScript.s.sol:TestScript
+    forge script script/TestScript.s.sol:TestScript --sig "run(string)()" $network
     ;;
   "testnetDeps")
     echo "Running testnetDeps"
@@ -127,7 +127,7 @@ case "$method" in
     ;;    
   "addBundle") 
     echo "Running addBundle"
-    forge script script/02_BundleTokens.s.sol:BundleTokens $forge_params
+    forge script script/02_BundleTokens.s.sol:BundleTokens --sig "run(string)()" $network $forge_params
     ;;
   "setGates")
     echo "Running setGates"

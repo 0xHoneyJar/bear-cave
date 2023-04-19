@@ -13,6 +13,15 @@ contract THJScriptBase is Script {
         return string(bytesArray);
     }
 
+    /// @notice only is used to read the config path based on the environemtn.
+    function _getConfigPath(string memory env) internal view returns (string memory) {
+        string memory filename = string.concat(env, ".json");
+        string memory jsonPath = string.concat("/script/config.", filename);
+        string memory root = vm.projectRoot();
+        console.log("Loading Config: ", jsonPath);
+        return string.concat(root, jsonPath);
+    }
+
     function _readAddress(string memory envKey) internal view returns (address envAddress) {
         envAddress = vm.envAddress(envKey);
         require(envAddress != address(0), string.concat("Address incorrectly set for key - ", envKey));

@@ -1,0 +1,23 @@
+{
+    "addresses": {
+        "gameAdmin": "0xd4920Bb5A6C032eB3BcE21E0C7FdAC9EeFa8d3f1",
+        "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
+        "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
+    },
+    "vrf": {
+        "coordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
+        "keyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15"
+    },
+    "bundleTokens": [
+        {
+            "address": "0xeC420B0d0dA852359e0D6a31Ec322AB502C788a2",
+            "id": 3,
+            "isERC1155": false
+        },
+        {
+            "address": "0x098D39bf9D50f2504ACF7B201B4f2e9169A1b388",
+            "id": 3,
+            "isERC1155": true
+        }
+    ]
+}

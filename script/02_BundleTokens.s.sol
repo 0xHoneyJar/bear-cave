@@ -11,6 +11,8 @@ import {HoneyBox} from "src/HoneyBox.sol";
 // Calls honeyBox.addBundle
 
 contract BundleTokens is THJScriptBase {
+    using stdJson for string;
+
     uint256 private SFT_ID = 4;
     uint256 private NFT_ID = 4;
 
@@ -20,32 +22,22 @@ contract BundleTokens is THJScriptBase {
     ERC20 private token;
 
     function setUp() public {
-        nft = ERC721(_readAddress("ERC721_ADDRESS"));
-        sft = ERC1155(_readAddress("ERC1155_ADDRESS"));
-        token = ERC20(_readAddress("ERC20_ADDRESS"));
-
         hb = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
-
-        // TODO: read SFT_ID, NFT_ID from config
     }
 
-    function run() public {
+    function run(string calldata env) public {
         vm.startBroadcast();
 
-        address[] memory tokenAddresses = new address[](2);
-        tokenAddresses[0] = address(nft);
-        tokenAddresses[1] = address(sft);
+        string memory fullJsonPath = _getConfigPath(env);
+        string memory json = vm.readFile(fullJsonPath);
 
-        uint256[] memory tokenIDs = new uint256[](2);
-        tokenIDs[0] = NFT_ID;
-        tokenIDs[1] = SFT_ID;
-
-        bool[] memory isERC1155s = new bool[](2);
-        isERC1155s[0] = false;
-        isERC1155s[1] = true;
+        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
+        uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
+        bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
 
         // Identify tokenID to hibernate
-        uint8 bundleId = hb.addBundle(tokenAddresses, tokenIDs, isERC1155s);
+        uint8 bundleId = hb.addBundle(addresses, tokenIds, isERC1155s);
+        console.log(5);
         console.log("BundleID: ", bundleId);
 
         vm.stopBroadcast();
