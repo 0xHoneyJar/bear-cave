@@ -30,10 +30,9 @@ contract DeployScript is THJScriptBase {
     GameRegistry private gameRegistry;
 
     // Config
-    // TODO: read from config/env
-    uint256 private honeyJarShare = 2233 * 1e14;
-    uint256 private honeyJarStartIndex = 0;
-    uint256 private honeyJarAmount = 69;
+    uint256 private honeyJarShare;
+    uint256 private honeyJarStartIndex;
+    uint256 private honeyJarAmount;
 
     // Users to grant permissions
     address private gameAdmin;
@@ -63,6 +62,10 @@ contract DeployScript is THJScriptBase {
         jani = json.readAddress(".addresses.jani");
         beekeeper = json.readAddress(".addresses.beekeeper");
         vrfCoordinator = json.readAddress(".addresses.vrfCoordinator");
+
+        honeyJarShare = json.readUint(".honeyJar.honeyJarShare");
+        honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
+        honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
 
         // Deploy gameRegistry and give gameAdmin permisisons
         gameRegistry = new GameRegistry();

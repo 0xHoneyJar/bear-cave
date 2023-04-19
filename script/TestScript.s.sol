@@ -14,6 +14,8 @@ contract TestScript is THJScriptBase {
 
     address private honeyBox;
 
+    HoneyBox.MintConfig mintConfig;
+
     function setUp() public {
         honeyBox = _readAddress("HONEYBOX_ADDRESS");
     }
@@ -24,6 +26,13 @@ contract TestScript is THJScriptBase {
         address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
         uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+
+        bytes memory rawMintConfig = json.parseRaw(".mintConfig");
+        mintConfig = abi.decode(rawMintConfig, (HoneyBox.MintConfig));
+        console.log(mintConfig.maxHoneyJar);
+        console.log(mintConfig.maxClaimableHoneyJar);
+        console.log(mintConfig.honeyJarPrice_ERC20);
+        console.log(mintConfig.honeyJarPrice_ETH);
 
         // Build out txns here.
         for (uint256 i = 0; i < addresses.length; i++) {

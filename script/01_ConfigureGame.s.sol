@@ -42,22 +42,18 @@ contract ConfigureGame is THJScriptBase {
         // Dependencies
         honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
         gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-
-        // Read chainlink config
-
-        // TODO: read rest of config from json/env
-        mintConfig = HoneyBox.MintConfig({
-            maxHoneyJar: 10926, // Should be Generation Max
-            maxClaimableHoneyJar: 1708, // Should be sum(gates.maxClaimable)
-            honeyJarPrice_ERC20: 16 * 1e9, // 16 OHM
-            honeyJarPrice_ETH: 11 * 1e7 * 1 gwei // 0.11 eth
-        });
     }
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
+
+        // Chainlink VRF Config
         vrfKeyhash = json.readBytes32(".vrf.keyhash");
         vrfConfig = HoneyBox.VRFConfig(vrfKeyhash, subId, 3, 10000000);
+
+        // MintConfig
+        bytes memory rawMintConfig = json.parseRaw(".mintConfig");
+        mintConfig = abi.decode(rawMintConfig, (HoneyBox.MintConfig));
 
         vm.startBroadcast();
 

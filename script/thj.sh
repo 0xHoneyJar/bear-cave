@@ -114,7 +114,6 @@ echo ""
 case "$method" in
   "test")
     echo "Forge Params ${forge_params}"
-
     forge script script/TestScript.s.sol:TestScript --sig 'run(string)()' $network $forge_params
     ;;
   "testnetDeps")
@@ -140,6 +139,10 @@ case "$method" in
   "startGame")
     echo "Running startGame"
     forge script script/04_StartGame.s.sol:StartGame --sig 'run(string)()' $network $forge_params
+    ;;
+  "testnetPuffPuff")
+    echo "Running testnetPuffPuff"
+    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
     ;;
   *)
     echo "Error: Unsupported method."
