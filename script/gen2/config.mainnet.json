@@ -13,7 +13,7 @@
     },
     "honeyJar": {
         "startIndex": 0,
-        "maxMintableForChain": 20000
+        "maxMintableForChain": 4200000
     },
     "revShare": 223300000000000000,
     "vrf": {
