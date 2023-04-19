@@ -5,6 +5,8 @@ import "./THJScriptBase.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 
 contract SetGates is THJScriptBase {
+    using stdJson for string;
+
     string private envKey = "GATEKEEPER_ADDRESS";
     uint8 private BUNDLE_ID = 0;
 
@@ -14,8 +16,9 @@ contract SetGates is THJScriptBase {
         gk = Gatekeeper(_readAddress(envKey));
     }
 
-    function run() public {
+    function run(string calldata env) public override {
         vm.startBroadcast();
+
         //     function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
         gk.addGate(BUNDLE_ID, 0x79f399eaa629b0c00c3f4b23961988fccecac06a0d23d903b9ad2e7740147ace, 214, 0);
         gk.addGate(BUNDLE_ID, 0x99895320046b474b3bb8379d8a70071da548b780d593569b38a9edb913f6a386, 0, 0);

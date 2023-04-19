@@ -18,7 +18,7 @@ contract TestnetDeps is THJScriptBase {
         gameAdmin = _readAddress("GAMEADMIN_ADDRESS");
     }
 
-    function run() public {
+    function run(string calldata env) public override {
         vm.startBroadcast();
 
         MockERC1155 erc1155 = new MockERC1155();

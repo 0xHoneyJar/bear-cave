@@ -4,7 +4,11 @@ pragma solidity 0.8.17;
 import "forge-std/Script.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 
-contract THJScriptBase is Script {
+abstract contract THJScriptBase is Script {
+    /// @notice must pass in an env name for the script to run
+    /// @notice env the environment: mainnet, goerli, polygon, etc.
+    function run(string calldata env) public virtual;
+
     function _bytes32ToString(bytes32 _bytes32) internal pure returns (string memory) {
         bytes memory bytesArray = new bytes(32);
         for (uint256 i; i < 32; i++) {
@@ -20,6 +24,11 @@ contract THJScriptBase is Script {
         string memory root = vm.projectRoot();
         console.log("Loading Config: ", jsonPath);
         return string.concat(root, jsonPath);
+    }
+
+    function _getConfig(string memory env) internal view returns (string memory) {
+        string memory fullJsonPath = _getConfigPath(env);
+        return vm.readFile(fullJsonPath);
     }
 
     function _readAddress(string memory envKey) internal view returns (address envAddress) {

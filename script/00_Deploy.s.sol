@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {THJScriptBase} from "./THJScriptBase.sol";
+import "./THJScriptBase.sol";
 
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
@@ -15,6 +15,8 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 contract DeployScript is THJScriptBase {
+    using stdJson for string;
+
     // Chainlink Config
     address private vrfCoordinator;
 
@@ -41,8 +43,6 @@ contract DeployScript is THJScriptBase {
 
     function setUp() public {
         // Dependencies
-        paymentToken = ERC20(_readAddress("ERC20_ADDRESS"));
-
         // If a deployment fails uncomment lines of existing deployments
 
         // gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
@@ -50,17 +50,19 @@ contract DeployScript is THJScriptBase {
         // honeyJar = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
         // honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
 
-        gameAdmin = _readAddress("GAMEADMIN_ADDRESS");
-        jani = _readAddress("JANI_ADDRESS");
-        beekeeper = _readAddress("BEEKEEPER_ADDRESS");
-
-        // Read chainlink config
-        vrfCoordinator = _readAddress("VRF_COORDINATOR");
+        // TODO: this shoudl be read @ runtime
         deployer = vm.parseAddress("0xF951bA8107D7BF63733188E64D7E07bD27b46Af7");
     }
 
-    function run() public {
+    function run(string calldata env) public override {
         vm.startBroadcast();
+        // Read Config
+        string memory json = _getConfig(env);
+        paymentToken = ERC20(json.readAddress(".addresses.paymentToken"));
+        gameAdmin = json.readAddress(".addresses.gameAdmin");
+        jani = json.readAddress(".addresses.jani");
+        beekeeper = json.readAddress(".addresses.beekeeper");
+        vrfCoordinator = json.readAddress(".addresses.vrfCoordinator");
 
         // Deploy gameRegistry and give gameAdmin permisisons
         gameRegistry = new GameRegistry();

@@ -25,19 +25,17 @@ contract BundleTokens is THJScriptBase {
         hb = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
     }
 
-    function run(string calldata env) public {
-        vm.startBroadcast();
-
-        string memory fullJsonPath = _getConfigPath(env);
-        string memory json = vm.readFile(fullJsonPath);
+    function run(string calldata env) public override {
+        string memory json = _getConfig(env);
 
         address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
         uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
 
+        vm.startBroadcast();
+
         // Identify tokenID to hibernate
         uint8 bundleId = hb.addBundle(addresses, tokenIds, isERC1155s);
-        console.log(5);
         console.log("BundleID: ", bundleId);
 
         vm.stopBroadcast();

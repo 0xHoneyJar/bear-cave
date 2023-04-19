@@ -94,7 +94,7 @@ fi
 
 # Build forge params
 # Append --broadcast to the forge param if flag is provided
-forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvvv"
+forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY"
@@ -104,6 +104,9 @@ if [ "$resume" = true ]; then
   forge_params="${forge_params} --resume"
 fi
 
+# For some reason this doesn't work need to manully put --sig in all calls.
+sig="--sig 'run(string)()' $network"
+
 # Space for funsies
 echo ""
 
@@ -111,31 +114,32 @@ echo ""
 case "$method" in
   "test")
     echo "Forge Params ${forge_params}"
-    forge script script/TestScript.s.sol:TestScript --sig "run(string)()" $network
+
+    forge script script/TestScript.s.sol:TestScript --sig 'run(string)()' $network $forge_params
     ;;
   "testnetDeps")
     echo "Running testnetDeps"
-    forge script script/100_TestnetDeps.s.sol:TestnetDeps $forge_params
+    forge script script/100_TestnetDeps.s.sol:TestnetDeps --sig 'run(string)()' $network $forge_params
     ;;
   "deploy")
     echo "Running deploy"
-    forge script script/00_Deploy.s.sol:DeployScript $forge_params
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'run(string)()' $network $forge_params
     ;;
   "config")
     echo "Running config"
-    forge script script/01_ConfigureGame.s.sol:ConfigureGame $forge_params
+    forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'run(string)()' $network $forge_params
     ;;    
   "addBundle") 
     echo "Running addBundle"
-    forge script script/02_BundleTokens.s.sol:BundleTokens --sig "run(string)()" $network $forge_params
+    forge script script/02_BundleTokens.s.sol:BundleTokens --sig 'run(string)()' $network $forge_params
     ;;
   "setGates")
     echo "Running setGates"
-    forge script script/03_SetGates.s.sol:SetGates $forge_params
+    forge script script/03_SetGates.s.sol:SetGates --sig 'run(string)()' $network $forge_params
     ;;
   "startGame")
     echo "Running startGame"
-    forge script script/04_StartGame.s.sol:StartGame $forge_params
+    forge script script/04_StartGame.s.sol:StartGame --sig 'run(string)()' $network $forge_params
     ;;
   *)
     echo "Error: Unsupported method."
