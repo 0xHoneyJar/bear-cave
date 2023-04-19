@@ -20,7 +20,7 @@ abstract contract THJScriptBase is Script {
     /// @notice only is used to read the config path based on the environemtn.
     function _getConfigPath(string memory env) internal view returns (string memory) {
         string memory filename = string.concat(env, ".json");
-        string memory jsonPath = string.concat("/script/config.", filename);
+        string memory jsonPath = string.concat("/script/gen2/config.", filename);
         string memory root = vm.projectRoot();
         console.log("Loading Config: ", jsonPath);
         return string.concat(root, jsonPath);
