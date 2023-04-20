@@ -25,17 +25,17 @@
     "bundleTokens": [
         {
             "address": "0xeC420B0d0dA852359e0D6a31Ec322AB502C788a2",
-            "id": 20,
+            "id": 22,
             "isERC1155": false
         },
         {
             "address": "0xeC420B0d0dA852359e0D6a31Ec322AB502C788a2",
-            "id": 21,
+            "id": 23,
             "isERC1155": false
         },
         {
             "address": "0x098D39bf9D50f2504ACF7B201B4f2e9169A1b388",
-            "id": 20,
+            "id": 21,
             "isERC1155": true
         }
     ]

@@ -105,7 +105,7 @@ forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast"
   if [ "$no_verify" = false ]; then
-    forge_params="$forge_params} --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+    forge_params="$forge_params --verify --etherscan-api-key $ETHERSCAN_API_KEY"
   fi
 fi
 
@@ -129,9 +129,18 @@ case "$method" in
     echo "Running testnetDeps"
     forge script script/100_TestnetDeps.s.sol:TestnetDeps --sig 'run(string)()' $network $forge_params
     ;;
-  "deploy")
+  "deploy1")
     echo "Running deploy"
     forge script script/00_Deploy.s.sol:DeployScript --sig 'run(string)()' $network $forge_params
+    ;;
+  "deploy2")
+    echo "Running deploy"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJar(string)()' $network $forge_params
+    ;;
+
+  "deploy3")
+    echo "Running deploy"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyBox(string)()' $network $forge_params
     ;;
   "config")
     echo "Running config"
