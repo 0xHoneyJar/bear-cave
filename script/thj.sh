@@ -4,7 +4,7 @@
 usage() {
     echo "THJ Utility Belt";
     echo "";
-    echo "Usage: $0 -n <network> <method>  [--no-load-env] [--broadcast] [--resume]"
+    echo "Usage: $0 -n <network> <method>  [--no-load-env] [--broadcast] [--no-verify] [--resume]"
     echo "";
     echo "Description: Utility belt for THJ on-chain commands for <method>."
     echo "             Loads environment variables from .env and a file specific to the <network> parameter  "
@@ -14,6 +14,7 @@ usage() {
     echo "                         - Options [testnetDeps|deploy|config|addBundle|setGates|startGame]"
     echo "  --no-load-env       : Optional flag to skip loading environment variables from .env file."
     echo "  --broadcast         : Optional flag to append '--broadcast' to the forge command."
+    echo "  --no-verify         : Optional flag to remove append '--verify' from the forge command when --broadcast is active"
     echo "  --resume            : Optional flag to append '--resume' to the forge command."
 }
 
@@ -24,6 +25,7 @@ load_env=true
 network=""
 method=""
 forge_params=""
+no_verify=false
 
 # Check if at least three arguments are provided
 if [ "$#" -lt 3 ]; then
@@ -42,6 +44,10 @@ while [[ "$#" -gt 0 ]]; do
       broadcast=true
       shift
       ;;
+    --no-verify)
+      no_verify=true
+      shift
+      ;;  
     --resume)
       resume=true
       shift
@@ -97,7 +103,10 @@ fi
 forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 
 if [ "$broadcast" = true ]; then
-  forge_params="${forge_params} --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+  forge_params="${forge_params} --broadcast"
+  if [ "$no_verify" = false ]; then
+    forge_params="$forge_params} --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+  fi
 fi
 
 if [ "$resume" = true ]; then

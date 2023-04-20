@@ -78,12 +78,7 @@ contract DeployScript is THJScriptBase {
 
         // Deploy HoneyJar with Create2
         bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarOogaBooga"));
-        bytes memory creationCode = type(HoneyJar).creationCode;
-        bytes memory constructorArgs = abi.encode(deployer, address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
-        address honeyJarAddress = Create2.deploy(0, salt, abi.encodePacked(creationCode, constructorArgs));
-        honeyJar = HoneyJar(honeyJarAddress);
-
-        // honeyJar = new HoneyJar(address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
+        honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
 
         // Deploy HoneyBox
         honeyBox = new HoneyBox(

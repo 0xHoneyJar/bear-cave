@@ -5,46 +5,47 @@ import "./THJScriptBase.sol";
 
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HoneyJar} from "src/HoneyJar.sol";
+
+// import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+// import {CREATE3} from "solmate/utils/CREATE3.sol";
+import {Create3} from "./Create3.sol";
+
 // Calls honeyBox.addBundle
 
 /// @notice this script is only meant to test do not use for production
 contract TestScript is THJScriptBase {
     using stdJson for string;
 
-    address private honeyBox;
+    address private gameRegistry;
+    address private deployer;
 
-    HoneyBox.MintConfig mintConfig;
+    HoneyJar private honeyJar;
+    uint256 private honeyJarStartIndex;
+    uint256 private honeyJarAmount;
+
+    // CREATE2_FACTORY
 
     function setUp() public {
-        honeyBox = _readAddress("HONEYBOX_ADDRESS");
+        gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
+        deployer = vm.parseAddress("0xF951bA8107D7BF63733188E64D7E07bD27b46Af7");
     }
 
     function run(string calldata env) public override {
+        vm.startBroadcast();
         string memory json = _getConfig(env);
 
-        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
-        uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
-        bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+        honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
+        honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
 
-        bytes memory rawMintConfig = json.parseRaw(".mintConfig");
-        mintConfig = abi.decode(rawMintConfig, (HoneyBox.MintConfig));
-        console.log(mintConfig.maxHoneyJar);
-        console.log(mintConfig.maxClaimableHoneyJar);
-        console.log(mintConfig.honeyJarPrice_ERC20);
-        console.log(mintConfig.honeyJarPrice_ETH);
+        bytes32 salt = keccak256(bytes("TheBearasLoveTheHoneyJar"));
+        // bytes memory creationCode = type(HoneyJar).creationCode;
+        // bytes memory constructorArgs = abi.encode(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
+        // bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
 
-        // Build out txns here.
-        for (uint256 i = 0; i < addresses.length; i++) {
-            if (isERC1155s[i]) {
-                ERC1155(addresses[i]).setApprovalForAll(honeyBox, true);
-                continue;
-            }
+        honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
 
-            ERC721(addresses[i]).approve(honeyBox, tokenIds[i]);
-            console.log(addresses[i]);
-            console.log(tokenIds[i]);
-            console.log(isERC1155s[i]);
-        }
+        console.log("honeyJarAddy: ", address(honeyJar));
+        vm.stopBroadcast();
     }
 }
