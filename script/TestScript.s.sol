@@ -6,6 +6,7 @@ import "./THJScriptBase.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
+import {HoneyBox} from "src/HoneyBox.sol";
 
 // Calls honeyBox.addBundle
 
@@ -13,29 +14,32 @@ import {HoneyJar} from "src/HoneyJar.sol";
 contract TestScript is THJScriptBase {
     using stdJson for string;
 
-    address private gameRegistry;
-    address private deployer;
-
-    function setUp() public {
-        gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
-        deployer = vm.envAddress("DEPLOYER_ADDRESS");
-    }
+    function setUp() public {}
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        uint256 honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
-        uint256 honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
+        address honeyBox = vm.envAddress("HONEYBOX_ADDRESS");
 
-        vm.startBroadcast(deployer);
-        // bytes memory creationCode = type(HoneyJar).creationCode;
-        // bytes memory constructorArgs = abi.encode(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
-        // bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
+        // ReadConfig
+        // address deployer = json.readAddress(".addresses.beekeeper");
+        address gameAdmin = json.readAddress(".addresses.gameAdmin");
 
-        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarOogaBooga"));
-        HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
+        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
+        uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
+        bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
 
-        console.log("honeyJarAddy: ", address(honeyJar));
-        vm.stopBroadcast();
+        vm.startBroadcast(gameAdmin);
+
+        // Approve all
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (isERC1155s[i]) {
+                ERC1155(addresses[i]).setApprovalForAll(honeyBox, true);
+                continue;
+            }
+            ERC721(addresses[i]).approve(honeyBox, tokenIds[i]);
+        }
+
+        HoneyBox(honeyBox).puffPuffPassOut(0);
     }
 }

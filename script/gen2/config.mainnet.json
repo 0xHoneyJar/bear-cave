@@ -21,6 +21,7 @@
         "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
         "subId": 670
     },
+    "bundleId": 0,
     "bundleTokens": [
         {
             "address": "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
@@ -193,7 +194,7 @@
             "isERC1155": false
         },
         {
-            "address": "0x32bb5a147b5371fd901aa4a72b7f82c58a87e36d",
+            "address": "0x34d85c9cdeb23fa97cb08333b511ac86e1c4e258",
             "id": 60803,
             "isERC1155": false
         },
