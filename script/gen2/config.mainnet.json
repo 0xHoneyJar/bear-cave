@@ -13,7 +13,8 @@
     },
     "honeyJar": {
         "startIndex": 0,
-        "maxMintableForChain": 4200000
+        "maxMintableForChain": 4200000,
+        "baseURI": "ipfs://QmVf2j976sw3Gfacg4AHeX2nBa6y6cNqxvx2pf2Qysq1Hd/"
     },
     "revShare": 223300000000000000,
     "vrf": {
@@ -21,7 +22,7 @@
         "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
         "subId": 670
     },
-    "bundleId": 0,
+    "bundleId": 1,
     "bundleTokens": [
         {
             "address": "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",

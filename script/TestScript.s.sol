@@ -19,27 +19,15 @@ contract TestScript is THJScriptBase {
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        address honeyBox = vm.envAddress("HONEYBOX_ADDRESS");
-
+        HoneyJar honeyJar = HoneyJar(vm.envAddress("HONEYJAR_ADDRESS"));
         // ReadConfig
         // address deployer = json.readAddress(".addresses.beekeeper");
-        address gameAdmin = json.readAddress(".addresses.gameAdmin");
+        string memory baseURI = json.readString(".honeyJar.baseURI");
 
-        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
-        uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
-        bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+        // vm.startBroadCast(gameAdmin); // Simulate with GameAdmin
+        vm.startBroadcast();
 
-        vm.startBroadcast(gameAdmin);
-
-        // Approve all
-        for (uint256 i = 0; i < addresses.length; i++) {
-            if (isERC1155s[i]) {
-                ERC1155(addresses[i]).setApprovalForAll(honeyBox, true);
-                continue;
-            }
-            ERC721(addresses[i]).approve(honeyBox, tokenIds[i]);
-        }
-
-        HoneyBox(honeyBox).puffPuffPassOut(0);
+        honeyJar.setBaseURI(baseURI);
+        vm.stopBroadcast();
     }
 }
