@@ -5,15 +5,18 @@ libs = ['lib']
 
 remappings = [
     '@openzeppelin/=lib/openzeppelin-contracts/',
+    '@layerzero/=lib/solidity-examples/contracts/',
     '@chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/',
+    'chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/contracts/src/v0.8/',
     'solmate/=lib/solmate/src/'
 ]
 
 
 fs_permissions = [
     {access = "write", path = "./deployments/"},
-    {access = "read", path = "./src/scripts/"}
+    {access = "read", path = "./script/"}
 ]
+
 
 solc_version = "0.8.17"
 optimizer = true

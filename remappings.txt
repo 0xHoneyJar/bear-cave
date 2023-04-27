@@ -1,10 +1,12 @@
 @chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/
+@layerzero/=lib/solidity-examples/contracts/
 @openzeppelin/=lib/openzeppelin-contracts/
 ERC721A/=lib/ERC721A/contracts/
-chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/vendor/@arbitrum/nitro-contracts/src/
-ds-test/=lib/solmate/lib/ds-test/src/
+chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/contracts/src/v0.8/
+ds-test/=lib/forge-std/lib/ds-test/src/
 dual-ownership-nft/=lib/dual-ownership-nft/contracts/
 forge-std/=lib/forge-std/src/
 murky/=lib/murky/src/
 openzeppelin-contracts/=lib/murky/lib/openzeppelin-contracts/
+solidity-examples/=lib/solidity-examples/contracts/
 solmate/=lib/solmate/src/

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.17;
 
 library Random {
     // Returns a random index in the range [0, _max)
@@ -10,7 +10,6 @@ library Random {
         return randomNum % _max;
     }
 
-    // TODO: Have this shit be a VRFConsumer or something
     // Returns a random number between 0 and 2^256-1
     /// @dev this is the same number for each block per caller. :sadge:
     function random(address _sender) private view returns (uint256) {
