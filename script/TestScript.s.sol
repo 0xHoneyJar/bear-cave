@@ -28,6 +28,7 @@ contract TestScript is THJScriptBase {
         vm.startBroadcast();
 
         honeyJar.setBaseURI(baseURI);
+        honeyJar.setGenerated(true);
         vm.stopBroadcast();
     }
 }
