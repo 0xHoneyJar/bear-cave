@@ -461,14 +461,13 @@ contract HoneyBox is
     }
 
     /// @notice transfers NFT defined by sleeper_ to the caller of of the method
-    /// @dev whens
     function _transferSleeper(SleepingNFT memory sleeper_, address from, address to) internal {
         if (sleeper_.isERC1155) {
             // ERC1155
-            IERC1155(sleeper_.tokenAddress).safeTransferFrom(address(this), msg.sender, sleeper_.tokenId, 1, "");
+            IERC1155(sleeper_.tokenAddress).safeTransferFrom(from, to, sleeper_.tokenId, 1, "");
         } else {
             //  ERC721
-            IERC721(sleeper_.tokenAddress).safeTransferFrom(address(this), msg.sender, sleeper_.tokenId);
+            IERC721(sleeper_.tokenAddress).safeTransferFrom(from, to, sleeper_.tokenId);
         }
     }
 
