@@ -160,9 +160,9 @@ contract HoneyBox is
     bool public initialized;
 
     // TODO: Don't double save SlumberParty
-    /// @notice list of slumberParties
-    SlumberParty[] public slumberPartyList; // list of slumberparties
-    /// @notice bundleId --> SlumblerParty (could be used to index into slumberPartyList)
+    /// @notice id of the next party
+    uint8 public nextSlumberParty;
+    /// @notice bundleId --> SlumblerParty
     mapping(uint8 => SlumberParty) public slumberParties;
     /// @notice tracks free claims for a given bundle
     mapping(uint8 => uint32) public claimed;
@@ -235,10 +235,19 @@ contract HoneyBox is
         emit SlumberPartyStarted(bundleId_);
     }
 
-    function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper) external onlyRole(Constants.GAME_ADMIN) {
+    /// @notice admin function to add more sleepers to the party once a bundle is started
+    /// @param sleeper the NFT being added
+    /// @param transfer to indicates if a transfer should be called. -- false: if an NFT is yeted in/airdroped
+    function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper, bool transfer)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         SlumberParty storage party = slumberParties[bundleId_];
         party.sleepoors.push(sleeper);
-        _transferSleeper(sleeper, msg.sender, address(this));
+
+        if (transfer) {
+            _transferSleeper(sleeper, msg.sender, address(this));
+        }
 
         emit SleeperAdded(bundleId_, sleeper);
     }
@@ -255,12 +264,12 @@ contract HoneyBox is
             revert InvalidInput("addBundle");
         }
 
-        // TODO: do we need this list at all?
-        if (slumberPartyList.length > 255) revert TooManyBundles();
-        uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
+        if (nextSlumberParty > 255) revert TooManyBundles();
+        uint8 bundleId = nextSlumberParty; // Will fail if we have >255 bundles
+        nextSlumberParty++;
 
         // Add to the bundle mapping & list
-        SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
+        SlumberParty storage slumberParty = SlumberParty(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
 
         // Synthesize sleeper configs from input
