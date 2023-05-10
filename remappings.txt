@@ -7,6 +7,6 @@ ds-test/=lib/forge-std/lib/ds-test/src/
 dual-ownership-nft/=lib/dual-ownership-nft/contracts/
 forge-std/=lib/forge-std/src/
 murky/=lib/murky/src/
-openzeppelin-contracts/=lib/murky/lib/openzeppelin-contracts/
+openzeppelin-contracts/=lib/openzeppelin-contracts/
 solidity-examples/=lib/solidity-examples/contracts/
 solmate/=lib/solmate/src/
