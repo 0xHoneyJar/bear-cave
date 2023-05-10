@@ -161,7 +161,7 @@ contract HoneyBox is
 
     // TODO: Don't double save SlumberParty
     /// @notice id of the next party
-    uint8 public nextSlumberParty;
+    SlumberParty[] public slumberPartyList;
     /// @notice bundleId --> SlumblerParty
     mapping(uint8 => SlumberParty) public slumberParties;
     /// @notice tracks free claims for a given bundle
@@ -264,12 +264,11 @@ contract HoneyBox is
             revert InvalidInput("addBundle");
         }
 
-        if (nextSlumberParty > 255) revert TooManyBundles();
-        uint8 bundleId = nextSlumberParty; // Will fail if we have >255 bundles
-        nextSlumberParty++;
+        if (slumberPartyList.length > 255) revert TooManyBundles();
+        uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
 
         // Add to the bundle mapping & list
-        SlumberParty storage slumberParty = SlumberParty(); // 0 initialized Bundle
+        SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
 
         // Synthesize sleeper configs from input
