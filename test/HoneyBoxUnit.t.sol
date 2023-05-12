@@ -139,6 +139,32 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _addBundle(0);
     }
 
+    function testAddToParty() public {
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        uint256 numSleepers = party.sleepoors.length;
+
+        // Add random addr
+        HoneyBox.SleepingNFT memory newSleeper;
+        newSleeper.isERC1155 = false;
+        newSleeper.tokenId = 1;
+        newSleeper.tokenAddress = makeAddr("token");
+
+        honeyBox.addToParty(party.bundleId, newSleeper, false);
+
+        // Add a real erc1155
+        MockERC1155 newToken = new MockERC1155();
+        newToken.mint(address(this), 1, 1, "");
+        newSleeper.isERC1155 = true;
+        newSleeper.tokenId = 1;
+        newSleeper.tokenAddress = address(newToken);
+        newToken.setApprovalForAll(address(honeyBox), true); // fails without approvals
+
+        honeyBox.addToParty(party.bundleId, newSleeper, true);
+
+        party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.sleepoors.length, numSleepers + 2);
+    }
+
     // ============= Meking HoneyJar ==================== //
 
     function testFailMekHoney_notSleeping() public {
