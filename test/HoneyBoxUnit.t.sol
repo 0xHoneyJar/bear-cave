@@ -239,13 +239,11 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     // ============= Waking Slumber Party ==================== //
 
     function testFailOpenHotBox() public {
-        // Returns NotEnoughHoneyJarMinted
+        // NFT doens't exist
         honeyBox.wakeSleeper(bundleId, 0);
-        // TODO: test minting one and then trying.
     }
 
     function testFailWakeBear_notEnoughHoney() public {
-        // Same as the bear is sleeping
         _puffPuffPassOut(bundleId);
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
@@ -266,6 +264,17 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         honeyBox.wakeSleeper(bundleId, 0);
     }
 
+    function testFailWakeWithWrongJar() public {
+        _puffPuffPassOut(bundleId);
+
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+
+        _simulateVRF(bundleId);
+
+        honeyBox.wakeSleeper(bundleId, 0);
+    }
+
     function testFailOpenHotBox_allHoneyJarNoVRF() public {
         _puffPuffPassOut(bundleId);
 
@@ -282,9 +291,30 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         _simulateVRF(bundleId);
 
-        honeyBox.wakeSleeper(bundleId, 0);
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        _wakeAll(bundleId, party.fermentedJars);
+
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc721.balanceOf(address(this)), 1, "the bear didn't wake up");
+    }
+
+    function testFailWakePartyTwice() public {
+        _puffPuffPassOut(bundleId);
+
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+
+        _simulateVRF(bundleId);
+
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        _wakeAll(bundleId, party.fermentedJars);
+        _wakeAll(bundleId, party.fermentedJars);
+    }
+
+    function _wakeAll(uint8 bundleId_, HoneyBox.FermentedJar[] memory jars) internal {
+        for (uint256 i = 0; i < jars.length; i++) {
+            honeyBox.wakeSleeper(bundleId_, jars[i].id);
+        }
     }
 
     function testWorks() public {
@@ -309,8 +339,11 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
         _simulateVRF(secondBundleId);
 
-        honeyBox.wakeSleeper(bundleId, 0);
-        honeyBox.wakeSleeper(secondBundleId, 0);
+        HoneyBox.SlumberParty memory party1 = honeyBox.getSlumberParty(bundleId);
+        HoneyBox.SlumberParty memory party2 = honeyBox.getSlumberParty(secondBundleId);
+
+        _wakeAll(bundleId, party1.fermentedJars);
+        _wakeAll(secondBundleId, party2.fermentedJars);
 
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc1155.balanceOf(address(this), 2), 1, "the bear didn't wake up");

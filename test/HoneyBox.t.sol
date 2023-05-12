@@ -25,10 +25,11 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     uint256 private constant MINT_PRICE_ERC20 = 99 * 1e8;
     uint256 private constant MINT_PRICE_ETH = 99 * 1e6 * 1 gwei;
+    uint256 private constant START_TOKEN_ID = 69;
 
     // Scenario Setup
     uint32 private maxHoneyJar = 15;
-    uint256 private honeyJarShare = 2233 * 1e14; // In WAD (.2233)
+    uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
 
     // Gatekeeper
@@ -85,8 +86,11 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         jani = payable(makeAddr("definitelyNotJani"));
         gameAdmin = makeAddr("gameAdmin");
         alfaHunter = makeAddr("alfaHunter");
+        vm.deal(alfaHunter, 100 ether);
         bera = makeAddr("bera");
+        vm.deal(bera, 100 ether);
         clown = makeAddr("clown");
+        vm.deal(clown, 100 ether);
 
         // @solidity-ignore no-console
         console.log("beekeeper: ", beekeeper);
@@ -120,7 +124,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.setJani(jani);
         gameRegistry.setBeekeeper(beekeeper);
 
-        honeyJar = new HoneyJar(address(this), address(gameRegistry), 69, 69);
+        honeyJar = new HoneyJar(address(this), address(gameRegistry), START_TOKEN_ID, 69);
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
         honeyBox = new HoneyBox(
@@ -237,34 +241,37 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyBox.mekHoneyJarWithERC20(bundleId, 3);
     }
 
-    function testEarlyWakeAttempt() public {
+    function testFailEarlyWakeAttempt() public {
         vm.warp(block.timestamp + 72 hours);
 
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 3);
         honeyBox.mekHoneyJarWithERC20(bundleId, 3);
 
-        honeyBox.wakeSleeper(bundleId, 1);
+        honeyBox.wakeSleeper(bundleId, START_TOKEN_ID);
     }
 
     function testMultipleWinners() public {
         vm.warp(block.timestamp + 72 hours);
 
         vm.startPrank(alfaHunter);
-        honeyBox.mekHoneyJarWithETH(bundleId, 5);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        honeyBox.mekHoneyJarWithETH(bundleId, 5);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
         vm.stopPrank();
 
         vm.startPrank(clown);
-        honeyBox.mekHoneyJarWithETH(bundleId, 5);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
         vm.stopPrank();
+
+        vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
+
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
         assertEq(party.bundleId, bundleId);
-        assertEq(2, party.fermentedJars.length);
-        assertEq(2, party.sleepoors.length);
+        assertEq(party.fermentedJars.length, 2, "wrong # of fermented jars");
+        assertEq(party.sleepoors.length, 2, "wrong # of sleepers");
     }
 
     function testFullRun() public {
@@ -390,22 +397,28 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
          */
 
         for (uint256 i = 0; i < party.fermentedJars.length; i++) {
-            _checkWinner(party.fermentedJars[i].id);
+            _checkWinner(party.fermentedJars[i].id, party.sleepoors[i]);
         }
 
         console.log("janiBal: ", paymentToken.balanceOf(jani));
         console.log("beekeeper: ", paymentToken.balanceOf(beekeeper));
     }
 
-    function _checkWinner(uint256 winningID) internal {
+    function _checkWinner(uint256 winningID, HoneyBox.SleepingNFT memory sleeper) internal {
         address winner = honeyJar.ownerOf(winningID);
-        assertEq(erc1155.balanceOf(winner, SFT_ID), 0);
-        assertEq(erc721.balanceOf(winner), 0);
+        if (sleeper.isERC1155) {
+            assertEq(erc1155.balanceOf(winner, SFT_ID), 0);
+        } else {
+            assertEq(erc721.balanceOf(winner), 0);
+        }
 
         vm.startPrank(winner);
         honeyBox.wakeSleeper(bundleId, winningID);
-        assertEq(erc1155.balanceOf(winner, SFT_ID), 1);
-        assertEq(erc721.balanceOf(winner), 1);
+        if (sleeper.isERC1155) {
+            assertEq(erc1155.balanceOf(winner, SFT_ID), 1);
+        } else {
+            assertEq(erc721.balanceOf(winner), 1);
+        }
         vm.stopPrank();
     }
 }

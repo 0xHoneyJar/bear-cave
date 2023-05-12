@@ -48,7 +48,7 @@ contract HoneyBox is
         /// @dev id of the fermented jar
         uint256 id;
         /// @dev boolean to determine if the user has awoken the sleeping NFT
-        bool hasAwoke;
+        bool isUsed;
     }
 
     /// @notice The bundle Config (Collection)
@@ -59,6 +59,8 @@ contract HoneyBox is
         uint256 publicMintTime;
         /// @dev Used so a tokenID 0 can't wake the slumberParty before special Honeyjar is found.
         bool fermentedJarsFound;
+        /// @dev used to track the number of used fermentedJars
+        uint256 numUsed;
         /// @dev list of jars that have a claim on the sleeping NFTs
         FermentedJar[] fermentedJars;
         /// @dev list of sleeping NFTs
@@ -88,7 +90,7 @@ contract HoneyBox is
     error PartyAlreadyWoke(uint8 bundleId);
     error GameInProgress();
     error AlreadyTooManyHoneyJars(uint8 bundleId);
-    error FermentedJarNotFound(uint8 bundleId); // TODO: rename to fermented
+    error FermentedJarNotFound(uint8 bundleId);
     error NotEnoughHoneyJarMinted(uint8 bundleId);
     error GeneralMintNotOpen(uint8 bundleId);
     error InvalidBundle(uint8 bundleId);
@@ -264,8 +266,8 @@ contract HoneyBox is
             revert InvalidInput("addBundle");
         }
 
-        uint8 bundleId = uint8(uint256(keccak256(abi.encode(block.timestamp))) % 256);
-        if (slumberParties[bundleId].bundleId != 0) revert TooManyBundles();
+        if (slumberPartyList.length > 255) revert TooManyBundles();
+        uint8 bundleId = uint8(slumberPartyList.length);
 
         // Add to the bundle mapping & list
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
@@ -423,13 +425,14 @@ contract HoneyBox is
         for (uint256 i = 0; i < numSleepers; i++) {
             fermentedIndex = randomNumbers[i] % numHoneyJars;
             fermentedIndexes[i] = fermentedIndex;
-            party.fermentedJars[i] = FermentedJar(honeyJarIds[fermentedIndex], false);
+            party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
         }
 
         party.fermentedJarsFound = true;
         emit FermentedJarsFound(bundleId, fermentedIndexes);
     }
 
+    // TODO: consider making this FCFS for claiming.
     /// @notice transfers sleeping NFT to msg.sender if they hold the special honeyJar
     /// @dev The index in which the jarId is stored within party.fermentedJars will be the index of the NFT that will be claimed for party.sleepoors
     function wakeSleeper(uint8 bundleId_, uint256 jarId) external {
@@ -440,17 +443,23 @@ contract HoneyBox is
         if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
 
         SlumberParty storage party = slumberParties[bundleId_];
-        FermentedJar[] storage fermentedJars = party.fermentedJars;
+        if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
         if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);
 
+        FermentedJar[] storage fermentedJars = party.fermentedJars;
+
         uint256 numFermentedJars = fermentedJars.length;
+        uint256 sleeperIndex = 0;
         for (uint256 i = 0; i < numFermentedJars; ++i) {
             if (fermentedJars[i].id != jarId) continue;
-            if (fermentedJars[i].hasAwoke) revert JarUsed(bundleId_, jarId);
+            if (fermentedJars[i].isUsed) revert JarUsed(bundleId_, jarId);
             // The caller is the owner of the Fermented jar and its unused
-            fermentedJars[i].hasAwoke = true;
+            fermentedJars[i].isUsed = true;
+            sleeperIndex = party.numUsed;
+            party.numUsed++;
 
-            _transferSleeper(party.sleepoors[i], address(this), msg.sender);
+            // party.numUsed is the index of the sleeper to wake up
+            _transferSleeper(party.sleepoors[sleeperIndex], address(this), msg.sender);
             emit SleeperAwoke(bundleId_, party.sleepoors[i].tokenId, jarId, msg.sender);
             // Early return out of loop if successful
             return;
