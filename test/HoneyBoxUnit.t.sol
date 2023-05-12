@@ -111,7 +111,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         gameRegistry.registerGame(address(honeyBox));
         gameRegistry.startGame(address(honeyBox));
         bundleId = _addBundle(0);
-        
+
         // HoneyBox needs at least one gate to function.
         gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
     }
@@ -217,7 +217,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     }
 
     function _simulateVRF(uint256 bundleId_) private {
-        // Gotta manually do this to simulate VRF working.
+        // Loop through potential requestIds starting at 1 to find one corresponding to bundle
         for (uint256 i = 1; i < 5; ++i) {
             if (honeyBox.rng(i) != bundleId_) continue;
             vrfCoordinator.fulfillRandomWords(i, address(honeyBox));
