@@ -11,17 +11,19 @@ import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 import {MockVRFCoordinator} from "test/mocks/MockVRFCoordinator.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+
 import {UserFactory} from "test/utils/UserFactory.sol";
 import {Random} from "test/utils/Random.sol";
 
-import "src/HoneyBox.sol";
+import {HoneyBox} from "src/HoneyBox.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
+contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -105,12 +107,13 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         vrfCoordinator.addConsumer(subId, address(honeyBox));
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
-        // HoneyBox needs at least one gate to function.
-        gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
 
         gameRegistry.registerGame(address(honeyBox));
         gameRegistry.startGame(address(honeyBox));
         bundleId = _addBundle(0);
+        
+        // HoneyBox needs at least one gate to function.
+        gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
     }
 
     function testFail_alreadyInitialized() public {
@@ -222,23 +225,23 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         }
     }
 
-    function testFindSpecialHoney() public {
+    function testFindFermentedHoney() public {
         _puffPuffPassOut(bundleId);
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         _makeMultipleHoney(bundleId, maxHoneyJar);
 
         _simulateVRF(bundleId);
-        (,,, bool specialHoneyJarFound,) = honeyBox.slumberParties(bundleId);
-
-        assertEq(specialHoneyJarFound, true, "special honey is not found");
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.fermentedJarsFound, true, "Fermented Jar is not found");
     }
 
     // ============= Waking Slumber Party ==================== //
 
     function testFailOpenHotBox() public {
         // Returns NotEnoughHoneyJarMinted
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
+        // TODO: test minting one and then trying.
     }
 
     function testFailWakeBear_notEnoughHoney() public {
@@ -248,7 +251,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
 
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
     }
 
     function testFailOpenHotBox_wrongUser() public {
@@ -260,7 +263,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
 
         vm.prank(anotherUser);
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
     }
 
     function testFailOpenHotBox_allHoneyJarNoVRF() public {
@@ -268,7 +271,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         _makeMultipleHoney(bundleId, maxHoneyJar);
-        honeyBox.openHotBox(bundleId); // SpecialHoneyJar not found
+        honeyBox.wakeSleeper(bundleId, 0); // SpecialHoneyJar not found
     }
 
     function testWakeParty() public {
@@ -279,7 +282,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         _simulateVRF(bundleId);
 
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc721.balanceOf(address(this)), 1, "the bear didn't wake up");
     }
@@ -306,8 +309,8 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
         _simulateVRF(secondBundleId);
 
-        honeyBox.openHotBox(bundleId);
-        honeyBox.openHotBox(secondBundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
+        honeyBox.wakeSleeper(secondBundleId, 0);
 
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc1155.balanceOf(address(this), 2), 1, "the bear didn't wake up");

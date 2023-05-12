@@ -264,8 +264,8 @@ contract HoneyBox is
             revert InvalidInput("addBundle");
         }
 
-        if (slumberPartyList.length > 255) revert TooManyBundles();
-        uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
+        uint8 bundleId = uint8(uint256(keccak256(abi.encode(block.timestamp))) % 256);
+        if (slumberParties[bundleId].bundleId != 0) revert TooManyBundles();
 
         // Add to the bundle mapping & list
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
