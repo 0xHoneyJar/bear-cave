@@ -9,6 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 
@@ -35,26 +36,46 @@ contract HoneyBox is
 
     /// @notice the lone sleepooor (single NFT)
     struct SleepingNFT {
+        /// @dev address of the ERC721/ERC1155
         address tokenAddress;
-        uint256 tokenId; // The ID of the sleeping NFT
+        /// @dev tokenID of the sleeping NFT
+        uint256 tokenId;
+        /// @dev true if the tokenAddress points to an ERC1155
         bool isERC1155;
+    }
+
+    struct FermentedJar {
+        /// @dev id of the fermented jar
+        uint256 id;
+        /// @dev boolean to determine if the user has awoken the sleeping NFT
+        bool isUsed;
     }
 
     /// @notice The bundle Config (Collection)
     struct SlumberParty {
+        /// @dev unique ID representing the bundle
         uint8 bundleId;
-        uint256 specialHoneyJar; // defaults to 0
-        uint256 publicMintTime; // block.timestamp that general public can start making honeyJars
-        bool specialHoneyJarFound; // So tokenID=0 can't wake bear before special honey is found
-        bool isAwake;
+        /// @dev the block.timestamp when the mint() function can be called. Should be set at game-start
+        uint256 publicMintTime;
+        /// @dev Used so a tokenID 0 can't wake the slumberParty before special Honeyjar is found.
+        bool fermentedJarsFound;
+        /// @dev used to track the number of used fermentedJars
+        uint256 numUsed;
+        /// @dev list of jars that have a claim on the sleeping NFTs
+        FermentedJar[] fermentedJars;
+        /// @dev list of sleeping NFTs
         SleepingNFT[] sleepoors;
     }
 
     /// @notice Configuration for minting for games occurring at the same time.
     struct MintConfig {
+        /// @dev maximum number of honeyJar alloted to be minted.
         uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m)
+        /// @dev number of free honey jars to be claimed. Should be sum(gates.maxClaimable)
         uint32 maxClaimableHoneyJar; // # of honeyJars that can be claimed (total)
+        /// @dev value of the honeyJar in ERC20 -- Ohm is 1e9
         uint256 honeyJarPrice_ERC20;
+        /// @dev value of the honeyJar in ETH
         uint256 honeyJarPrice_ETH;
     }
 
@@ -69,7 +90,7 @@ contract HoneyBox is
     error PartyAlreadyWoke(uint8 bundleId);
     error GameInProgress();
     error AlreadyTooManyHoneyJars(uint8 bundleId);
-    error SpecialHoneyJarNotFound(uint8 bundleId);
+    error FermentedJarNotFound(uint8 bundleId);
     error NotEnoughHoneyJarMinted(uint8 bundleId);
     error GeneralMintNotOpen(uint8 bundleId);
     error InvalidBundle(uint8 bundleId);
@@ -77,12 +98,14 @@ contract HoneyBox is
     error TooManyBundles();
 
     // User Errors
-    error NotOwnerOfSpecialHoneyJar(uint8 bundleId, uint256 honeyJarId);
+    error NotFermentedJarOwner(uint8 bundleId, uint256 honeyJarId);
     error InvalidInput(string method);
     error Claim_InvalidProof();
     error MekingTooManyHoneyJars(uint8 bundleId);
     error ZeroMint();
     error WrongAmount_ETH(uint256 expected, uint256 actual);
+    error NotJarOwner();
+    error JarUsed(uint8 bundle, uint256 jarId);
 
     /**
      * Events
@@ -90,11 +113,12 @@ contract HoneyBox is
     event Initialized(MintConfig mintConfig);
     event SlumberPartyStarted(uint8 bundleId);
     event SlumberPartyAdded(uint8 bundleId);
-    event SpecialHoneyJarFound(uint8 bundleId, uint256 honeyJarId);
+    event FermentedJarsFound(uint8 bundleId, uint256[] honeyJarIds);
     event MintConfigChanged(MintConfig mintConfig);
     event VRFConfigChanged(VRFConfig vrfConfig);
     event HoneyJarClaimed(uint256 bundleId, uint32 gateId, address player, uint256 amount);
-    event PartyAwoke(uint8 bundleId, address player);
+    event SleeperAwoke(uint8 bundleId, uint256 tokenId, uint256 jarId, address player);
+    event SleeperAdded(uint8 bundleId_, SleepingNFT sleeper);
 
     /**
      * Configuration
@@ -136,12 +160,20 @@ contract HoneyBox is
      * Internal Storage
      */
     bool public initialized;
-    SlumberParty[] public slumberPartyList; // list of slumberparties
-    mapping(uint8 => SlumberParty) public slumberParties; //  bundleId --> bundle
-    mapping(uint8 => uint32) public claimed; // bundleId -> numClaimed (free claims)
-    mapping(uint256 => uint8) public rng; // Chainlink VRF request ID => bundleID
+
+    // TODO: Don't double save SlumberParty
+    /// @notice id of the next party
+    SlumberParty[] public slumberPartyList;
+    /// @notice bundleId --> SlumblerParty
+    mapping(uint8 => SlumberParty) public slumberParties;
+    /// @notice tracks free claims for a given bundle
+    mapping(uint8 => uint32) public claimed;
+    /// @notice Chainlink VRF request ID => bundleID
+    mapping(uint256 => uint8) public rng;
+    /// @notice Reverse mapping for honeyjar to bundle (UI)
     mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
-    mapping(uint8 => uint256[]) public honeyJarShelf; // List of Honeyjars associated with a particular bundle (SlumberParty)
+    /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
+    mapping(uint8 => uint256[]) public honeyJarShelf;
 
     constructor(
         address _vrfCoordinator,
@@ -193,8 +225,6 @@ contract HoneyBox is
         uint256 sleeperCount = sleepoors.length;
         if (sleeperCount == 0) revert InvalidBundle(bundleId_);
 
-        SleepingNFT storage sleepoor;
-
         uint256[] memory allStages = _getStages();
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
@@ -202,17 +232,26 @@ contract HoneyBox is
         gatekeeper.startGatesForBundle(bundleId_);
 
         for (uint256 i = 0; i < sleeperCount; ++i) {
-            sleepoor = sleepoors[i];
-
-            if (sleepoor.isERC1155) {
-                // ERC1155
-                IERC1155(sleepoor.tokenAddress).safeTransferFrom(msg.sender, address(this), sleepoor.tokenId, 1, "");
-            } else {
-                //  ERC721
-                IERC721(sleepoor.tokenAddress).safeTransferFrom(msg.sender, address(this), sleepoor.tokenId);
-            }
+            _transferSleeper(sleepoors[i], msg.sender, address(this));
         }
         emit SlumberPartyStarted(bundleId_);
+    }
+
+    /// @notice admin function to add more sleepers to the party once a bundle is started
+    /// @param sleeper the NFT being added
+    /// @param transfer to indicates if a transfer should be called. -- false: if an NFT is yeted in/airdroped
+    function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper, bool transfer)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        SlumberParty storage party = slumberParties[bundleId_];
+        party.sleepoors.push(sleeper);
+
+        if (transfer) {
+            _transferSleeper(sleeper, msg.sender, address(this));
+        }
+
+        emit SleeperAdded(bundleId_, sleeper);
     }
 
     /// @notice method stores the configuration for the sleeping NFTs
@@ -228,7 +267,7 @@ contract HoneyBox is
         }
 
         if (slumberPartyList.length > 255) revert TooManyBundles();
-        uint8 bundleId = uint8(slumberPartyList.length); // Will fail if we have >255 bundles
+        uint8 bundleId = uint8(slumberPartyList.length);
 
         // Add to the bundle mapping & list
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
@@ -252,7 +291,7 @@ contract HoneyBox is
 
         if (party.bundleId != bundleId_) revert InvalidBundle(bundleId_);
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
-        if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
+        if (party.fermentedJarsFound) revert PartyAlreadyWoke(bundleId_); // Check if fermented jars found
         if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
         if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar) {
             revert MekingTooManyHoneyJars(bundleId_);
@@ -352,11 +391,13 @@ contract HoneyBox is
         return tokenId - 1; // returns the lastID created
     }
 
-    /// @notice Forcing function to find a bear.
+    /// @notice Forcing function to find a winning HoneyJar.
     /// @notice Should only be called when the last honeyJars is minted.
     function _findHoneyJar(uint8 bundleId_) internal {
+        // Find 1 special honeyJar for _EACH_ item in the bundle
+        uint32 numWords = SafeCastLib.safeCastTo32(slumberParties[bundleId_].sleepoors.length);
         uint256 requestId = vrfCoordinator.requestRandomWords(
-            vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, 2
+            vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, numWords
         );
         rng[requestId] = bundleId_;
     }
@@ -367,56 +408,76 @@ contract HoneyBox is
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomness) internal override {
         /// use requestID to get bundleId
         uint8 bundleId = rng[requestId];
-        _setSpecialHoneyJar(bundleId, randomness[0]);
+        _setFermentedJars(bundleId, randomness);
     }
 
-    /// @notice helper function to set a random honeyJar as a winner
+    /// @notice sets the winners of each NFT
     /// @param bundleId self-explanatory
-    /// @param randomNumber used to determine the index of the winning number
-    function _setSpecialHoneyJar(uint8 bundleId, uint256 randomNumber) internal {
-        uint256 numHoneyJars = honeyJarShelf[bundleId].length;
-        uint256 specialHoneyIndex = randomNumber % numHoneyJars;
-        uint256 specialHoneyJarId = honeyJarShelf[bundleId][specialHoneyIndex];
-
+    /// @param randomNumbers array of randomNumbers returned by chainlink VRF
+    function _setFermentedJars(uint8 bundleId, uint256[] memory randomNumbers) internal {
         SlumberParty storage party = slumberParties[bundleId];
-        party.specialHoneyJarFound = true;
-        party.specialHoneyJar = specialHoneyJarId;
+        uint256 numSleepers = party.sleepoors.length;
+        uint256[] memory honeyJarIds = honeyJarShelf[bundleId];
+        uint256 numHoneyJars = honeyJarShelf[bundleId].length;
+        uint256[] memory fermentedIndexes = new uint256[](numSleepers); // used for emitting the event
 
-        emit SpecialHoneyJarFound(bundleId, specialHoneyJarId);
+        uint256 fermentedIndex;
+        for (uint256 i = 0; i < numSleepers; i++) {
+            fermentedIndex = randomNumbers[i] % numHoneyJars;
+            fermentedIndexes[i] = fermentedIndex;
+            party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
+        }
+
+        party.fermentedJarsFound = true;
+        emit FermentedJarsFound(bundleId, fermentedIndexes);
     }
 
-    /// @notice transfers sleeping NFTs to msg.sender if they hold the special honeyJar
-    function openHotBox(uint8 bundleId_) external {
-        // Check that msg.sender has the special honeyJar
-        SlumberParty memory party = slumberParties[bundleId_];
-
+    // TODO: consider making this FCFS for claiming.
+    /// @notice transfers sleeping NFT to msg.sender if they hold the special honeyJar
+    /// @dev The index in which the jarId is stored within party.fermentedJars will be the index of the NFT that will be claimed for party.sleepoors
+    function wakeSleeper(uint8 bundleId_, uint256 jarId) external {
+        // Validate that the caller of the method holds the honeyjar
+        if (honeyJar.ownerOf(jarId) != msg.sender) {
+            revert NotJarOwner();
+        }
         if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
-        if (party.isAwake) revert PartyAlreadyWoke(bundleId_);
-        if (!party.specialHoneyJarFound) revert SpecialHoneyJarNotFound(bundleId_);
 
-        if (honeyJar.ownerOf(party.specialHoneyJar) != msg.sender) {
-            revert NotOwnerOfSpecialHoneyJar(bundleId_, party.specialHoneyJar);
+        SlumberParty storage party = slumberParties[bundleId_];
+        if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
+        if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);
+
+        FermentedJar[] storage fermentedJars = party.fermentedJars;
+
+        uint256 numFermentedJars = fermentedJars.length;
+        uint256 sleeperIndex = 0;
+        for (uint256 i = 0; i < numFermentedJars; ++i) {
+            if (fermentedJars[i].id != jarId) continue;
+            if (fermentedJars[i].isUsed) revert JarUsed(bundleId_, jarId);
+            // The caller is the owner of the Fermented jar and its unused
+            fermentedJars[i].isUsed = true;
+            sleeperIndex = party.numUsed;
+            party.numUsed++;
+
+            // party.numUsed is the index of the sleeper to wake up
+            _transferSleeper(party.sleepoors[sleeperIndex], address(this), msg.sender);
+            emit SleeperAwoke(bundleId_, party.sleepoors[i].tokenId, jarId, msg.sender);
+            // Early return out of loop if successful
+            return;
         }
 
-        slumberParties[bundleId_].isAwake = true;
+        // If you complete the for loop without returning then you don't own the right NFT
+        revert NotFermentedJarOwner(bundleId_, jarId);
+    }
 
-        SleepingNFT[] memory sleepoors = party.sleepoors;
-        uint256 sleeperCount = sleepoors.length;
-
-        SleepingNFT memory sleepoor;
-        for (uint256 i = 0; i < sleeperCount; ++i) {
-            sleepoor = sleepoors[i];
-
-            if (sleepoor.isERC1155) {
-                // ERC1155
-                IERC1155(sleepoor.tokenAddress).safeTransferFrom(address(this), msg.sender, sleepoor.tokenId, 1, "");
-            } else {
-                //  ERC721
-                IERC721(sleepoor.tokenAddress).safeTransferFrom(address(this), msg.sender, sleepoor.tokenId);
-            }
+    /// @notice transfers NFT defined by sleeper_ to the caller of of the method
+    function _transferSleeper(SleepingNFT memory sleeper_, address from, address to) internal {
+        if (sleeper_.isERC1155) {
+            // ERC1155
+            IERC1155(sleeper_.tokenAddress).safeTransferFrom(from, to, sleeper_.tokenId, 1, "");
+        } else {
+            //  ERC721
+            IERC721(sleeper_.tokenAddress).safeTransferFrom(from, to, sleeper_.tokenId);
         }
-
-        emit PartyAwoke(bundleId_, msg.sender);
     }
 
     /**

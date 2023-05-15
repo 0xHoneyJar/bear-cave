@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "./THJScriptBase.sol";
-
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {HoneyBox} from "src/HoneyBox.sol";
 
-// Calls honeyBox.addBundle
+import "./THJScriptBase.sol";
 
 /// @notice this script is only meant to test do not use for production
 contract TestScript is THJScriptBase {

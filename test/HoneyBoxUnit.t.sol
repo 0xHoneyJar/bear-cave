@@ -11,17 +11,19 @@ import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 import {MockVRFCoordinator} from "test/mocks/MockVRFCoordinator.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+
 import {UserFactory} from "test/utils/UserFactory.sol";
 import {Random} from "test/utils/Random.sol";
 
-import "src/HoneyBox.sol";
+import {HoneyBox} from "src/HoneyBox.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
+contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -105,12 +107,13 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         vrfCoordinator.addConsumer(subId, address(honeyBox));
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
-        // HoneyBox needs at least one gate to function.
-        gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
 
         gameRegistry.registerGame(address(honeyBox));
         gameRegistry.startGame(address(honeyBox));
         bundleId = _addBundle(0);
+
+        // HoneyBox needs at least one gate to function.
+        gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
     }
 
     function testFail_alreadyInitialized() public {
@@ -134,6 +137,32 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
     function testAddBundle() public {
         _addBundle(0);
+    }
+
+    function testAddToParty() public {
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        uint256 numSleepers = party.sleepoors.length;
+
+        // Add random addr
+        HoneyBox.SleepingNFT memory newSleeper;
+        newSleeper.isERC1155 = false;
+        newSleeper.tokenId = 1;
+        newSleeper.tokenAddress = makeAddr("token");
+
+        honeyBox.addToParty(party.bundleId, newSleeper, false);
+
+        // Add a real erc1155
+        MockERC1155 newToken = new MockERC1155();
+        newToken.mint(address(this), 1, 1, "");
+        newSleeper.isERC1155 = true;
+        newSleeper.tokenId = 1;
+        newSleeper.tokenAddress = address(newToken);
+        newToken.setApprovalForAll(address(honeyBox), true); // fails without approvals
+
+        honeyBox.addToParty(party.bundleId, newSleeper, true);
+
+        party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.sleepoors.length, numSleepers + 2);
     }
 
     // ============= Meking HoneyJar ==================== //
@@ -214,7 +243,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     }
 
     function _simulateVRF(uint256 bundleId_) private {
-        // Gotta manually do this to simulate VRF working.
+        // Loop through potential requestIds starting at 1 to find one corresponding to bundle
         for (uint256 i = 1; i < 5; ++i) {
             if (honeyBox.rng(i) != bundleId_) continue;
             vrfCoordinator.fulfillRandomWords(i, address(honeyBox));
@@ -222,33 +251,31 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         }
     }
 
-    function testFindSpecialHoney() public {
+    function testFindFermentedHoney() public {
         _puffPuffPassOut(bundleId);
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         _makeMultipleHoney(bundleId, maxHoneyJar);
 
         _simulateVRF(bundleId);
-        (,,, bool specialHoneyJarFound,) = honeyBox.slumberParties(bundleId);
-
-        assertEq(specialHoneyJarFound, true, "special honey is not found");
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.fermentedJarsFound, true, "Fermented Jar is not found");
     }
 
     // ============= Waking Slumber Party ==================== //
 
     function testFailOpenHotBox() public {
-        // Returns NotEnoughHoneyJarMinted
-        honeyBox.openHotBox(bundleId);
+        // NFT doens't exist
+        honeyBox.wakeSleeper(bundleId, 0);
     }
 
     function testFailWakeBear_notEnoughHoney() public {
-        // Same as the bear is sleeping
         _puffPuffPassOut(bundleId);
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
 
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
     }
 
     function testFailOpenHotBox_wrongUser() public {
@@ -260,7 +287,18 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
 
         vm.prank(anotherUser);
-        honeyBox.openHotBox(bundleId);
+        honeyBox.wakeSleeper(bundleId, 0);
+    }
+
+    function testFailWakeWithWrongJar() public {
+        _puffPuffPassOut(bundleId);
+
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+
+        _simulateVRF(bundleId);
+
+        honeyBox.wakeSleeper(bundleId, 0);
     }
 
     function testFailOpenHotBox_allHoneyJarNoVRF() public {
@@ -268,7 +306,7 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
         _makeMultipleHoney(bundleId, maxHoneyJar);
-        honeyBox.openHotBox(bundleId); // SpecialHoneyJar not found
+        honeyBox.wakeSleeper(bundleId, 0); // SpecialHoneyJar not found
     }
 
     function testWakeParty() public {
@@ -279,9 +317,30 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         _simulateVRF(bundleId);
 
-        honeyBox.openHotBox(bundleId);
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        _wakeAll(bundleId, party.fermentedJars);
+
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc721.balanceOf(address(this)), 1, "the bear didn't wake up");
+    }
+
+    function testFailWakePartyTwice() public {
+        _puffPuffPassOut(bundleId);
+
+        paymentToken.approve(address(honeyBox), maxHoneyJar * MINT_PRICE_ERC20);
+        _makeMultipleHoney(bundleId, maxHoneyJar);
+
+        _simulateVRF(bundleId);
+
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        _wakeAll(bundleId, party.fermentedJars);
+        _wakeAll(bundleId, party.fermentedJars);
+    }
+
+    function _wakeAll(uint8 bundleId_, HoneyBox.FermentedJar[] memory jars) internal {
+        for (uint256 i = 0; i < jars.length; i++) {
+            honeyBox.wakeSleeper(bundleId_, jars[i].id);
+        }
     }
 
     function testWorks() public {
@@ -306,8 +365,11 @@ contract HoneyBoxTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
         _simulateVRF(secondBundleId);
 
-        honeyBox.openHotBox(bundleId);
-        honeyBox.openHotBox(secondBundleId);
+        HoneyBox.SlumberParty memory party1 = honeyBox.getSlumberParty(bundleId);
+        HoneyBox.SlumberParty memory party2 = honeyBox.getSlumberParty(secondBundleId);
+
+        _wakeAll(bundleId, party1.fermentedJars);
+        _wakeAll(secondBundleId, party2.fermentedJars);
 
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
         assertEq(erc1155.balanceOf(address(this), 2), 1, "the bear didn't wake up");
