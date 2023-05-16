@@ -34,8 +34,10 @@ contract BundleTokens is THJScriptBase {
 
         vm.startBroadcast();
 
+        uint256 CHAIN_ID = 0; // ETH
+
         // Identify tokenID to hibernate
-        uint8 bundleId = hb.addBundle(addresses, tokenIds, isERC1155s);
+        uint8 bundleId = hb.addBundle(CHAIN_ID, addresses, tokenIds, isERC1155s);
         console.log("BundleID: ", bundleId);
 
         vm.stopBroadcast();

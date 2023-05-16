@@ -139,6 +139,12 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _addBundle(0);
     }
 
+    function testChainId() public {
+        bundleId = _addBundle(0);
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.chainId, block.chainid);
+    }
+
     function testAddToParty() public {
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         uint256 numSleepers = party.sleepoors.length;
@@ -470,6 +476,6 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         bool[] memory isERC1155 = new bool[](2);
         isERC1155[0] = true;
         isERC1155[1] = false;
-        return honeyBox.addBundle(tokenAddresses, tokenIds, isERC1155);
+        return honeyBox.addBundle(block.chainid, tokenAddresses, tokenIds, isERC1155);
     }
 }

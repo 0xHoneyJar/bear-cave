@@ -177,7 +177,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         isERC1155s[0] = false;
         isERC1155s[1] = true;
 
-        bundleId = honeyBox.addBundle(tokenAddresses, tokenIDs, isERC1155s);
+        bundleId = honeyBox.addBundle(block.chainid, tokenAddresses, tokenIDs, isERC1155s);
         erc721.approve(address(honeyBox), NFT_ID);
         erc1155.setApprovalForAll(address(honeyBox), true);
         honeyBox.puffPuffPassOut(bundleId);

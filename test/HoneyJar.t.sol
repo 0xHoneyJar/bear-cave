@@ -10,7 +10,7 @@ import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 contract MockGameRegistry {
     bool internal returnVal;
 
-    function hasRole(bytes32 role_, address account_) public view returns (bool) {
+    function hasRole(bytes32, address) public view returns (bool) {
         return returnVal;
     }
 
