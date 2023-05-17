@@ -16,6 +16,7 @@ import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {Constants} from "src/Constants.sol";
+import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 
 contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
@@ -64,6 +65,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     //Chainlink setup
     MockVRFCoordinator private vrfCoordinator;
+    uint64 private subId;
     uint96 private constant FUND_AMOUNT = 1 * 10 ** 18;
 
     function createNode(address player, uint32 amount) private pure returns (bytes32) {
@@ -85,6 +87,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         beekeeper = payable(makeAddr("beekeeper"));
         jani = payable(makeAddr("definitelyNotJani"));
         gameAdmin = makeAddr("gameAdmin");
+        vm.deal(gameAdmin, 100 ether);
         alfaHunter = makeAddr("alfaHunter");
         vm.deal(alfaHunter, 100 ether);
         bera = makeAddr("bera");
@@ -112,7 +115,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         // Chainlink setup
         vrfCoordinator = new MockVRFCoordinator();
-        uint64 subId = vrfCoordinator.createSubscription();
+        subId = vrfCoordinator.createSubscription();
         vrfCoordinator.fundSubscription(subId, FUND_AMOUNT);
 
         /**
@@ -272,6 +275,89 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.bundleId, bundleId);
         assertEq(party.fermentedJars.length, 2, "wrong # of fermented jars");
         assertEq(party.sleepoors.length, 2, "wrong # of sleepers");
+    }
+
+    function testCrossChain() public {
+        // For simplicity's sake, reuse most dependencies.
+        uint256 l1ChainId = block.chainid;
+        uint256 l2ChainId = l1ChainId + 10000;
+        address portal = makeAddr("portal");
+        vm.deal(portal, 100 ether);
+        gameRegistry.grantRole(Constants.PORTAL, portal);
+
+        HoneyBox l1HoneyBox = honeyBox;
+
+        // Deploy l2 on a new chain
+        vm.chainId(l2ChainId);
+        HoneyBox l2HoneyBox = new HoneyBox(
+            address(vrfCoordinator),
+            address(gameRegistry),
+            address(honeyJar),
+            address(paymentToken),
+            address(gatekeeper),
+            address(jani),
+            address(beekeeper),
+            honeyJarShare
+        );
+
+        vrfCoordinator.addConsumer(subId, address(honeyBox));
+
+        // Do the rest on main chain
+        vm.chainId(l1ChainId);
+
+        address[] memory tokenAddresses = new address[](2);
+        tokenAddresses[0] = address(erc721);
+        tokenAddresses[1] = address(erc1155);
+        uint256[] memory tokenIDs = new uint256[](2);
+        tokenIDs[0] = NFT_ID;
+        tokenIDs[1] = SFT_ID;
+        bool[] memory isERC1155s = new bool[](2);
+        isERC1155s[0] = false;
+        isERC1155s[1] = true;
+
+        // Only game Admin actions
+        vm.startPrank(gameAdmin);
+        l2HoneyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
+        gameRegistry.registerGame(address(l2HoneyBox));
+        gameRegistry.startGame(address(l2HoneyBox));
+
+        uint8 newBundleId = l1HoneyBox.addBundle(l2ChainId, tokenAddresses, tokenIDs, isERC1155s);
+        gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
+        vm.stopPrank();
+
+        // Assuming the claiming flow works the same from below.
+
+        vm.warp(block.timestamp + 72 hours);
+
+        // wtf idk why vm.changePrank doesn't work
+
+        vm.startPrank(portal);
+        CrossChainTHJ.CrossChainBundleConfig memory config;
+        config.bundleId = newBundleId;
+        config.numSleepers = tokenAddresses.length;
+        l2HoneyBox.startGame(l1ChainId, config);
+        vm.stopPrank();
+
+        vm.startPrank(alfaHunter);
+        // l1HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5); Fails as expected
+        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        vm.stopPrank();
+
+        vm.startPrank(bera);
+        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        vm.stopPrank();
+
+        vm.startPrank(clown);
+        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        vm.stopPrank();
+
+        // Get winnors
+        vrfCoordinator.fulfillRandomWords(1, address(l2HoneyBox));
+        HoneyBox.SlumberParty memory party = l2HoneyBox.getSlumberParty(newBundleId);
+        assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
+        assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
+        assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
+        assertEq(party.fermentedJars.length, config.numSleepers);
     }
 
     function testFullRun() public {

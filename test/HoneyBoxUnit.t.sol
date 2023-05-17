@@ -20,6 +20,7 @@ import {HoneyBox} from "src/HoneyBox.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
+import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 
 import {console2} from "forge-std/console2.sol";
 
@@ -142,7 +143,8 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     function testChainId() public {
         bundleId = _addBundle(0);
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
-        assertEq(party.chainId, block.chainid);
+        assertEq(party.mintChainId, block.chainid);
+        assertEq(party.assetChainId, block.chainid);
     }
 
     function testAddToParty() public {
@@ -448,6 +450,65 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }
 
+    ////////////////////////////////////////
+    ////////    Cross Chain Tests //////////
+    ////////////////////////////////////////
+
+    function testDiffChainId() public {
+        uint256 wrongChainId = 123;
+        uint256 tokenId = 123;
+        bundleId = _addBundleForChain(wrongChainId, tokenId);
+
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.mintChainId, wrongChainId);
+        assertEq(party.assetChainId, block.chainid);
+    }
+
+    function testFailMekHoneyJar_diffChainId() public {
+        uint256 wrongChainId = 123;
+        uint256 tokenId = 123;
+        erc721.mint(address(this), tokenId);
+
+        bundleId = _addBundleForChain(wrongChainId, tokenId);
+        _puffPuffPassOut(bundleId);
+
+        // Errors out with #invalid chain
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH}(bundleId, 1);
+    }
+
+    function testFailStartGame_bundleAlreadyExists() public {
+        CrossChainTHJ.CrossChainBundleConfig memory config;
+        // Give this address portal role in order to call method
+        gameRegistry.grantRole("PORTAL", address(this));
+        config.bundleId = bundleId;
+        config.numSleepers = 8;
+        honeyBox.startGame(block.chainid, config);
+    }
+
+    function testStartGameXChain() public {
+        // simulates getting a message saying "start the game"
+        CrossChainTHJ.CrossChainBundleConfig memory config;
+        // Give this address portal role in order to call method
+        gameRegistry.grantRole("PORTAL", address(this));
+        config.bundleId = bundleId + 1;
+        config.numSleepers = 8;
+
+        gatekeeper.addGate(config.bundleId, bytes32(0), 6969, 0);
+        honeyBox.startGame(block.chainid, config);
+        vm.warp(block.timestamp + 72 hours);
+
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(config.bundleId, maxHoneyJar);
+
+        _simulateVRF(config.bundleId);
+
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(config.bundleId);
+        assertEq(party.fermentedJarsFound, true, "expected fermentedJarsFound");
+        assertEq(party.sleepoors.length, config.numSleepers);
+
+        // This call should fail because its not a real NFT
+        // honeyBox.wakeSleeper(config.bundleId, party.fermentedJars[0].id);
+    }
+
     // ============= Claiming will be an integration test  ==================== //
 
     /**
@@ -477,5 +538,16 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         isERC1155[0] = true;
         isERC1155[1] = false;
         return honeyBox.addBundle(block.chainid, tokenAddresses, tokenIds, isERC1155);
+    }
+
+    function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
+        address[] memory tokenAddresses = new address[](1);
+        tokenAddresses[0] = address(erc721);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = tokenId_;
+        bool[] memory isERC1155 = new bool[](1);
+        isERC1155[0] = false;
+
+        return honeyBox.addBundle(chainId_, tokenAddresses, tokenIds, isERC1155);
     }
 }

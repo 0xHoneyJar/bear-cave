@@ -62,8 +62,10 @@ contract HoneyBox is
         uint8 bundleId;
         /// @dev the block.timestamp when the mint() function can be called. Should be set at game-start
         uint256 publicMintTime;
-        /// @dev used to determine which chain is allowed to mint the party
-        uint256 chainId;
+        /// @dev chainId that can wakeSleeper
+        uint256 assetChainId;
+        /// @dev The chainId that can mint
+        uint256 mintChainId;
         /// @dev Used so a tokenID 0 can't wake the slumberParty before special Honeyjar is found.
         bool fermentedJarsFound;
         /// @dev used to track the number of used fermentedJars
@@ -199,7 +201,7 @@ contract HoneyBox is
         address _jani,
         address _beekeeper,
         uint256 _honeyJarShare
-    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) EIP712("HoneyBox", "2") {
+    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) EIP712("HoneyBox", "2") CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
         paymentToken = IERC20(_paymentToken);
@@ -244,27 +246,45 @@ contract HoneyBox is
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
         slumberParties[bundleId_].publicMintTime = block.timestamp + publicMintOffset;
-        gatekeeper.startGatesForBundle(bundleId_);
 
         for (uint256 i = 0; i < sleeperCount; ++i) {
             _transferSleeper(sleepoors[i], msg.sender, address(this));
+        }
+
+        // Only start gates if the configured chainId is the current chain.
+        if (slumberParty.mintChainId == getChainId()) {
+            gatekeeper.startGatesForBundle(bundleId_);
+        } else {
+            // Send xChain message
         }
         emit SlumberPartyStarted(bundleId_);
     }
 
     /// @notice Does the same as function above, except doesn't transfer the NFTs.
     /// @dev can only be called by the HoneyJar Portal
-    function startGame(uint8 bundleId_, uint256 srcChainId, CrossChainBundleConfig calldata config_)
+    /// @param config contains bundleId
+    function startGame(uint256 srcChainId, CrossChainBundleConfig calldata config)
         external
         onlyRole(Constants.PORTAL)
     {
         uint256[] memory allStages = _getStages();
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
-        slumberParties[bundleId_].publicMintTime = block.timestamp + publicMintOffset;
-        gatekeeper.startGatesForBundle(bundleId_);
+        SlumberParty storage party = slumberParties[config.bundleId];
+        party.bundleId = config.bundleId;
+        party.assetChainId = srcChainId;
+        party.mintChainId = getChainId(); // This party MUST be able to mint.
+        if (party.sleepoors.length != 0) revert InvalidBundle(config.bundleId);
 
-        emit SlumberPartyStarted(bundleId_);
+        party.publicMintTime = block.timestamp + publicMintOffset;
+        // Push empty sleepers.
+        SleepingNFT memory emptyNft;
+        for (uint256 i = 0; i < config.numSleepers; i++) {
+            party.sleepoors.push(emptyNft);
+        }
+        gatekeeper.startGatesForBundle(config.bundleId);
+
+        emit SlumberPartyStarted(config.bundleId);
 
         return;
     }
@@ -289,7 +309,7 @@ contract HoneyBox is
     /// @notice method stores the configuration for the sleeping NFTs
     // bundleId --> bundle --> []nfts
     function addBundle(
-        uint256 chainId_,
+        uint256 mintChainId_,
         address[] calldata tokenAddresses_,
         uint256[] calldata tokenIds_,
         bool[] calldata isERC1155_
@@ -305,7 +325,8 @@ contract HoneyBox is
         // Add to the bundle mapping & list
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
-        slumberParty.chainId = block.chainid;
+        slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
+        slumberParty.mintChainId = mintChainId_; // minting can occur on another chain. .
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
@@ -324,7 +345,7 @@ contract HoneyBox is
         SlumberParty storage party = slumberParties[bundleId_];
 
         if (party.bundleId != bundleId_) revert InvalidBundle(bundleId_);
-        if (party.chainId != block.chainid) revert InvalidChain(party.chainId, block.chainid);
+        if (party.mintChainId != getChainId()) revert InvalidChain(party.mintChainId, getChainId());
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
         if (party.fermentedJarsFound) revert PartyAlreadyWoke(bundleId_); // Check if fermented jars found
         if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
@@ -504,6 +525,7 @@ contract HoneyBox is
         if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
 
         SlumberParty storage party = slumberParties[bundleId_];
+        if (party.assetChainId != getChainId()) revert InvalidChain(party.assetChainId, getChainId()); // Can only claim on chains with the asset
         if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
         if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);
 
