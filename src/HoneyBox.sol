@@ -5,7 +5,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
@@ -28,7 +27,6 @@ import {Constants} from "src/Constants.sol";
 /// @notice Revision of v1/BearCave.sol
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
 contract HoneyBox is
-    EIP712,
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
     ERC1155TokenReceiver,
@@ -38,6 +36,7 @@ contract HoneyBox is
 {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
+    using ECDSA for bytes32;
 
     /// @notice the lone sleepooor (single NFT)
     struct SleepingNFT {
@@ -201,7 +200,7 @@ contract HoneyBox is
         address _jani,
         address _beekeeper,
         uint256 _honeyJarShare
-    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) EIP712("HoneyBox", "2") CrossChainTHJ() {
+    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
         paymentToken = IERC20(_paymentToken);
@@ -488,10 +487,26 @@ contract HoneyBox is
         emit FermentedJarsFound(bundleId, fermentedIndexes);
     }
 
+    /// @notice called by portal when the fermented jars are found on another chain
+    /// @dev should only be called by PORTAL since this changes who is the winner
+    function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds)
+        external
+        onlyRole(Constants.PORTAL)
+    {
+        if (fermentedJarIds.length == 0) revert InvalidInput("setCrossChainFermentedJars");
+        SlumberParty storage party = slumberParties[bundleId];
+        party.fermentedJarsFound = true;
+        for (uint256 i = 0; i < fermentedJarIds.length; i++) {
+            party.fermentedJars.push(FermentedJar(fermentedJarIds[i], false));
+        }
+
+        emit FermentedJarsFound(bundleId, fermentedJarIds);
+    }
+
     /// @notice returns a signed message that proves that the owner owns a valid fermented jar
     /// @return the signed hash proving ownership of the fermentedJar
-    function getSignedMessageForJar(uint8 bundleId_, uint256 jarId) external view returns (bytes32) {
-        if (honeyJar.ownerOf(jarId) != msg.sender) {
+    function getSignedMessageForJar(uint8 bundleId_, uint256 jarId_) external view returns (bytes32) {
+        if (honeyJar.ownerOf(jarId_) != msg.sender) {
             revert NotJarOwner();
         }
         SlumberParty storage party = slumberParties[bundleId_];
@@ -500,18 +515,20 @@ contract HoneyBox is
         uint256 numFermentedJars = fermentedJars.length;
 
         for (uint256 i = 0; i < numFermentedJars; ++i) {
-            if (fermentedJars[i].id != jarId) continue;
-            return _hashTypedDataV4(keccak256(abi.encode(SignedMessage(msg.sender, bundleId_, jarId))));
+            if (fermentedJars[i].id != jarId_) continue;
+            return ECDSA.toEthSignedMessageHash(keccak256(abi.encode(SignedMessage(msg.sender, bundleId_, jarId_))));
         }
 
-        revert NotFermentedJarOwner(bundleId_, jarId);
+        revert NotFermentedJarOwner(bundleId_, jarId_);
     }
 
     // TODO:
-    function useSignedMessageForJar(bytes32 hash, bytes memory signature) external {
-        address sender = ECDSA.recover(hash, signature);
-        if (sender != msg.sender) revert NotFermentedJarOwner(0, 1);
+    function useSignedMessageForJar(uint8 bundleId_, uint256 jarId_, bytes memory signature) external {
+        // Rebuild the message hash
+        bytes32 hash = keccak256((abi.encode(SignedMessage(msg.sender, bundleId_, jarId_))));
 
+        address sender = ECDSA.recover(hash, signature);
+        if (sender != msg.sender) revert NotFermentedJarOwner(bundleId_, jarId_);
         // TODO: wake sleeper?
     }
 
@@ -522,9 +539,12 @@ contract HoneyBox is
         if (honeyJar.ownerOf(jarId) != msg.sender) {
             revert NotJarOwner();
         }
-        if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
 
         SlumberParty storage party = slumberParties[bundleId_];
+        if (party.assetChainId == party.mintChainId) {
+            // Only perform these validations if the asset and mint chainID are the same.
+            if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
+        }
         if (party.assetChainId != getChainId()) revert InvalidChain(party.assetChainId, getChainId()); // Can only claim on chains with the asset
         if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
         if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);

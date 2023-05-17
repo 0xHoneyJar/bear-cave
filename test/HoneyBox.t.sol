@@ -281,6 +281,8 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // For simplicity's sake, reuse most dependencies.
         uint256 l1ChainId = block.chainid;
         uint256 l2ChainId = l1ChainId + 10000;
+
+        // Set up portal address (contract or user)
         address portal = makeAddr("portal");
         vm.deal(portal, 100 ether);
         gameRegistry.grantRole(Constants.PORTAL, portal);
@@ -300,7 +302,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             honeyJarShare
         );
 
-        vrfCoordinator.addConsumer(subId, address(honeyBox));
+        vrfCoordinator.addConsumer(subId, address(l2HoneyBox));
 
         // Do the rest on main chain
         vm.chainId(l1ChainId);
@@ -325,10 +327,6 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
-        // Assuming the claiming flow works the same from below.
-
-        vm.warp(block.timestamp + 72 hours);
-
         // wtf idk why vm.changePrank doesn't work
 
         vm.startPrank(portal);
@@ -337,6 +335,9 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         config.numSleepers = tokenAddresses.length;
         l2HoneyBox.startGame(l1ChainId, config);
         vm.stopPrank();
+
+        // Assuming the claiming flow works the same from below. Go to GeneralMint
+        vm.warp(block.timestamp + 72 hours);
 
         vm.startPrank(alfaHunter);
         // l1HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5); Fails as expected
@@ -358,6 +359,25 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
         assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
         assertEq(party.fermentedJars.length, config.numSleepers);
+
+        // Communicate Via portal
+        vm.startPrank(portal);
+        uint256[] memory fermentedJarIds = new uint256[](party.fermentedJars.length);
+        for (uint256 i = 0; i < party.fermentedJars.length; i++) {
+            fermentedJarIds[i] = party.fermentedJars[i].id;
+        }
+        l1HoneyBox.setCrossChainFermentedJars(newBundleId, fermentedJarIds);
+        vm.stopPrank();
+
+        // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper. 
+
+        // Test out a particular winner
+        uint256 fermentedJarId = party.fermentedJars[0].id;
+        address winner = honeyJar.ownerOf(fermentedJarId);
+
+        vm.startPrank(winner);
+        // l2HoneyBox.wakeSleeper(newBundleId, fermentedJarId);  This fails like it should
+        l1HoneyBox.wakeSleeper(newBundleId, fermentedJarId);
     }
 
     function testFullRun() public {
