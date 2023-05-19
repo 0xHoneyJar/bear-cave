@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
+
 abstract contract CrossChainTHJ {
-    struct CrossChainBundleConfig {
-        /// @dev unique ID representing the bundle
-        uint8 bundleId;
-        /// @dev Number of sleepers within a game.
-        uint256 numSleepers;
-    }
+    uint16 private immutable _chainId;
 
-    uint256 private immutable _chainId;
-
-    function getChainId() internal view returns (uint256) {
+    function getChainId() internal view returns (uint16) {
         return _chainId;
     }
 
     constructor() {
-        _chainId = block.chainid;
+        _chainId = SafeCastLib.safeCastTo16(block.chainid);
     }
 }

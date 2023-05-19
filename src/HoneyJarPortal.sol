@@ -13,13 +13,14 @@ import {Constants} from "src/Constants.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
 
 interface IHoneyBox {
-    function startGame(uint8 bundleId, CrossChainTHJ.CrossChainBundleConfig calldata config) external;
+    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_) external;
+    function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds) external;
 }
 
 /// @title HoneyJarPortal
 /// @notice Manages cross chain business logic and interactions with HoneyJar NFT
 /// @dev Modeled off of @layerzero/token/onft/extension/ProxyONFT721.sol
-/// @dev Is subject to change with v3 development
+/// @dev setTrustedRemote must be called when initializing`
 contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IERC721Receiver {
     using ERC165Checker for address;
 
@@ -27,57 +28,62 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
     // Events
     event PortalSet(uint256 chainId, address portalAddress);
-    event StartCrossChainGame(uint256 chainId, CrossChainBundleConfig bundleConfig);
+    event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
     event MessageRecieved(bytes payload);
+    event HoneyBoxSet(address honeyBoxAddress);
+    event StartGameProcessed(uint16 srcChainId, StartGamePayload);
+    event FermentedJarsProcessed(uint16 srcChainId, FermentedJarsPayload);
 
     // Errors
     error InvalidToken(address tokenAddress);
     error HoneyJarNotInPortal(uint256 tokenId);
     error OwnerNotCaller();
-    error PortalDoesNotExist(uint256 destChainId);
 
     enum MessageTypes {
         SEND_NFT,
-        START_GAME
+        START_GAME,
+        SET_FERMENTED_JARS
     }
 
     // Dependencies
     IHoneyJar public immutable honeyJar;
+    IHoneyBox public honeyBox;
 
-    /// @notice mapping of chainId --> HoneyJar Portals
-    mapping(uint256 => address) public otherPortals;
-    mapping(uint256 => uint256) public dstChainIdToStartGame;
-
-    constructor(uint256 _minGasToTransfer, address _lzEndpoint, address _honeyJar, address _gameRegistry)
-        ONFT721Core(_minGasToTransfer, _lzEndpoint)
-        GameRegistryConsumer(_gameRegistry)
-    {
+    constructor(
+        uint256 _minGasToTransfer,
+        address _lzEndpoint,
+        address _honeyJar,
+        address _honeyBox,
+        address _gameRegistry
+    ) ONFT721Core(_minGasToTransfer, _lzEndpoint) GameRegistryConsumer(_gameRegistry) {
         if (!_honeyJar.supportsInterface(type(IERC721).interfaceId)) revert InvalidToken(_honeyJar);
         honeyJar = IHoneyJar(_honeyJar);
+        honeyBox = IHoneyBox(_honeyBox);
     }
 
-    function setPortal(uint256 destChainId_, address portalAddress_) external onlyRole(Constants.GAME_ADMIN) {
-        otherPortals[destChainId_] = portalAddress_;
+    /// @dev there can only be one honeybox per portal.
+    function setHoneyBox(address honeyBoxAddress_) external onlyRole(Constants.GAME_ADMIN) {
+        honeyBox = IHoneyBox(honeyBoxAddress_);
 
-        emit PortalSet(destChainId_, portalAddress_);
+        emit HoneyBoxSet(honeyBoxAddress_);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function setDstChainIdToStartGame(uint16 dstChainId_, uint256 dstChainIdToStartGame_) external onlyOwner {
-        require(dstChainIdToStartGame_ > 0, "HoneyJarPortal: dstChainIdToStartGame_ must be > 0");
-        dstChainIdToStartGame[dstChainId_] = dstChainIdToStartGame_;
-    }
+    ////////////////////////////////////////////////////////////
+    //////////////////  ONFT Transfer        ///////////////////
+    ////////////////////////////////////////////////////////////
 
-    // Revisit debit logic, could BURN.  _creditTo would be able to  ignore existence check
+    /// @notice burns the token that is bridges. Contract needs BURNER role
     function _debitFrom(address _from, uint16, bytes memory, uint256 _tokenId) internal override {
         if (_from != _msgSender()) revert OwnerNotCaller();
-        honeyJar.safeTransferFrom(_from, address(this), _tokenId); // Performs the owner & approval checks
+        honeyJar.burn(_tokenId);
     }
 
     function _creditTo(uint16, address _toAddress, uint256 _tokenId) internal override {
+        // This shouldn't happen, but just in case.
         if (_exists(_tokenId) && honeyJar.ownerOf(_tokenId) != address(this)) revert HoneyJarNotInPortal(_tokenId);
         if (!_exists(_tokenId)) {
             honeyJar.mintTokenId(_toAddress, _tokenId); //HoneyJar Portal should have MINTER Perms on HoneyJar
@@ -86,25 +92,8 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         }
     }
 
-    /// @notice should only be called form ETH (ChainId=1) Doens't make sense otherwise.
-    function sendStartGame(
-        uint16 destChainId_,
-        CrossChainBundleConfig calldata bundleConfig_,
-        address payable refundAddress_,
-        address zroPaymentAddress_,
-        bytes memory adapterParams_
-    ) internal virtual {
-        if (otherPortals[destChainId_] == address(0)) revert PortalDoesNotExist(destChainId_);
-
-        bytes memory payload = abi.encode(otherPortals[destChainId_], MessageTypes.START_GAME, bundleConfig_);
-
-        _checkGasLimit(destChainId_, FUNCTTION_TYPE_START, adapterParams_, dstChainIdToStartGame[destChainId_]);
-        _lzSend(destChainId_, payload, refundAddress_, zroPaymentAddress_, adapterParams_, msg.value);
-
-        emit StartCrossChainGame(destChainId_, bundleConfig_);
-    }
-
-    /// @notice slightly modified version of the _send method in ONFTCore. Overloaded with additional parameters to comply with additional xChain messaging
+    /// @notice slightly modified version of the _send method in ONFTCore.
+    /// @dev payload is encoded with messageType to be able to consume different message types.
     function _send(
         address _from,
         uint16 _dstChainId,
@@ -135,48 +124,135 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         emit SendToChain(_dstChainId, _from, _toAddress, _tokenIds);
     }
 
+    //////////////////////////////////////////////////////
+    //////////////////  Game Methods  //////////////////
+    //////////////////////////////////////////////////////
+
+    /// @notice should only be called form ETH (ChainId=1) Doens't make sense otherwise.
+    /// @dev can only be called by game instances
+    function sendStartGame(uint16 destChainId_, uint8 bundleId_, uint256 numSleepers_)
+        external
+        payable
+        onlyRole(Constants.GAME_INSTANCE)
+    {
+        bytes memory payload = _encodeStartGame(bundleId_, numSleepers_);
+        _lzSend(destChainId_, payload, payable(msg.sender), address(0x0), bytes(""), msg.value);
+
+        emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
+    }
+
+    function sendFermentedJars(uint16 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_)
+        external
+        payable
+        onlyRole(Constants.GAME_INSTANCE)
+    {
+        bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
+        _lzSend(destChainId_, payload, payable(msg.sender), address(0x0), bytes(""), msg.value);
+    }
+
     function _nonblockingLzReceive(
         uint16 _srcChainId,
         bytes memory _srcAddress,
         uint64, /*_nonce*/
         bytes memory _payload
     ) internal override {
-        // TODO: figure out how to decode payload properly.
-        (MessageTypes msgType, bytes memory remainingPayload) = abi.decode(_payload, (MessageTypes, bytes));
+        (MessageTypes msgType) = abi.decode(_payload, (MessageTypes));
+        address srcAddress;
+        assembly {
+            srcAddress := mload(add(_srcAddress, 20))
+        }
 
         if (msgType == MessageTypes.SEND_NFT) {
-            _processSendNFTMessage(_srcChainId, _srcAddress, remainingPayload);
+            _processSendNFTMessage(_srcChainId, _srcAddress, _payload);
         } else if (msgType == MessageTypes.START_GAME) {
-            // Do something
-            _processStartGame(_srcChainId, remainingPayload);
+            _processStartGame(_srcChainId, _payload);
+        } else if (msgType == MessageTypes.SET_FERMENTED_JARS) {
+            _processFermentedJars(_srcChainId, _payload);
         } else {
             emit MessageRecieved(_payload);
         }
     }
 
-    function _processStartGame(uint16 srcChainid, bytes memory payload) internal {
-        CrossChainBundleConfig memory bundleConfig = abi.decode(payload, (CrossChainBundleConfig));
+    ////////////////////////////////////////////////////////////
+    //////////////////  Message Processing   ///////////////////
+    ////////////////////////////////////////////////////////////
+
+    function _processStartGame(uint16 srcChainId, bytes memory _payload) internal {
+        StartGamePayload memory payload = _decodeStartGame(_payload);
+        honeyBox.startGame(srcChainId, payload.bundleId, payload.bundleId);
+
+        emit StartGameProcessed(srcChainId, payload);
+    }
+
+    function _processFermentedJars(uint16 _srcChainId, bytes memory _payload) internal {
+        FermentedJarsPayload memory payload = _decodeFermentedJars(_payload);
+        honeyBox.setCrossChainFermentedJars(payload.bundleId, payload.fermentedJarIds);
+
+        emit FermentedJarsProcessed(_srcChainId, payload);
     }
 
     /// @notice a copy of the OFNFT721COre _nonBlockingrcv to keep NFT functionality the same.
     function _processSendNFTMessage(uint16 _srcChainId, bytes memory _srcAddress, bytes memory _payload) internal {
-        (bytes memory toAddressBytes, uint256[] memory tokenIds) = abi.decode(_payload, (bytes, uint256[]));
+        SendNFTPayload memory payload = _decodeSendNFT(_payload);
 
-        address toAddress;
-        assembly {
-            toAddress := mload(add(toAddressBytes, 20))
-        }
-
-        uint256 nextIndex = _creditTill(_srcChainId, toAddress, 0, tokenIds);
-        if (nextIndex < tokenIds.length) {
+        uint256 nextIndex = _creditTill(_srcChainId, payload.to, 0, payload.tokenIds);
+        if (nextIndex < payload.tokenIds.length) {
             // not enough gas to complete transfers, store to be cleared in another tx
             bytes32 hashedPayload = keccak256(_payload);
-            storedCredits[hashedPayload] = StoredCredit(_srcChainId, toAddress, nextIndex, true);
+            storedCredits[hashedPayload] = StoredCredit(_srcChainId, payload.to, nextIndex, true);
             emit CreditStored(hashedPayload, _payload);
         }
 
-        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, tokenIds);
+        emit ReceiveFromChain(_srcChainId, _srcAddress, payload.to, payload.tokenIds);
     }
+
+    //////////////////////////////////////////////////////
+    //////////////////  Encode/Decode   //////////////////
+    //////////////////////////////////////////////////////
+
+    struct StartGamePayload {
+        uint8 bundleId;
+        uint256 numSleepers;
+    }
+
+    struct SendNFTPayload {
+        address to;
+        uint256[] tokenIds;
+    }
+
+    struct FermentedJarsPayload {
+        uint8 bundleId;
+        uint256[] fermentedJarIds;
+    }
+
+    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_) internal view returns (bytes memory) {
+        return abi.encode(MessageTypes.START_GAME, StartGamePayload(bundleId_, numSleepers_));
+    }
+
+    function _encodeFermentedJars(uint8 bundleId_, uint256[] memory fermentedJarIds_)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return abi.encode(MessageTypes.SET_FERMENTED_JARS, FermentedJarsPayload(bundleId_, fermentedJarIds_));
+    }
+
+    function _decodeSendNFT(bytes memory _payload) internal pure returns (SendNFTPayload memory payload) {
+        (, payload) = abi.decode(_payload, (MessageTypes, SendNFTPayload));
+    }
+
+    function _decodeStartGame(bytes memory _payload) internal pure returns (StartGamePayload memory payload) {
+        (, payload) = abi.decode(_payload, (MessageTypes, StartGamePayload));
+    }
+
+    function _decodeFermentedJars(bytes memory _payload) internal pure returns (FermentedJarsPayload memory) {
+        (, FermentedJarsPayload memory payload) = abi.decode(_payload, (MessageTypes, FermentedJarsPayload));
+        return payload;
+    }
+
+    /////////////////////////////////////////////
+    //////////////////  Misc   //////////////////
+    /////////////////////////////////////////////
 
     function onERC721Received(address _operator, address, uint256, bytes memory)
         public

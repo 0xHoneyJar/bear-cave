@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "murky/Merkle.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 
 import {MockERC1155, ERC1155TokenReceiver} from "test/mocks/MockERC1155.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
@@ -20,6 +21,7 @@ import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 
 contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
+    using SafeCastLib for uint256;
     using Address for address;
 
     Merkle private merkleLib = new Merkle();
@@ -323,17 +325,14 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.registerGame(address(l2HoneyBox));
         gameRegistry.startGame(address(l2HoneyBox));
 
-        uint8 newBundleId = l1HoneyBox.addBundle(l2ChainId, tokenAddresses, tokenIDs, isERC1155s);
+        uint8 newBundleId = l1HoneyBox.addBundle(l2ChainId.safeCastTo16(), tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
         // wtf idk why vm.changePrank doesn't work
 
         vm.startPrank(portal);
-        CrossChainTHJ.CrossChainBundleConfig memory config;
-        config.bundleId = newBundleId;
-        config.numSleepers = tokenAddresses.length;
-        l2HoneyBox.startGame(l1ChainId, config);
+        l2HoneyBox.startGame(l1ChainId, newBundleId, tokenAddresses.length);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
@@ -358,7 +357,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
         assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
         assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
-        assertEq(party.fermentedJars.length, config.numSleepers);
+        assertEq(party.fermentedJars.length, tokenAddresses.length);
 
         // Communicate Via portal
         vm.startPrank(portal);
@@ -369,7 +368,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         l1HoneyBox.setCrossChainFermentedJars(newBundleId, fermentedJarIds);
         vm.stopPrank();
 
-        // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper. 
+        // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper.
 
         // Test out a particular winner
         uint256 fermentedJarId = party.fermentedJars[0].id;

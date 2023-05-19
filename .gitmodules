@@ -16,13 +16,9 @@
 	path = lib/chainlink-brownie-contracts
 	url = https://github.com/smartcontractkit/chainlink-brownie-contracts
 	branch = 3cc700
-[submodule "lib/ERC721A"]
-	path = lib/ERC721A
-	url = https://github.com/chiru-labs/ERC721A
-	branch = v4.2.3
 [submodule "lib/dual-ownership-nft"]
 	path = lib/dual-ownership-nft
 	url = https://github.com/tubby-cats/dual-ownership-nft
 [submodule "lib/solidity-examples"]
 	path = lib/solidity-examples
-	url = https://github.com/LayerZero-Labs/solidity-examples
+	url = https://github.com/layerzerolabs/solidity-examples

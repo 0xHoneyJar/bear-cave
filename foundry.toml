@@ -2,6 +2,8 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
+test = 'test'
+script = 'script'
 
 remappings = [
     '@openzeppelin/=lib/openzeppelin-contracts/',
@@ -15,6 +17,10 @@ fs_permissions = [
     {access = "write", path = "./deployments/"},
     {access = "read", path = "./script/"}
 ]
+
+# known error codes are: ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]
+# additional warnings can be added using their numeric error code: ["license", 1337]
+ignored_error_codes = ["unused-param", "unused-var"]
 
 solc_version = "0.8.17"
 optimizer = true

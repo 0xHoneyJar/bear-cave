@@ -477,33 +477,29 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     }
 
     function testFailStartGame_bundleAlreadyExists() public {
-        CrossChainTHJ.CrossChainBundleConfig memory config;
         // Give this address portal role in order to call method
         gameRegistry.grantRole("PORTAL", address(this));
-        config.bundleId = bundleId;
-        config.numSleepers = 8;
-        honeyBox.startGame(block.chainid, config);
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, 8);
     }
 
     function testStartGameXChain() public {
         // simulates getting a message saying "start the game"
-        CrossChainTHJ.CrossChainBundleConfig memory config;
         // Give this address portal role in order to call method
         gameRegistry.grantRole("PORTAL", address(this));
-        config.bundleId = bundleId + 1;
-        config.numSleepers = 8;
+        uint8 newBundleId = bundleId + 1;
+        uint256 numSleepers = 8;
 
-        gatekeeper.addGate(config.bundleId, bytes32(0), 6969, 0);
-        honeyBox.startGame(block.chainid, config);
+        gatekeeper.addGate(newBundleId, bytes32(0), 6969, 0);
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), newBundleId, numSleepers);
         vm.warp(block.timestamp + 72 hours);
 
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(config.bundleId, maxHoneyJar);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(newBundleId, maxHoneyJar);
 
-        _simulateVRF(config.bundleId);
+        _simulateVRF(newBundleId);
 
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(config.bundleId);
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(newBundleId);
         assertEq(party.fermentedJarsFound, true, "expected fermentedJarsFound");
-        assertEq(party.sleepoors.length, config.numSleepers);
+        assertEq(party.sleepoors.length, numSleepers);
 
         // This call should fail because its not a real NFT
         // honeyBox.wakeSleeper(config.bundleId, party.fermentedJars[0].id);
