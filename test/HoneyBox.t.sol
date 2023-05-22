@@ -155,11 +155,6 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
         gameRegistry.registerGame(address(honeyBox));
-        uint256[] memory checkpoints = new uint256[](3);
-        checkpoints[0] = 3;
-        checkpoints[1] = 6;
-        checkpoints[2] = 12;
-        honeyBox.setCheckpoints(checkpoints);
 
         /**
          *   Generate roots
@@ -176,7 +171,6 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         // Game Admin Actions
         vm.startPrank(gameAdmin);
-        gameRegistry.startGame(address(honeyBox));
         address[] memory tokenAddresses = new address[](2);
         tokenAddresses[0] = address(erc721);
         tokenAddresses[1] = address(erc1155);
@@ -188,8 +182,16 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         isERC1155s[1] = true;
 
         bundleId = honeyBox.addBundle(block.chainid, tokenAddresses, tokenIDs, isERC1155s);
+
+        uint256[] memory checkpoints = new uint256[](3);
+        checkpoints[0] = 3;
+        checkpoints[1] = 6;
+        checkpoints[2] = 12;
+        honeyBox.setCheckpoints(bundleId, checkpoints);
         erc721.approve(address(honeyBox), NFT_ID);
         erc1155.setApprovalForAll(address(honeyBox), true);
+
+        gameRegistry.startGame(address(honeyBox));
         honeyBox.puffPuffPassOut(bundleId);
         vm.stopPrank();
     }

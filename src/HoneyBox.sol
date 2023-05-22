@@ -78,6 +78,10 @@ contract HoneyBox is
         FermentedJar[] fermentedJars;
         /// @dev list of sleeping NFTs
         SleepingNFT[] sleepoors;
+        /// @dev the jar numbers that will cause parties to be fermented.
+        uint256[] checkpoints;
+        /// @dev index tracker for which checkpoint we're part of.
+        uint256 checkpointIndex;
     }
 
     /// @notice the struct that is signed with the domain separator to validate fermented jar ownership
@@ -198,8 +202,6 @@ contract HoneyBox is
     mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
-    /// @notice the winning checkpoints (generic for each game)
-    BitMaps.BitMap private partyCheckpoints;
 
     constructor(
         address _vrfCoordinator,
@@ -239,11 +241,6 @@ contract HoneyBox is
     /// @notice Who is partying without me?
     function getSlumberParty(uint8 _bundleId) external view returns (SlumberParty memory) {
         return slumberParties[_bundleId];
-    }
-
-    /// @notice view method to determine if JarNum results in a fermentation event
-    function isCheckpoint(uint256 jarNum) external view returns (bool) {
-        return partyCheckpoints.get(jarNum);
     }
 
     /// @notice Once a bundle is configured, transfers the configured assets into this contract.
@@ -319,6 +316,7 @@ contract HoneyBox is
     }
 
     /// @notice method stores the configuration for the sleeping NFTs
+    /// @dev you can choose to call `setCheckpoints`
     // bundleId --> bundle --> []nfts
     function addBundle(
         uint256 mintChainId_,
@@ -455,9 +453,13 @@ contract HoneyBox is
         uint256 numMinted = honeyJarShelf[bundleId_].length;
         if (numMinted >= mintConfig.maxHoneyJar) {
             _fermentJars(bundleId_);
-        } else if (partyCheckpoints.get(numMinted)) {
-            // TODO: Doesn't work for batch mints.
-            _fermentOneJar(bundleId_);
+        } else if (slumberParties[bundleId_].checkpoints.length != 0) {
+            // If the checkpoints are set
+            SlumberParty storage party = slumberParties[bundleId_];
+            if (numMinted >= party.checkpoints[party.checkpointIndex]) {
+                party.checkpointIndex += 1;
+                _fermentOneJar(bundleId_);
+            }
         }
 
         return tokenId - 1; // returns the lastID created
@@ -726,24 +728,22 @@ contract HoneyBox is
 
     /// @notice checkpoints where there can be one winner.
     /// @param checkpoints_ the JarNumber that determins winners.
-    function setCheckpoints(uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
+    function setCheckpoints(uint8 bundleId_, uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
 
-        for (uint256 i = 0; i < checkpoints_.length; ++i) {
-            partyCheckpoints.set(checkpoints_[i]);
-            emit CheckpointUpdated(checkpoints_[i], true);
-        }
+        SlumberParty storage party = slumberParties[bundleId_];
+        if (party.sleepoors.length == 0) revert InvalidBundle(bundleId_);
+
+        party.checkpoints = checkpoints_;
+        party.checkpointIndex = 0;
     }
 
     /// @notice reset the previously configured checkpoints.
-    /// @param checkpoints_ the JarNumbers that have previously been configured as winning checkpoints.
-    function unsetCheckpoints(uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
+    function resetCheckpoints(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
 
-        for (uint256 i = 0; i < checkpoints_.length; ++i) {
-            partyCheckpoints.unset(checkpoints_[i]);
-            emit CheckpointUpdated(checkpoints_[i], false);
-        }
+        delete slumberParties[bundleId_].checkpoints;
+        slumberParties[bundleId_].checkpointIndex = 0;
     }
 
     /**

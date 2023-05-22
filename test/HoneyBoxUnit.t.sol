@@ -109,18 +109,17 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         vrfCoordinator.addConsumer(subId, address(honeyBox));
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
 
-        // Game Config
+        gameRegistry.registerGame(address(honeyBox));
+        bundleId = _addBundle(0);
+
         uint256[] memory checkpoints = new uint256[](2);
         checkpoints[0] = 2;
         checkpoints[1] = 4;
-        honeyBox.setCheckpoints(checkpoints);
-
-        gameRegistry.registerGame(address(honeyBox));
-        gameRegistry.startGame(address(honeyBox));
-        bundleId = _addBundle(0);
-
+        honeyBox.setCheckpoints(bundleId, checkpoints);
         // HoneyBox needs at least one gate to function.
         gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
+
+        gameRegistry.startGame(address(honeyBox));
     }
 
     function testFail_alreadyInitialized() public {
@@ -151,19 +150,18 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         checkpoints[0] = 2;
         checkpoints[1] = 4;
 
-        for (uint256 i = 0; i < checkpoints.length; ++i) {
-            assertTrue(honeyBox.isCheckpoint(checkpoints[i]));
-        }
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+
+        assertEq(party.checkpointIndex, 0);
+        assertEq(party.checkpoints, checkpoints);
 
         // Game needs to be stopped in order to modify checkpoints
         gameRegistry.stopGame(address(honeyBox));
-        honeyBox.unsetCheckpoints(checkpoints);
+        honeyBox.resetCheckpoints(bundleId);
 
-        for (uint256 i = 0; i < checkpoints.length; ++i) {
-            assertFalse(honeyBox.isCheckpoint(checkpoints[i]));
-        }
-
-        assertFalse(honeyBox.isCheckpoint(3));
+        party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.checkpointIndex, 0);
+        assertEq(party.checkpoints.length, 0);
     }
 
     function testChainId() public {
