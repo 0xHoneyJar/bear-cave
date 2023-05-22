@@ -456,7 +456,10 @@ contract HoneyBox is
         } else if (slumberParties[bundleId_].checkpoints.length != 0) {
             // If the checkpoints are set
             SlumberParty storage party = slumberParties[bundleId_];
-            if (numMinted >= party.checkpoints[party.checkpointIndex]) {
+            if (
+                party.checkpointIndex < party.checkpoints.length
+                    && numMinted >= party.checkpoints[party.checkpointIndex]
+            ) {
                 party.checkpointIndex += 1;
                 _fermentOneJar(bundleId_);
             }
