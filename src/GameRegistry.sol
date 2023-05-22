@@ -26,6 +26,7 @@ contract GameRegistry is AccessControl {
         stageTimes.push(4 hours);
     }
 
+    /// @notice stores enabled state for the games.
     mapping(address => bool) public games; // Address -> enabled
 
     /// @notice registers the game with the GameRegistry

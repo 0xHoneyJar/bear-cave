@@ -4,9 +4,13 @@ pragma solidity 0.8.17;
 import "forge-std/Test.sol";
 
 contract GasTest is Test {
-    uint256 private chainId;
+    uint256 BITMAP_INDEX = 12356;
 
-    function _getChainId() internal returns (uint256) {
+    uint256 private chainId;
+    uint256 private uintBitmap;
+    mapping(uint256 => uint256) private mappingBitmap;
+
+    function _getChainId() internal view returns (uint256) {
         return chainId;
     }
 

@@ -155,6 +155,11 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
         gameRegistry.registerGame(address(honeyBox));
+        uint256[] memory checkpoints = new uint256[](3);
+        checkpoints[0] = 3;
+        checkpoints[1] = 6;
+        checkpoints[2] = 12;
+        honeyBox.setCheckpoints(checkpoints);
 
         /**
          *   Generate roots
@@ -490,6 +495,9 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Simulate VRF (RequestID = 1)
 
         vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
+        vrfCoordinator.fulfillRandomWords(2, address(honeyBox));
+        vrfCoordinator.fulfillRandomWords(3, address(honeyBox));
+
         honeyBox.slumberParties(bundleId);
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 

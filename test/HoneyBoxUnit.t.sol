@@ -109,6 +109,12 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         vrfCoordinator.addConsumer(subId, address(honeyBox));
         honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
 
+        // Game Config
+        uint256[] memory checkpoints = new uint256[](2);
+        checkpoints[0] = 2;
+        checkpoints[1] = 4;
+        honeyBox.setCheckpoints(checkpoints);
+
         gameRegistry.registerGame(address(honeyBox));
         gameRegistry.startGame(address(honeyBox));
         bundleId = _addBundle(0);
@@ -138,6 +144,26 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
     function testAddBundle() public {
         _addBundle(0);
+    }
+
+    function testCheckpoints() public {
+        uint256[] memory checkpoints = new uint256[](2);
+        checkpoints[0] = 2;
+        checkpoints[1] = 4;
+
+        for (uint256 i = 0; i < checkpoints.length; ++i) {
+            assertTrue(honeyBox.isCheckpoint(checkpoints[i]));
+        }
+
+        // Game needs to be stopped in order to modify checkpoints
+        gameRegistry.stopGame(address(honeyBox));
+        honeyBox.unsetCheckpoints(checkpoints);
+
+        for (uint256 i = 0; i < checkpoints.length; ++i) {
+            assertFalse(honeyBox.isCheckpoint(checkpoints[i]));
+        }
+
+        assertFalse(honeyBox.isCheckpoint(3));
     }
 
     function testChainId() public {

@@ -5,7 +5,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
@@ -23,14 +23,13 @@ import {IGatekeeper} from "src/IGatekeeper.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
 import {Constants} from "src/Constants.sol";
 
-/// @notice minimal interface
+/// @notice minimal interface for the CrossChainPortal
 interface IHoneyJarPortal {
     function sendStartGame(uint16 destChainId_, uint8 bundleId_, uint256 numSleepers_) external;
     function sendFermentedJars(uint16 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_) external;
 }
 
 /// @title HoneyBox
-/// @notice Revision of v1/BearCave.sol
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
 contract HoneyBox is
     VRFConsumerBaseV2,
@@ -42,7 +41,7 @@ contract HoneyBox is
 {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
-    using ECDSA for bytes32;
+    using BitMaps for BitMaps.BitMap;
 
     /// @notice the lone sleepooor (single NFT)
     struct SleepingNFT {
@@ -142,6 +141,7 @@ contract HoneyBox is
     event HoneyJarClaimed(uint256 bundleId, uint32 gateId, address player, uint256 amount);
     event SleeperAwoke(uint8 bundleId, uint256 tokenId, uint256 jarId, address player);
     event SleeperAdded(uint8 bundleId_, SleepingNFT sleeper);
+    event CheckpointUpdated(uint256 index, bool isSet);
 
     /**
      * Configuration
@@ -198,6 +198,8 @@ contract HoneyBox is
     mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
+    /// @notice the winning checkpoints (generic for each game)
+    BitMaps.BitMap private partyCheckpoints;
 
     constructor(
         address _vrfCoordinator,
@@ -237,6 +239,11 @@ contract HoneyBox is
     /// @notice Who is partying without me?
     function getSlumberParty(uint8 _bundleId) external view returns (SlumberParty memory) {
         return slumberParties[_bundleId];
+    }
+
+    /// @notice view method to determine if JarNum results in a fermentation event
+    function isCheckpoint(uint256 jarNum) external view returns (bool) {
+        return partyCheckpoints.get(jarNum);
     }
 
     /// @notice Once a bundle is configured, transfers the configured assets into this contract.
@@ -331,7 +338,7 @@ contract HoneyBox is
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
-        slumberParty.mintChainId = SafeCastLib.safeCastTo16(mintChainId_); // minting can occur on another chain. .
+        slumberParty.mintChainId = SafeCastLib.safeCastTo16(mintChainId_); // minting can occur on another chain
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
@@ -445,20 +452,35 @@ contract HoneyBox is
         }
 
         // Find the special honeyJar when the last honeyJar is minted.
-        if (honeyJarShelf[bundleId_].length >= mintConfig.maxHoneyJar) {
-            _findHoneyJar(bundleId_);
+        uint256 numMinted = honeyJarShelf[bundleId_].length;
+        if (numMinted >= mintConfig.maxHoneyJar) {
+            _fermentJars(bundleId_);
+        } else if (partyCheckpoints.get(numMinted)) {
+            // TODO: Doesn't work for batch mints.
+            _fermentOneJar(bundleId_);
         }
 
         return tokenId - 1; // returns the lastID created
     }
 
-    /// @notice Forcing function to find a winning HoneyJar.
+    /// @notice Forcing function to find a winning HoneyJars. 1 for each item in the bundle
     /// @notice Should only be called when the last honeyJars is minted.
-    function _findHoneyJar(uint8 bundleId_) internal {
-        // Find 1 special honeyJar for _EACH_ item in the bundle
-        uint32 numWords = SafeCastLib.safeCastTo32(slumberParties[bundleId_].sleepoors.length);
+    function _fermentJars(uint8 bundleId_) internal {
+        // account for already already winners.
+        uint256 numSleepers = slumberParties[bundleId_].sleepoors.length;
+        uint256 numFermented = slumberParties[bundleId_].fermentedJars.length;
+        uint32 numWords = SafeCastLib.safeCastTo32(numSleepers - numFermented);
         uint256 requestId = vrfCoordinator.requestRandomWords(
             vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, numWords
+        );
+        rng[requestId] = bundleId_;
+    }
+
+    /// @notice Fermine only one honejar for a given bundle
+    /// @notice mainly used for checkpoint logic.
+    function _fermentOneJar(uint8 bundleId_) internal {
+        uint256 requestId = vrfCoordinator.requestRandomWords(
+            vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, 1
         );
         rng[requestId] = bundleId_;
     }
@@ -477,18 +499,20 @@ contract HoneyBox is
     /// @param randomNumbers array of randomNumbers returned by chainlink VRF
     function _setFermentedJars(uint8 bundleId, uint256[] memory randomNumbers) internal {
         SlumberParty storage party = slumberParties[bundleId];
-        uint256 numSleepers = party.sleepoors.length;
         uint256[] memory honeyJarIds = honeyJarShelf[bundleId];
         uint256 numHoneyJars = honeyJarShelf[bundleId].length;
-        uint256[] memory fermentedIndexes = new uint256[](numSleepers); // used for emitting the event
+        uint256 numFermentedJars = randomNumbers.length;
+        uint256[] memory fermentedIndexes = new uint256[](numFermentedJars); // used for emitting the event
 
         uint256 fermentedIndex;
-        for (uint256 i = 0; i < numSleepers; i++) {
+        for (uint256 i = 0; i < numFermentedJars; i++) {
             fermentedIndex = randomNumbers[i] % numHoneyJars;
             fermentedIndexes[i] = fermentedIndex;
             party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
         }
         party.fermentedJarsFound = true;
+
+        // TODO: does this need to be in the VRF call?
         if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0)) {
             honeyJarPortal.sendFermentedJars(party.assetChainId, party.bundleId, honeyJarIds);
         }
@@ -656,6 +680,7 @@ contract HoneyBox is
 
     //=============== SETTERS ================//
 
+    /// @notice sets HoneyJarPortal which is responsible for xChain communication.
     function setPortal(address portal_) external onlyRole(Constants.GAME_ADMIN) {
         honeyJarPortal = IHoneyJarPortal(portal_);
 
@@ -697,6 +722,28 @@ contract HoneyBox is
         mintConfig.honeyJarPrice_ETH = _honeyJarPrice;
 
         emit MintConfigChanged(mintConfig);
+    }
+
+    /// @notice checkpoints where there can be one winner.
+    /// @param checkpoints_ the JarNumber that determins winners.
+    function setCheckpoints(uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
+        if (_isEnabled(address(this))) revert GameInProgress();
+
+        for (uint256 i = 0; i < checkpoints_.length; ++i) {
+            partyCheckpoints.set(checkpoints_[i]);
+            emit CheckpointUpdated(checkpoints_[i], true);
+        }
+    }
+
+    /// @notice reset the previously configured checkpoints.
+    /// @param checkpoints_ the JarNumbers that have previously been configured as winning checkpoints.
+    function unsetCheckpoints(uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
+        if (_isEnabled(address(this))) revert GameInProgress();
+
+        for (uint256 i = 0; i < checkpoints_.length; ++i) {
+            partyCheckpoints.unset(checkpoints_[i]);
+            emit CheckpointUpdated(checkpoints_[i], false);
+        }
     }
 
     /**
