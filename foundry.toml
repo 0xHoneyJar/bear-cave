@@ -25,6 +25,8 @@ ignored_error_codes = ["unused-param", "unused-var"]
 solc_version = "0.8.17"
 optimizer = true
 optimizer_runs = 10
+# Specific EVM version since push0 isn't supported on most chains. 
+evm_version = "paris"
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [rpc_endpoints]

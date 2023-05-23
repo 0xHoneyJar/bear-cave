@@ -176,29 +176,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         // Game Admin Actions
         vm.startPrank(gameAdmin);
-        address[] memory tokenAddresses = new address[](6);
-        tokenAddresses[0] = address(erc721);
-        tokenAddresses[1] = address(erc1155);
-        tokenAddresses[2] = address(erc721);
-        tokenAddresses[3] = address(erc721);
-        tokenAddresses[4] = address(erc721);
-        tokenAddresses[5] = address(erc721);
-
-        uint256[] memory tokenIDs = new uint256[](6);
-        tokenIDs[0] = NFT_ID;
-        tokenIDs[1] = SFT_ID;
-        tokenIDs[2] = NFT_ID + 1;
-        tokenIDs[3] = NFT_ID + 2;
-        tokenIDs[4] = NFT_ID + 3;
-        tokenIDs[5] = NFT_ID + 4;
-
-        bool[] memory isERC1155s = new bool[](6);
-        isERC1155s[0] = false;
-        isERC1155s[1] = true;
-        isERC1155s[2] = false;
-        isERC1155s[3] = false;
-        isERC1155s[4] = false;
-        isERC1155s[5] = false;
+        (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s) = _getBundleInput();
 
         checkpoints = new uint256[](3);
         checkpoints[0] = 3;
@@ -348,15 +326,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Do the rest on main chain
         vm.chainId(l1ChainId);
 
-        address[] memory tokenAddresses = new address[](2);
-        tokenAddresses[0] = address(erc721);
-        tokenAddresses[1] = address(erc1155);
-        uint256[] memory tokenIDs = new uint256[](2);
-        tokenIDs[0] = NFT_ID;
-        tokenIDs[1] = SFT_ID;
-        bool[] memory isERC1155s = new bool[](2);
-        isERC1155s[0] = false;
-        isERC1155s[1] = true;
+        (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s) = _getBundleInput();
 
         // Only game Admin actions
         vm.startPrank(gameAdmin);
@@ -421,7 +391,6 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     function testFullRun() public {
         // Get the first gate for validation
-
         (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 _gateRoot, uint256 activeAt)
         = gatekeeper.tokenToGates(bundleId, 0);
 
@@ -447,10 +416,18 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(honeyJar.balanceOf(bera), 3);
         vm.stopPrank();
 
+        // Checkpoint 1 = 3
+        vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
+        _validateWinners();
+
         vm.startPrank(clown);
         honeyBox.claim(bundleId, 0, 3, getProof(2));
         assertEq(honeyJar.balanceOf(clown), 1);
         vm.stopPrank();
+
+        // Checkpoint 2 = 6
+        vrfCoordinator.fulfillRandomWords(2, address(honeyBox));
+        _validateWinners();
 
         // Gate claimable is > game claimable.
         // Game claimable clamps number of allowed mints.
@@ -478,6 +455,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyBox.claim(bundleId, 0, 3, getProof(2));
         assertEq(honeyJar.balanceOf(clown), 1);
         vm.stopPrank();
+
         /**
          * Phase 3: early mint
          */
@@ -518,6 +496,10 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(honeyJar.balanceOf(bera), 3 + 2 + 3); //claimed 3, early minted 2, mint 3
         vm.stopPrank();
 
+        // Checkpoint 3 = 12
+        vrfCoordinator.fulfillRandomWords(3, address(honeyBox));
+        _validateWinners();
+
         vm.startPrank(clown);
         paymentToken.approve(address(honeyBox), 2 * MINT_PRICE_ERC20);
         honeyBox.mekHoneyJarWithERC20(bundleId, 1); // minting 3 fails, need to mint exactly 1
@@ -527,30 +509,56 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         /**
          * Phase 5: End of Game
          */
-        // Simulate VRF (RequestID = 1)
 
-        vrfCoordinator.fulfillRandomWords(1, address(honeyBox)); // checkpoint 1
-        vrfCoordinator.fulfillRandomWords(2, address(honeyBox)); // checkpoint 2
-        vrfCoordinator.fulfillRandomWords(3, address(honeyBox)); // checkpoint 3
         vrfCoordinator.fulfillRandomWords(4, address(honeyBox)); // Final winner
-
-        honeyBox.slumberParties(bundleId);
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
         assertEq(party.bundleId, bundleId);
         assertTrue(party.fermentedJarsFound);
         assertEq(party.fermentedJars.length, party.sleepoors.length, "fermented jars != sleepers");
         console.log("id: ", party.bundleId);
+
         /**
          * Phase 6: Wake NFTs
          */
 
-        for (uint256 i = 0; i < party.fermentedJars.length; i++) {
-            _checkWinner(party.fermentedJars[i].id, party.sleepoors[i]);
-        }
+        // for (uint256 i = 0; i < party.fermentedJars.length; i++) {
+        //     _checkWinner(party.fermentedJars[i].id, party.sleepoors[i]);
+        // }
 
         console.log("janiBal: ", paymentToken.balanceOf(jani));
         console.log("beekeeper: ", paymentToken.balanceOf(beekeeper));
+    }
+
+    /////
+
+    function _getBundleInput()
+        internal
+        returns (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s)
+    {
+        tokenAddresses = new address[](6);
+        tokenAddresses[0] = address(erc721);
+        tokenAddresses[1] = address(erc1155);
+        tokenAddresses[2] = address(erc721);
+        tokenAddresses[3] = address(erc721);
+        tokenAddresses[4] = address(erc721);
+        tokenAddresses[5] = address(erc721);
+
+        tokenIDs = new uint256[](6);
+        tokenIDs[0] = NFT_ID;
+        tokenIDs[1] = SFT_ID;
+        tokenIDs[2] = NFT_ID + 1;
+        tokenIDs[3] = NFT_ID + 2;
+        tokenIDs[4] = NFT_ID + 3;
+        tokenIDs[5] = NFT_ID + 4;
+
+        isERC1155s = new bool[](6);
+        isERC1155s[0] = false;
+        isERC1155s[1] = true;
+        isERC1155s[2] = false;
+        isERC1155s[3] = false;
+        isERC1155s[4] = false;
+        isERC1155s[5] = false;
     }
 
     function _checkWinner(uint256 winningID, HoneyBox.SleepingNFT memory sleeper) internal {
@@ -569,5 +577,28 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             assertEq(erc721.balanceOf(winner), 1);
         }
         vm.stopPrank();
+    }
+
+    function _validateWinners() internal {
+        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertTrue(party.fermentedJarsFound);
+
+        address winner;
+        uint256 alreadyWon;
+        HoneyBox.FermentedJar memory fermentedJar;
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            fermentedJar = party.fermentedJars[i];
+            if (fermentedJar.isUsed) {
+                // Skip if the jar is used.
+                continue;
+            }
+            // Jar isn't used, so wake it up
+            winner = honeyJar.ownerOf(fermentedJar.id);
+            alreadyWon = erc721.balanceOf(winner) + erc1155.balanceOf(winner, SFT_ID);
+            vm.startPrank(winner);
+            honeyBox.wakeSleeper(bundleId, fermentedJar.id); // Validate an NFT transfer occured.
+            vm.stopPrank();
+            assertEq(erc721.balanceOf(winner) + erc1155.balanceOf(winner, SFT_ID), alreadyWon + 1);
+        }
     }
 }

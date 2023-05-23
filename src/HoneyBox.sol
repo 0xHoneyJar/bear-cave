@@ -129,7 +129,6 @@ contract HoneyBox is
     error ZeroMint();
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
-    error JarUsed(uint8 bundle, uint256 jarId);
     error InvalidChain(uint256 expectedChain, uint256 actualChain);
 
     /**
@@ -316,7 +315,7 @@ contract HoneyBox is
     }
 
     /// @notice method stores the configuration for the sleeping NFTs
-    /// @dev you can choose to call `setCheckpoints`
+    /// @param checkpoints_ number of jarMints that will trigger a VRF call
     // bundleId --> bundle --> []nfts
     function addBundle(
         uint256 mintChainId_,
@@ -328,7 +327,7 @@ contract HoneyBox is
         uint256 inputLength = tokenAddresses_.length;
         if (
             inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length
-                || inputLength > checkpoints_.length
+                || inputLength <= checkpoints_.length
         ) {
             revert InvalidInput("addBundle");
         }
@@ -341,7 +340,7 @@ contract HoneyBox is
         slumberParty.bundleId = bundleId;
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = SafeCastLib.safeCastTo16(mintChainId_); // minting can occur on another chain
-        slumberParty.checkpoints = checkpoints_; // Checkpoint index is defaulted to zero.
+        slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
@@ -362,7 +361,7 @@ contract HoneyBox is
         if (party.bundleId != bundleId_) revert InvalidBundle(bundleId_);
         if (party.mintChainId != getChainId()) revert InvalidChain(party.mintChainId, getChainId());
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
-        if (party.fermentedJarsFound) revert PartyAlreadyWoke(bundleId_); // Check if fermented jars found
+        if (party.fermentedJars.length == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_); // All the jars be found
         if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
         if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar) {
             revert MekingTooManyHoneyJars(bundleId_);
@@ -456,15 +455,12 @@ contract HoneyBox is
 
         // Find the special honeyJar when the last honeyJar is minted.
         uint256 numMinted = honeyJarShelf[bundleId_].length;
+        SlumberParty storage party = slumberParties[bundleId_];
         if (numMinted >= mintConfig.maxHoneyJar) {
             _fermentJars(bundleId_);
-        } else if (slumberParties[bundleId_].checkpoints.length != 0) {
+        } else if (party.checkpoints.length != 0 && party.checkpointIndex < party.checkpoints.length) {
             // If the checkpoints are set
-            SlumberParty storage party = slumberParties[bundleId_];
-            if (
-                party.checkpointIndex < party.checkpoints.length
-                    && numMinted >= party.checkpoints[party.checkpointIndex]
-            ) {
+            if (numMinted >= party.checkpoints[party.checkpointIndex]) {
                 party.checkpointIndex += 1;
                 _fermentOneJar(bundleId_);
             }
@@ -517,7 +513,7 @@ contract HoneyBox is
         uint256 fermentedIndex;
         for (uint256 i = 0; i < numFermentedJars; i++) {
             fermentedIndex = randomNumbers[i] % numHoneyJars;
-            fermentedIndexes[i] = fermentedIndex;
+            fermentedIndexes[i] = honeyJarIds[fermentedIndex];
             party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
         }
         party.fermentedJarsFound = true;
@@ -555,10 +551,6 @@ contract HoneyBox is
         }
 
         SlumberParty storage party = slumberParties[bundleId_];
-        if (party.assetChainId == party.mintChainId) {
-            // Only perform these validations if the asset and mint chainID are the same.
-            if (honeyJarShelf[bundleId_].length < mintConfig.maxHoneyJar) revert NotEnoughHoneyJarMinted(bundleId_);
-        }
         if (party.assetChainId != getChainId()) revert InvalidChain(party.assetChainId, getChainId()); // Can only claim on chains with the asset
         if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
         if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);
@@ -569,7 +561,7 @@ contract HoneyBox is
         uint256 sleeperIndex = 0;
         for (uint256 i = 0; i < numFermentedJars; ++i) {
             if (fermentedJars[i].id != jarId) continue;
-            if (fermentedJars[i].isUsed) revert JarUsed(bundleId_, jarId);
+            if (fermentedJars[i].isUsed) continue; // Same jar can win multiple times.
             // The caller is the owner of the Fermented jar and its unused
             fermentedJars[i].isUsed = true;
             sleeperIndex = party.numUsed; // Use the next available sleeper
