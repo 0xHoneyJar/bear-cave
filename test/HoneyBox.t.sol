@@ -64,6 +64,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     // Game vars
     uint8 private bundleId;
+    uint256[] private checkpoints;
 
     //Chainlink setup
     MockVRFCoordinator private vrfCoordinator;
@@ -199,12 +200,13 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         isERC1155s[4] = false;
         isERC1155s[5] = false;
 
-        bundleId = honeyBox.addBundle(block.chainid, tokenAddresses, tokenIDs, isERC1155s);
-
-        uint256[] memory checkpoints = new uint256[](3);
+        checkpoints = new uint256[](3);
         checkpoints[0] = 3;
         checkpoints[1] = 6;
         checkpoints[2] = 12;
+
+        bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+
         honeyBox.setCheckpoints(bundleId, checkpoints);
         erc721.approve(address(honeyBox), NFT_ID);
         erc721.approve(address(honeyBox), NFT_ID + 1);
@@ -312,8 +314,8 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
         assertEq(party.bundleId, bundleId);
-        assertEq(party.fermentedJars.length, 2, "wrong # of fermented jars");
-        assertEq(party.sleepoors.length, 2, "wrong # of sleepers");
+        assertEq(party.fermentedJars.length, 6, "wrong # of fermented jars");
+        assertEq(party.sleepoors.length, 6, "wrong # of sleepers");
     }
 
     function testCrossChain() public {
@@ -362,7 +364,8 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.registerGame(address(l2HoneyBox));
         gameRegistry.startGame(address(l2HoneyBox));
 
-        uint8 newBundleId = l1HoneyBox.addBundle(l2ChainId.safeCastTo16(), tokenAddresses, tokenIDs, isERC1155s);
+        uint8 newBundleId =
+            l1HoneyBox.addBundle(l2ChainId.safeCastTo16(), checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 

@@ -557,7 +557,9 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         bool[] memory isERC1155 = new bool[](2);
         isERC1155[0] = true;
         isERC1155[1] = false;
-        return honeyBox.addBundle(block.chainid, tokenAddresses, tokenIds, isERC1155);
+
+        uint256[] memory checkpoints;
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 
     function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
@@ -568,6 +570,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         bool[] memory isERC1155 = new bool[](1);
         isERC1155[0] = false;
 
-        return honeyBox.addBundle(chainId_, tokenAddresses, tokenIds, isERC1155);
+        uint256[] memory checkpoints;
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 }

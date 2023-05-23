@@ -320,12 +320,16 @@ contract HoneyBox is
     // bundleId --> bundle --> []nfts
     function addBundle(
         uint256 mintChainId_,
+        uint256[] calldata checkpoints_,
         address[] calldata tokenAddresses_,
         uint256[] calldata tokenIds_,
         bool[] calldata isERC1155_
     ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
-        if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length) {
+        if (
+            inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length
+                || inputLength > checkpoints_.length
+        ) {
             revert InvalidInput("addBundle");
         }
 
@@ -337,6 +341,7 @@ contract HoneyBox is
         slumberParty.bundleId = bundleId;
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = SafeCastLib.safeCastTo16(mintChainId_); // minting can occur on another chain
+        slumberParty.checkpoints = checkpoints_; // Checkpoint index is defaulted to zero.
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
