@@ -21,4 +21,4 @@
 	url = https://github.com/tubby-cats/dual-ownership-nft
 [submodule "lib/solidity-examples"]
 	path = lib/solidity-examples
-	url = https://github.com/layerzerolabs/solidity-examples
+	url = https://github.com/layerzero-labs/solidity-examples
