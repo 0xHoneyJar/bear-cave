@@ -6,13 +6,13 @@ import "./THJScriptBase.sol";
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 
 import {GameRegistry} from "src/GameRegistry.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-// Sets up HoneyBox as a game
+// Sets up HibernationDen as a game
 contract ConfigureGame is THJScriptBase {
     using stdJson for string;
     using SafeCastLib for uint256;
@@ -29,15 +29,15 @@ contract ConfigureGame is THJScriptBase {
 
     // Deployment vars
 
-    HoneyBox private honeyBox;
+    HibernationDen private honeyBox;
     GameRegistry private gameRegistry;
 
-    HoneyBox.MintConfig private mintConfig;
-    HoneyBox.VRFConfig private vrfConfig;
+    HibernationDen.MintConfig private mintConfig;
+    HibernationDen.VRFConfig private vrfConfig;
 
     function setUp() public {
         // Dependencies
-        honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+        honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
         gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
     }
 
@@ -47,11 +47,11 @@ contract ConfigureGame is THJScriptBase {
         // Chainlink VRF Config
         vrfKeyhash = json.readBytes32(".vrf.keyhash");
         vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
-        vrfConfig = HoneyBox.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
+        vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
 
         // MintConfig
         bytes memory rawMintConfig = json.parseRaw(".mintConfig");
-        mintConfig = abi.decode(rawMintConfig, (HoneyBox.MintConfig));
+        mintConfig = abi.decode(rawMintConfig, (HibernationDen.MintConfig));
 
         vm.startBroadcast();
 

@@ -7,21 +7,21 @@ import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 
 // Mints the required tokens to GameAdmin and starts the game
 contract TestnetPuffPuff is THJScriptBase {
     using stdJson for string;
 
     // External Addresses
-    HoneyBox private honeyBox;
+    HibernationDen private honeyBox;
     MockERC20 private erc20;
     address private deployer;
     address private gameAdmin;
     uint8 private bundleId;
 
     function setUp() public {
-        honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+        honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
     }
 
     function run(string calldata env) public override {

@@ -12,14 +12,14 @@ import {MockERC20} from "test/mocks/MockERC20.sol";
 import {MockERC721, ERC721TokenReceiver} from "test/mocks/MockERC721.sol";
 import {MockVRFCoordinator} from "test/mocks/MockVRFCoordinator.sol";
 
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {Constants} from "src/Constants.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 
-contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
+contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
     using SafeCastLib for uint256;
     using Address for address;
@@ -56,9 +56,9 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     // Deployables
     GameRegistry private gameRegistry;
-    HoneyBox private honeyBox;
-    HoneyBox.VRFConfig private vrfConfig;
-    HoneyBox.MintConfig private mintConfig;
+    HibernationDen private honeyBox;
+    HibernationDen.VRFConfig private vrfConfig;
+    HibernationDen.MintConfig private mintConfig;
     HoneyJar private honeyJar;
     Gatekeeper private gatekeeper;
 
@@ -137,7 +137,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyJar = new HoneyJar(address(this), address(gameRegistry), START_TOKEN_ID, 69);
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
-        honeyBox = new HoneyBox(
+        honeyBox = new HibernationDen(
             address(vrfCoordinator),
             address(gameRegistry),
             address(honeyJar),
@@ -148,7 +148,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             honeyJarShare
         );
 
-        mintConfig = HoneyBox.MintConfig({
+        mintConfig = HibernationDen.MintConfig({
             maxHoneyJar: maxHoneyJar,
             maxClaimableHoneyJar: maxClaimableHoneyJar,
             honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
@@ -158,7 +158,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Set up on VRF site
         vrfCoordinator.addConsumer(subId, address(honeyBox));
 
-        honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
+        honeyBox.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
         gameRegistry.registerGame(address(honeyBox));
 
         /**
@@ -205,7 +205,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     function testFailAlreadyInitialized() public {
         vm.prank(address(gameAdmin));
-        honeyBox.initialize(HoneyBox.VRFConfig("", 0, 0, 0), mintConfig);
+        honeyBox.initialize(HibernationDen.VRFConfig("", 0, 0, 0), mintConfig);
     }
 
     function testFailClaim_InvalidProof() public {
@@ -289,7 +289,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
 
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
         assertEq(party.bundleId, bundleId);
         assertEq(party.fermentedJars.length, 6, "wrong # of fermented jars");
@@ -306,11 +306,11 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.deal(portal, 100 ether);
         gameRegistry.grantRole(Constants.PORTAL, portal);
 
-        HoneyBox l1HoneyBox = honeyBox;
+        HibernationDen l1HibernationDen = honeyBox;
 
         // Deploy l2 on a new chain
         vm.chainId(l2ChainId);
-        HoneyBox l2HoneyBox = new HoneyBox(
+        HibernationDen l2HibernationDen = new HibernationDen(
             address(vrfCoordinator),
             address(gameRegistry),
             address(honeyJar),
@@ -321,7 +321,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             honeyJarShare
         );
 
-        vrfCoordinator.addConsumer(subId, address(l2HoneyBox));
+        vrfCoordinator.addConsumer(subId, address(l2HibernationDen));
 
         // Do the rest on main chain
         vm.chainId(l1ChainId);
@@ -330,40 +330,40 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         // Only game Admin actions
         vm.startPrank(gameAdmin);
-        l2HoneyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
-        gameRegistry.registerGame(address(l2HoneyBox));
-        gameRegistry.startGame(address(l2HoneyBox));
+        l2HibernationDen.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
+        gameRegistry.registerGame(address(l2HibernationDen));
+        gameRegistry.startGame(address(l2HibernationDen));
 
         uint8 newBundleId =
-            l1HoneyBox.addBundle(l2ChainId.safeCastTo16(), checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+            l1HibernationDen.addBundle(l2ChainId.safeCastTo16(), checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
         // wtf idk why vm.changePrank doesn't work
 
         vm.startPrank(portal);
-        l2HoneyBox.startGame(l1ChainId, newBundleId, tokenAddresses.length);
+        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
         vm.warp(block.timestamp + 72 hours);
 
         vm.startPrank(alfaHunter);
-        // l1HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5); Fails as expected
-        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        // l1HibernationDen.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5); Fails as expected
+        l2HibernationDen.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        l2HibernationDen.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
         vm.stopPrank();
 
         vm.startPrank(clown);
-        l2HoneyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
+        l2HibernationDen.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(newBundleId, 5);
         vm.stopPrank();
 
         // Get winnors
-        vrfCoordinator.fulfillRandomWords(1, address(l2HoneyBox));
-        HoneyBox.SlumberParty memory party = l2HoneyBox.getSlumberParty(newBundleId);
+        vrfCoordinator.fulfillRandomWords(1, address(l2HibernationDen));
+        HibernationDen.SlumberParty memory party = l2HibernationDen.getSlumberParty(newBundleId);
         assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
         assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
         assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
@@ -375,7 +375,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         for (uint256 i = 0; i < party.fermentedJars.length; i++) {
             fermentedJarIds[i] = party.fermentedJars[i].id;
         }
-        l1HoneyBox.setCrossChainFermentedJars(newBundleId, fermentedJarIds);
+        l1HibernationDen.setCrossChainFermentedJars(newBundleId, fermentedJarIds);
         vm.stopPrank();
 
         // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper.
@@ -385,8 +385,8 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         address winner = honeyJar.ownerOf(fermentedJarId);
 
         vm.startPrank(winner);
-        // l2HoneyBox.wakeSleeper(newBundleId, fermentedJarId);  This fails like it should
-        l1HoneyBox.wakeSleeper(newBundleId, fermentedJarId);
+        // l2HibernationDen.wakeSleeper(newBundleId, fermentedJarId);  This fails like it should
+        l1HibernationDen.wakeSleeper(newBundleId, fermentedJarId);
     }
 
     function testFullRun() public {
@@ -511,7 +511,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
          */
 
         vrfCoordinator.fulfillRandomWords(4, address(honeyBox)); // Final winner
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
         assertEq(party.bundleId, bundleId);
         assertTrue(party.fermentedJarsFound);
@@ -561,7 +561,7 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         isERC1155s[5] = false;
     }
 
-    function _checkWinner(uint256 winningID, HoneyBox.SleepingNFT memory sleeper) internal {
+    function _checkWinner(uint256 winningID, HibernationDen.SleepingNFT memory sleeper) internal {
         address winner = honeyJar.ownerOf(winningID);
         if (sleeper.isERC1155) {
             assertEq(erc1155.balanceOf(winner, SFT_ID), 0);
@@ -580,12 +580,12 @@ contract HoneyBoxTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     }
 
     function _validateWinners() internal {
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         assertTrue(party.fermentedJarsFound);
 
         address winner;
         uint256 alreadyWon;
-        HoneyBox.FermentedJar memory fermentedJar;
+        HibernationDen.FermentedJar memory fermentedJar;
         for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
             fermentedJar = party.fermentedJars[i];
             if (fermentedJar.isUsed) {

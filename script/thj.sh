@@ -140,7 +140,7 @@ case "$method" in
 
   "deploy3")
     echo "Running deploy"
-    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyBox(string)()' $network $forge_params
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHibernationDen(string)()' $network $forge_params
     ;;
   "config")
     echo "Running config"

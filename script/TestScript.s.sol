@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 
 import "./THJScriptBase.sol";
 

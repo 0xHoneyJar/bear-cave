@@ -7,7 +7,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 // Calls honeyBox.addBundle
 
 contract BundleTokens is THJScriptBase {
@@ -16,13 +16,13 @@ contract BundleTokens is THJScriptBase {
     uint256 private SFT_ID = 4;
     uint256 private NFT_ID = 4;
 
-    HoneyBox private hb;
+    HibernationDen private hb;
     ERC721 private nft;
     ERC1155 private sft;
     ERC20 private token;
 
     function setUp() public {
-        hb = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+        hb = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
     }
 
     function run(string calldata env) public override {

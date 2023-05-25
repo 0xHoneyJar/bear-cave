@@ -12,7 +12,7 @@ import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {Constants} from "src/Constants.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
 
-interface IHoneyBox {
+interface IHibernationDen {
     function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_) external;
     function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds) external;
 }
@@ -30,7 +30,7 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     event PortalSet(uint256 chainId, address portalAddress);
     event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
     event MessageRecieved(bytes payload);
-    event HoneyBoxSet(address honeyBoxAddress);
+    event HibernationDenSet(address honeyBoxAddress);
     event StartGameProcessed(uint16 srcChainId, StartGamePayload);
     event FermentedJarsProcessed(uint16 srcChainId, FermentedJarsPayload);
 
@@ -47,7 +47,7 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
     // Dependencies
     IHoneyJar public immutable honeyJar;
-    IHoneyBox public honeyBox;
+    IHibernationDen public honeyBox;
 
     constructor(
         uint256 _minGasToTransfer,
@@ -58,14 +58,14 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     ) ONFT721Core(_minGasToTransfer, _lzEndpoint) GameRegistryConsumer(_gameRegistry) {
         if (!_honeyJar.supportsInterface(type(IERC721).interfaceId)) revert InvalidToken(_honeyJar);
         honeyJar = IHoneyJar(_honeyJar);
-        honeyBox = IHoneyBox(_honeyBox);
+        honeyBox = IHibernationDen(_honeyBox);
     }
 
     /// @dev there can only be one honeybox per portal.
-    function setHoneyBox(address honeyBoxAddress_) external onlyRole(Constants.GAME_ADMIN) {
-        honeyBox = IHoneyBox(honeyBoxAddress_);
+    function setHibernationDen(address honeyBoxAddress_) external onlyRole(Constants.GAME_ADMIN) {
+        honeyBox = IHibernationDen(honeyBoxAddress_);
 
-        emit HoneyBoxSet(honeyBoxAddress_);
+        emit HibernationDenSet(honeyBoxAddress_);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {

@@ -29,9 +29,9 @@ interface IHoneyJarPortal {
     function sendFermentedJars(uint16 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_) external;
 }
 
-/// @title HoneyBox
+/// @title HibernationDen
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
-contract HoneyBox is
+contract HibernationDen is
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
     ERC1155TokenReceiver,

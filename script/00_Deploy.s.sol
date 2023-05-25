@@ -6,7 +6,7 @@ import "./THJScriptBase.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 import {Constants} from "src/Constants.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
@@ -30,7 +30,7 @@ contract DeployScript is THJScriptBase {
         // Existing deployments (if it fails)
         // gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
         // honeyJar = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
-        // honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
+        // honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
 
         // Read Config
         string memory json = _getConfig(env);
@@ -53,8 +53,8 @@ contract DeployScript is THJScriptBase {
         // bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarOogaBooga"));
         // honeyJar = new HoneyJar{salt: salt}(deployer, address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
 
-        // Deploy HoneyBox
-        // honeyBox = new HoneyBox(
+        // Deploy HibernationDen
+        // honeyBox = new HibernationDen(
         //     address(vrfCoordinator),
         //     address(gameRegistry),
         //     address(honeyJar),
@@ -85,7 +85,7 @@ contract DeployScript is THJScriptBase {
         vm.stopBroadcast();
     }
 
-    function deployHoneyBox(string calldata env) public {
+    function deployHibernationDen(string calldata env) public {
         string memory json = _getConfig(env);
 
         address gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
@@ -101,7 +101,7 @@ contract DeployScript is THJScriptBase {
 
         vm.startBroadcast(deployer);
 
-        HoneyBox honeyBox = new HoneyBox(
+        HibernationDen honeyBox = new HibernationDen(
             vrfCoordinator,
             gameRegistry,
             honeyJar,
@@ -112,7 +112,7 @@ contract DeployScript is THJScriptBase {
             revShare
         );
 
-        console.log("-HoneyBoxAddress: ", address(honeyBox));
+        console.log("-HibernationDenAddress: ", address(honeyBox));
         vm.stopBroadcast();
     }
 }
