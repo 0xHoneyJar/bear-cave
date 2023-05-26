@@ -21,12 +21,11 @@ import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {IGatekeeper} from "src/IGatekeeper.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
 import {Constants} from "src/Constants.sol";
-import "forge-std/console2.sol";
 
 /// @notice minimal interface for the CrossChainPortal
 interface IHoneyJarPortal {
-    function sendStartGame(uint16 destChainId_, uint8 bundleId_, uint256 numSleepers_) external;
-    function sendFermentedJars(uint16 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_) external;
+    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_) external;
+    function sendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_) external;
 }
 
 /// @title HibernationDen
@@ -66,9 +65,9 @@ contract HibernationDen is
         /// @dev the block.timestamp when the mint() function can be called. Should be set at game-start
         uint256 publicMintTime;
         /// @dev chainId that can wakeSleeper
-        uint16 assetChainId;
+        uint256 assetChainId;
         /// @dev The chainId that can mint
-        uint16 mintChainId;
+        uint256 mintChainId;
         /// @dev Used so a tokenID 0 can't wake the slumberParty before special Honeyjar is found.
         bool fermentedJarsFound;
         /// @dev used to track the number of used fermentedJars
@@ -128,6 +127,7 @@ contract HibernationDen is
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
     error InvalidChain(uint256 expectedChain, uint256 actualChain);
+    error NotImplemented();
 
     /**
      * Events
@@ -506,7 +506,7 @@ contract HibernationDen is
         uint256[] memory honeyJarIds = honeyJarShelf[bundleId];
         uint256 numHoneyJars = honeyJarShelf[bundleId].length;
         uint256 numFermentedJars = randomNumbers.length;
-        // In the event more numbers were requested than number of jars.
+        // In the event more numbers were requested than number of sleepoors.
         if (numFermentedJars + party.fermentedJars.length > party.sleepoors.length) {
             numFermentedJars = party.sleepoors.length - party.fermentedJars.length;
         }
