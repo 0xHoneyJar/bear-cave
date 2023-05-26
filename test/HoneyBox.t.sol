@@ -333,8 +333,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.registerGame(address(l2HibernationDen));
         gameRegistry.startGame(address(l2HibernationDen));
 
-        uint8 newBundleId =
-            l1HibernationDen.addBundle(l2ChainId.safeCastTo16(), checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+        uint8 newBundleId = l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 

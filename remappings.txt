@@ -10,3 +10,5 @@ murky/=lib/murky/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 solidity-examples/=lib/solidity-examples/contracts/
 solmate/=lib/solmate/src/
+pigeon/=lib/pigeon/src/
+

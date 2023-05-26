@@ -285,7 +285,7 @@ contract HibernationDen is
 
         party.bundleId = bundleId_;
         party.checkpoints = checkpoints;
-        party.assetChainId = SafeCastLib.safeCastTo16(srcChainId);
+        party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
         // Push empty sleepers.
@@ -342,7 +342,7 @@ contract HibernationDen is
         SlumberParty storage slumberParty = slumberPartyList.push(); // 0 initialized Bundle
         slumberParty.bundleId = bundleId;
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
-        slumberParty.mintChainId = SafeCastLib.safeCastTo16(mintChainId_); // minting can occur on another chain
+        slumberParty.mintChainId = mintChainId_; // minting can occur on another chain
         slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
 
         // Synthesize sleeper configs from input
