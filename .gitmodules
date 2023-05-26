@@ -22,3 +22,6 @@
 [submodule "lib/solidity-examples"]
 	path = lib/solidity-examples
 	url = https://github.com/layerzero-labs/solidity-examples
+[submodule "lib/pigeon"]
+	path = lib/pigeon
+	url = https://github.com/exp-table/pigeon
