@@ -9,7 +9,7 @@ import {HibernationDen} from "src/HibernationDen.sol";
 import "./THJScriptBase.sol";
 
 /// @notice this script is only meant to test do not use for production
-contract TestScript is THJScriptBase {
+contract TestScript is THJScriptBase("gen2") {
     using stdJson for string;
 
     function setUp() public {}

@@ -10,7 +10,7 @@ import {MockERC20} from "test/mocks/MockERC20.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
 // Mints the required tokens to GameAdmin and starts the game
-contract TestnetPuffPuff is THJScriptBase {
+contract TestnetPuffPuff is THJScriptBase("gen2") {
     using stdJson for string;
 
     // External Addresses

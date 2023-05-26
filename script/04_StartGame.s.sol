@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "./THJScriptBase.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 
-contract StartGame is THJScriptBase {
+contract StartGame is THJScriptBase("gen3") {
     using stdJson for string;
 
     GameRegistry private gr;

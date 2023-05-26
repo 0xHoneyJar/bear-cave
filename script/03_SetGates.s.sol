@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "./THJScriptBase.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 
-contract SetGates is THJScriptBase {
+contract SetGates is THJScriptBase("gen3") {
     using stdJson for string;
 
     Gatekeeper private gk;

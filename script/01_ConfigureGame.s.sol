@@ -13,7 +13,7 @@ import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
 // Sets up HibernationDen as a game
-contract ConfigureGame is THJScriptBase {
+contract ConfigureGame is THJScriptBase("gen2") {
     using stdJson for string;
     using SafeCastLib for uint256;
 

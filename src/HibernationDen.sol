@@ -5,7 +5,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
@@ -41,7 +40,6 @@ contract HibernationDen is
 {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
-    using BitMaps for BitMaps.BitMap;
 
     /// @notice the lone sleepooor (single NFT)
     struct SleepingNFT {
@@ -94,7 +92,7 @@ contract HibernationDen is
     /// @notice Configuration for minting for games occurring at the same time.
     struct MintConfig {
         /// @dev maximum number of honeyJar alloted to be minted.
-        uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m)
+        uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m) TODO: Does this make sense as the last checkpoint?
         /// @dev number of free honey jars to be claimed. Should be sum(gates.maxClaimable)
         uint32 maxClaimableHoneyJar; // # of honeyJars that can be claimed (total)
         /// @dev value of the honeyJar in ERC20 -- Ohm is 1e9

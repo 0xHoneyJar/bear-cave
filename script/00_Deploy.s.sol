@@ -13,7 +13,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase {
+contract DeployScript is THJScriptBase("gen3") {
     using stdJson for string;
 
     // Users to grant permissions
@@ -22,7 +22,6 @@ contract DeployScript is THJScriptBase {
     function setUp() public {
         // Dependencies
         // If a deployment fails uncomment lines of existing deployments
-
         deployer = vm.envAddress("DEPLOYER_ADDRESS");
     }
 
@@ -81,7 +80,7 @@ contract DeployScript is THJScriptBase {
         bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
 
-        console.log("-HoneyJarAddress: ", address(honeyJar));
+        console.log("- HoneyJarAddress: ", address(honeyJar));
         vm.stopBroadcast();
     }
 
@@ -93,7 +92,7 @@ contract DeployScript is THJScriptBase {
         address honeyJar = _readAddress("HONEYJAR_ADDRESS");
 
         address paymentToken = json.readAddress(".addresses.paymentToken");
-        address vrfCoordinator = json.readAddress(".addresses.vrfCoordinator");
+        address vrfCoordinator = json.readAddress(".vrf.coordinator");
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
@@ -101,7 +100,7 @@ contract DeployScript is THJScriptBase {
 
         vm.startBroadcast(deployer);
 
-        HibernationDen honeyBox = new HibernationDen(
+        HibernationDen den = new HibernationDen{salt:"anotherONe"}(
             vrfCoordinator,
             gameRegistry,
             honeyJar,
@@ -112,7 +111,7 @@ contract DeployScript is THJScriptBase {
             revShare
         );
 
-        console.log("-HibernationDenAddress: ", address(honeyBox));
+        console.log("-HibernationDenAddress: ", address(den));
         vm.stopBroadcast();
     }
 }

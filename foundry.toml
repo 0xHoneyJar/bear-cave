@@ -23,14 +23,18 @@ fs_permissions = [
 ignored_error_codes = ["unused-param", "unused-var"]
 
 solc_version = "0.8.17"
+vir_ir = true
 optimizer = true
-optimizer_runs = 10
+optimizer_runs = 1000
 # Specific EVM version since push0 isn't supported on most chains. 
 evm_version = "paris"
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [rpc_endpoints]
-goerli = "${GOERLI_RPC_URL}"
+mainnet = "${MAINNET_URL}"
+goerli = "${GOERLI_URL}"
+arbitrum-goerli= "${ARB_GOERLI_URL}"
+arbitrum = "${ARBITRUM_URL}"
 
 [etherscan]
 goerli = { key = "${ETHERSCAN_API_KEY}" }

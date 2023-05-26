@@ -5,8 +5,14 @@ import "forge-std/Script.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 
 abstract contract THJScriptBase is Script {
+    string private gen;
+
+    constructor(string memory gen_) {
+        gen = gen_;
+    }
     /// @notice must pass in an env name for the script to run
     /// @notice env the environment: mainnet, goerli, polygon, etc.
+
     function run(string calldata env) public virtual;
 
     function _bytes32ToString(bytes32 _bytes32) internal pure returns (string memory) {
@@ -20,7 +26,9 @@ abstract contract THJScriptBase is Script {
     /// @notice only is used to read the config path based on the environemtn.
     function _getConfigPath(string memory env) internal view returns (string memory) {
         string memory filename = string.concat(env, ".json");
-        string memory jsonPath = string.concat("/script/gen2/config.", filename);
+        string memory folder = string.concat("/script/", gen);
+        string memory prefix = string.concat(folder, "/config.");
+        string memory jsonPath = string.concat(prefix, filename);
         string memory root = vm.projectRoot();
         console.log("Loading Config: ", jsonPath);
         return string.concat(root, jsonPath);

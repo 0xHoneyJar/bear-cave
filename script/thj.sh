@@ -100,7 +100,7 @@ fi
 
 # Build forge params
 # Append --broadcast to the forge param if flag is provided
-forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
+forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvvv"
 
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast"
@@ -121,6 +121,10 @@ echo ""
 
 # Perform different methods based on the parameter passed
 case "$method" in
+  "localNode")
+    echo "Running local fork of $network"
+    anvil --fork-url $RPC_URL
+    ;;
   "test")
     echo "Forge Params ${forge_params}"
     forge script script/TestScript.s.sol:TestScript --sig 'run(string)()' $network $forge_params
