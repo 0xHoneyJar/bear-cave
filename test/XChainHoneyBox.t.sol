@@ -103,6 +103,9 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     address L1_LZ_ENDPOINT = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
     address L2_LZ_ENDPOINT = 0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab;
 
+    address L1_DEFAULT_LIBRARY = 0x6f3a314C1279148E53f51AF154817C3EF2C827B1;
+    address L2_DEFAULT_LIBRARY = 0xCb78eEfd5fD0fA8DDB0C5e3FbC3bDcCba545Ae67;
+
     function createNode(address player, uint32 amount) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(player, amount));
     }
@@ -285,7 +288,14 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         vm.prank(gameAdmin);
         honeyBox.puffPuffPassOut{value: 1 ether}(bundleId);
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        lzHelper.help(L2_LZ_ENDPOINT, 100000, L2_FORK_ID, logs);
+        lzHelper.help(
+            L2_LZ_ENDPOINT,
+            L2_DEFAULT_LIBRARY,
+            100000,
+            0xe9bded5f24a4168e4f3bf44e00298c993b22376aad8c58c7dda9718a54cbea82,
+            L2_FORK_ID,
+            logs
+        );
     }
 
     function testCrossChain() public {
@@ -597,7 +607,5 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         }
     }
 
-    receive() external payable {
-        
-    }
+    receive() external payable {}
 }
