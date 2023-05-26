@@ -21,6 +21,7 @@ import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {IGatekeeper} from "src/IGatekeeper.sol";
 import {IHoneyJar} from "src/IHoneyJar.sol";
 import {Constants} from "src/Constants.sol";
+import "forge-std/console2.sol";
 
 /// @notice minimal interface for the CrossChainPortal
 interface IHoneyJarPortal {
@@ -76,7 +77,8 @@ contract HibernationDen is
         FermentedJar[] fermentedJars;
         /// @dev list of sleeping NFTs
         SleepingNFT[] sleepoors;
-        /// @dev the jar numbers that will cause parties to be fermented.
+        /// @dev the jar numbers that will cause parties to be fermented. The last index is the maximum number of honeyjars allowed to be minted
+        /// @dev the gap between checkpoints MUST be big enough so that a user can't mint through multiple checkpoints.
         uint256[] checkpoints;
         /// @dev index tracker for which checkpoint we're part of.
         uint256 checkpointIndex;
@@ -91,8 +93,6 @@ contract HibernationDen is
 
     /// @notice Configuration for minting for games occurring at the same time.
     struct MintConfig {
-        /// @dev maximum number of honeyJar alloted to be minted.
-        uint32 maxHoneyJar; // Max # of generated honeys (Max of 4.2m) TODO: Does this make sense as the last checkpoint?
         /// @dev number of free honey jars to be claimed. Should be sum(gates.maxClaimable)
         uint32 maxClaimableHoneyJar; // # of honeyJars that can be claimed (total)
         /// @dev value of the honeyJar in ERC20 -- Ohm is 1e9
@@ -272,16 +272,21 @@ contract HibernationDen is
     /// @notice Does the same as function above, except doesn't transfer the NFTs.
     /// @notice is used on the destination chain in an xChain setup.
     /// @dev can only be called by the HoneyJar Portal
-    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_) external onlyRole(Constants.PORTAL) {
+    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
+        external
+        onlyRole(Constants.PORTAL)
+    {
+        if (checkpoints.length > numSleepers_) revert InvalidInput("startGame::checkpoints");
         uint256[] memory allStages = _getStages();
         uint256 publicMintOffset = allStages[allStages.length - 1];
 
         SlumberParty storage party = slumberParties[bundleId_];
-        party.bundleId = bundleId_;
-        party.assetChainId = SafeCastLib.safeCastTo16(srcChainId);
-        party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         if (party.sleepoors.length != 0) revert InvalidBundle(bundleId_);
 
+        party.bundleId = bundleId_;
+        party.checkpoints = checkpoints;
+        party.assetChainId = SafeCastLib.safeCastTo16(srcChainId);
+        party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
         // Push empty sleepers.
         SleepingNFT memory emptyNft;
@@ -323,11 +328,11 @@ contract HibernationDen is
         bool[] calldata isERC1155_
     ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
-        if (
-            inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length
-                || inputLength <= checkpoints_.length
-        ) {
-            revert InvalidInput("addBundle");
+        if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length) {
+            revert InvalidInput("addBundle::inputLength");
+        }
+        if (inputLength < checkpoints_.length || checkpoints_.length == 0) {
+            revert InvalidInput("addBundle::checkpoints");
         }
 
         if (slumberPartyList.length > 255) revert TooManyBundles();
@@ -360,8 +365,8 @@ contract HibernationDen is
         if (party.mintChainId != getChainId()) revert InvalidChain(party.mintChainId, getChainId());
         if (party.publicMintTime == 0) revert NotSleeping(bundleId_);
         if (party.fermentedJars.length == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_); // All the jars be found
-        if (honeyJarShelf[bundleId_].length > mintConfig.maxHoneyJar) revert AlreadyTooManyHoneyJars(bundleId_);
-        if (honeyJarShelf[bundleId_].length + amount_ > mintConfig.maxHoneyJar) {
+        if (party.checkpointIndex == party.checkpoints.length) revert AlreadyTooManyHoneyJars(bundleId_);
+        if (honeyJarShelf[bundleId_].length + amount_ > party.checkpoints[party.checkpoints.length - 1]) {
             revert MekingTooManyHoneyJars(bundleId_);
         }
         if (amount_ == 0) revert ZeroMint();
@@ -438,6 +443,7 @@ contract HibernationDen is
     }
 
     /// @notice internal method to mint for a particular user
+    /// @dev if the amount_ is > than multiple checkpoints, accounting WILL mess up.
     /// @param to user to mint to
     /// @param bundleId_ the bea being minted for
     function _mintHoneyJarForBear(address to, uint8 bundleId_, uint256 amount_) internal returns (uint256) {
@@ -451,17 +457,11 @@ contract HibernationDen is
             ++tokenId;
         }
 
-        // Find the special honeyJar when the last honeyJar is minted.
+        // Find the special honeyJar when a checkpoint is passed.
         uint256 numMinted = honeyJarShelf[bundleId_].length;
         SlumberParty storage party = slumberParties[bundleId_];
-        if (numMinted >= mintConfig.maxHoneyJar) {
+        if (numMinted >= party.checkpoints[party.checkpointIndex]) {
             _fermentJars(bundleId_);
-        } else if (party.checkpoints.length != 0 && party.checkpointIndex < party.checkpoints.length) {
-            // If the checkpoints are set
-            if (numMinted >= party.checkpoints[party.checkpointIndex]) {
-                party.checkpointIndex += 1;
-                _fermentOneJar(bundleId_);
-            }
         }
 
         return tokenId - 1; // returns the lastID created
@@ -471,20 +471,19 @@ contract HibernationDen is
     /// @notice Should only be called when the last honeyJars is minted.
     function _fermentJars(uint8 bundleId_) internal {
         // account for already already winners.
-        uint256 numSleepers = slumberParties[bundleId_].sleepoors.length;
-        uint256 numFermented = slumberParties[bundleId_].fermentedJars.length;
-        uint32 numWords = SafeCastLib.safeCastTo32(numSleepers - numFermented);
+        SlumberParty storage party = slumberParties[bundleId_];
+        uint32 numWords = 1;
+        party.checkpointIndex += 1;
+
+        // When the index is the length of the checkpoints array, you've overflowed
+        if (party.checkpointIndex == party.checkpoints.length) {
+            uint256 numSleepers = slumberParties[bundleId_].sleepoors.length;
+            uint256 numFermented = slumberParties[bundleId_].fermentedJars.length;
+            numWords = SafeCastLib.safeCastTo32(numSleepers - numFermented);
+        }
+
         uint256 requestId = vrfCoordinator.requestRandomWords(
             vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, numWords
-        );
-        rng[requestId] = bundleId_;
-    }
-
-    /// @notice Fermine only one honejar for a given bundle
-    /// @notice mainly used for checkpoint logic.
-    function _fermentOneJar(uint8 bundleId_) internal {
-        uint256 requestId = vrfCoordinator.requestRandomWords(
-            vrfConfig.keyHash, vrfConfig.subId, vrfConfig.minConfirmations, vrfConfig.callbackGasLimit, 1
         );
         rng[requestId] = bundleId_;
     }
@@ -503,9 +502,14 @@ contract HibernationDen is
     /// @param randomNumbers array of randomNumbers returned by chainlink VRF
     function _setFermentedJars(uint8 bundleId, uint256[] memory randomNumbers) internal {
         SlumberParty storage party = slumberParties[bundleId];
+
         uint256[] memory honeyJarIds = honeyJarShelf[bundleId];
         uint256 numHoneyJars = honeyJarShelf[bundleId].length;
         uint256 numFermentedJars = randomNumbers.length;
+        // In the event more numbers were requested than number of jars.
+        if (numFermentedJars + party.fermentedJars.length > party.sleepoors.length) {
+            numFermentedJars = party.sleepoors.length - party.fermentedJars.length;
+        }
         uint256[] memory fermentedIndexes = new uint256[](numFermentedJars); // used for emitting the event
 
         uint256 fermentedIndex;
@@ -692,14 +696,6 @@ contract HibernationDen is
      *  These should not be called while a game is in progress to prevent hostage holding.
      */
 
-    /// @notice Sets the max number NFTs (honeyJar) that can be generated from the deposit of a bear (asset)
-    function setMaxHoneyJar(uint32 _maxhoneyJar) external onlyRole(Constants.GAME_ADMIN) {
-        if (_isEnabled(address(this))) revert GameInProgress();
-        mintConfig.maxHoneyJar = _maxhoneyJar;
-
-        emit MintConfigChanged(mintConfig);
-    }
-
     /// @notice sets the number of global free claims available
     function setMaxClaimableHoneyJar(uint32 _maxClaimableHoneyJar) external onlyRole(Constants.GAME_ADMIN) {
         if (_isEnabled(address(this))) revert GameInProgress();
@@ -725,23 +721,20 @@ contract HibernationDen is
     }
 
     /// @notice checkpoints where there can be one winner.
-    /// @param checkpoints_ the JarNumber that determins winners.
-    function setCheckpoints(uint8 bundleId_, uint256[] calldata checkpoints_) external onlyRole(Constants.GAME_ADMIN) {
+    /// @param checkpoints the JarNumber that determins winners.
+    /// @param checkpointIndex where in the checkpoint array the current game is in
+    function setCheckpoints(uint8 bundleId_, uint256[] calldata checkpoints, uint256 checkpointIndex)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
         if (_isEnabled(address(this))) revert GameInProgress();
+        if (checkpointIndex >= checkpoints.length) revert InvalidInput("setCheckpoints");
 
         SlumberParty storage party = slumberParties[bundleId_];
         if (party.sleepoors.length == 0) revert InvalidBundle(bundleId_);
 
-        party.checkpoints = checkpoints_;
-        party.checkpointIndex = 0;
-    }
-
-    /// @notice reset the previously configured checkpoints.
-    function resetCheckpoints(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
-        if (_isEnabled(address(this))) revert GameInProgress();
-
-        delete slumberParties[bundleId_].checkpoints;
-        slumberParties[bundleId_].checkpointIndex = 0;
+        party.checkpoints = checkpoints;
+        party.checkpointIndex = checkpointIndex;
     }
 
     /**

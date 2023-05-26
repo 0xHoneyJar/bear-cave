@@ -149,7 +149,6 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         );
 
         mintConfig = HibernationDen.MintConfig({
-            maxHoneyJar: maxHoneyJar,
             maxClaimableHoneyJar: maxClaimableHoneyJar,
             honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
             honeyJarPrice_ETH: MINT_PRICE_ETH // 0.099 eth
@@ -178,14 +177,14 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.startPrank(gameAdmin);
         (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s) = _getBundleInput();
 
-        checkpoints = new uint256[](3);
+        checkpoints = new uint256[](4);
         checkpoints[0] = 3;
         checkpoints[1] = 6;
         checkpoints[2] = 12;
+        checkpoints[3] = maxHoneyJar;
 
         bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
 
-        honeyBox.setCheckpoints(bundleId, checkpoints);
         erc721.approve(address(honeyBox), NFT_ID);
         erc721.approve(address(honeyBox), NFT_ID + 1);
         erc721.approve(address(honeyBox), NFT_ID + 2);
@@ -266,28 +265,28 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     }
 
     function testMultipleWinners() public {
-        vm.warp(block.timestamp + 72 hours);
-
-        // Don't test the checkpointing logic here.
-        vm.startPrank(gameAdmin);
-        gameRegistry.stopGame(address(honeyBox));
-        honeyBox.resetCheckpoints(bundleId);
-        gameRegistry.startGame(address(honeyBox));
-        vm.stopPrank();
+        vm.warp(block.timestamp + 72 hours); // Go to gen mint
 
         vm.startPrank(alfaHunter);
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        // Mints need to be broken up. else the VRF gets fucked.
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 4}(bundleId, 4);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 1}(bundleId, 1);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 1}(bundleId, 1);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 4}(bundleId, 4);
         vm.stopPrank();
 
         vm.startPrank(clown);
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 2}(bundleId, 2);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 3}(bundleId, 3);
         vm.stopPrank();
 
-        vrfCoordinator.fulfillRandomWords(1, address(honeyBox));
+        vrfCoordinator.fulfillRandomWords(1, address(honeyBox)); // 3
+        vrfCoordinator.fulfillRandomWords(2, address(honeyBox)); // 6
+        vrfCoordinator.fulfillRandomWords(3, address(honeyBox)); // 12
+        vrfCoordinator.fulfillRandomWords(4, address(honeyBox)); // 15
 
         HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
@@ -339,10 +338,11 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
-        // wtf idk why vm.changePrank doesn't work
+        uint256[] memory newCheckpoints = new uint256[](1);
+        newCheckpoints[0] = maxHoneyJar;
 
         vm.startPrank(portal);
-        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length);
+        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length, newCheckpoints);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
@@ -367,7 +367,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
         assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
         assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
-        assertEq(party.fermentedJars.length, tokenAddresses.length);
+        assertEq(party.fermentedJars.length, tokenAddresses.length, "fermented jars != num sleepers");
 
         // Communicate Via portal
         vm.startPrank(portal);

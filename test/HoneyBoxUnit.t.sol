@@ -85,7 +85,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         // MintConfig
         mintConfig = HibernationDen.MintConfig({
-            maxHoneyJar: maxHoneyJar,
             maxClaimableHoneyJar: 5,
             honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
             honeyJarPrice_ETH: MINT_PRICE_ETH // 0.099 eth
@@ -112,10 +111,10 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         gameRegistry.registerGame(address(honeyBox));
         bundleId = _addBundle(0);
 
-        uint256[] memory checkpoints = new uint256[](2);
-        checkpoints[0] = 2;
-        checkpoints[1] = 4;
-        honeyBox.setCheckpoints(bundleId, checkpoints);
+        // uint256[] memory checkpoints = new uint256[](2);
+        // checkpoints[0] = 2;
+        // checkpoints[1] = 4;
+        // honeyBox.setCheckpoints(bundleId, checkpoints);
         // HibernationDen needs at least one gate to function.
         gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
 
@@ -152,16 +151,20 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 
-        assertEq(party.checkpointIndex, 0);
-        assertEq(party.checkpoints, checkpoints);
+        assertEq(party.checkpointIndex, 0, "Checkpoints should be first index");
+        assertEq(party.checkpoints.length, 1, "should only be one item in the checkpoints");
+        assertEq(party.checkpoints[0], maxHoneyJar, "should be maxHoneyJar");
+
+        gameRegistry.stopGame(address(honeyBox));
+        honeyBox.setCheckpoints(bundleId, checkpoints, 0);
+        gameRegistry.startGame(address(honeyBox));
 
         // Game needs to be stopped in order to modify checkpoints
-        gameRegistry.stopGame(address(honeyBox));
-        honeyBox.resetCheckpoints(bundleId);
 
         party = honeyBox.getSlumberParty(bundleId);
-        assertEq(party.checkpointIndex, 0);
-        assertEq(party.checkpoints.length, 0);
+        assertEq(party.checkpointIndex, 0, "checkpointIndex is not 0");
+        assertEq(party.checkpoints.length, 2, "incorrect checkpoint length");
+        assertEq(party.checkpoints, checkpoints, "checkpoints don't match");
     }
 
     function testChainId() public {
@@ -254,7 +257,9 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         // increase mint limits
         gameRegistry.stopGame(address(honeyBox));
-        honeyBox.setMaxHoneyJar(mintAmount + 1);
+        uint256[] memory newCheckpoints = new uint256[](1);
+        newCheckpoints[0] = mintAmount;
+        honeyBox.setCheckpoints(bundleId, newCheckpoints, 0);
         gameRegistry.startGame(address(honeyBox));
 
         honeyBox.mekHoneyJarWithERC20(bundleId, mintAmount);
@@ -503,7 +508,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testFailStartGame_bundleAlreadyExists() public {
         // Give this address portal role in order to call method
         gameRegistry.grantRole("PORTAL", address(this));
-        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, 8);
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, 8, new uint256[](1));
     }
 
     function testStartGameXChain() public {
@@ -512,9 +517,12 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         gameRegistry.grantRole("PORTAL", address(this));
         uint8 newBundleId = bundleId + 1;
         uint256 numSleepers = 8;
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
 
+        // Bundle needs to exist before game is started.
         gatekeeper.addGate(newBundleId, bytes32(0), 6969, 0);
-        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), newBundleId, numSleepers);
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), newBundleId, numSleepers, checkpoints);
         vm.warp(block.timestamp + 72 hours);
 
         honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(newBundleId, maxHoneyJar);
@@ -558,7 +566,8 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         isERC1155[0] = true;
         isERC1155[1] = false;
 
-        uint256[] memory checkpoints;
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
         return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 
@@ -570,7 +579,8 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         bool[] memory isERC1155 = new bool[](1);
         isERC1155[0] = false;
 
-        uint256[] memory checkpoints;
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
         return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 }
