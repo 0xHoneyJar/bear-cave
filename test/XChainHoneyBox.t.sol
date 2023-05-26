@@ -19,6 +19,7 @@ import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {Constants} from "src/Constants.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
+import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 
 contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
@@ -65,6 +66,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     HibernationDen.MintConfig private mintConfig;
     HoneyJar private honeyJar;
     Gatekeeper private gatekeeper;
+    HoneyJarPortal private portal;
 
     // Deployables
     GameRegistry private gameRegistryL2;
@@ -73,6 +75,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     HibernationDen.MintConfig private mintConfigL2;
     HoneyJar private honeyJarL2;
     Gatekeeper private gatekeeperL2;
+    HoneyJarPortal private portalL2;
 
     // Game vars
     uint8 private bundleId;
@@ -82,6 +85,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     MockVRFCoordinator private vrfCoordinator;
     MockVRFCoordinator private vrfCoordinatorL2;
     uint64 private subId;
+    uint64 private subIdL2;
     uint96 private constant FUND_AMOUNT = 1 * 10 ** 18;
 
     //Helpers
@@ -93,6 +97,12 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     uint256 L1_FORK_ID;
     uint256 L2_FORK_ID;
 
+    uint256 L1_CHAIN_ID = 5;
+    uint256 L2_CHAIN_ID = 421613;
+
+    address L1_LZ_ENDPOINT = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
+    address L2_LZ_ENDPOINT = 0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab;
+
     function createNode(address player, uint32 amount) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(player, amount));
     }
@@ -102,14 +112,185 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     }
 
     // Initialize the test suite
-    function setUp() public {}
+    function setUp() public {
+        L1_FORK_ID = vm.createFork(RPC_GOERLI);
+        L2_FORK_ID = vm.createFork(RPC_ARB_GOERLI);
+
+        merkleLib = new Merkle();
+        lzHelper = new LayerZeroHelper();
+
+        vm.makePersistent(address(merkleLib));
+        vm.makePersistent(address(lzHelper));
+
+        beekeeper = payable(makeAddr("beekeeper"));
+        jani = payable(makeAddr("definitelyNotJani"));
+        gameAdmin = makeAddr("gameAdmin");
+        alfaHunter = makeAddr("alfaHunter");
+        bera = makeAddr("bera");
+        clown = makeAddr("clown");
+
+        vm.selectFork(L1_FORK_ID);
+
+        vm.deal(gameAdmin, 100 ether);
+        vm.deal(alfaHunter, 100 ether);
+        vm.deal(bera, 100 ether);
+        vm.deal(clown, 100 ether);
+
+        erc1155 = new MockERC1155();
+        erc721 = new MockERC721("OOGA", "BOOGA");
+        paymentToken = new MockERC20("OHM", "OHM", 9); // OHM is 9 decimals
+
+        // Mint winning NFTs to the gameAdmin (L1)
+        erc1155.mint(gameAdmin, SFT_ID, 1, "");
+        erc721.mint(gameAdmin, NFT_ID);
+        erc721.mint(gameAdmin, NFT_ID + 1);
+        erc721.mint(gameAdmin, NFT_ID + 2);
+        erc721.mint(gameAdmin, NFT_ID + 3);
+        erc721.mint(gameAdmin, NFT_ID + 4);
+
+        // Chainlink setup (L1)
+        vrfCoordinator = new MockVRFCoordinator();
+        subId = vrfCoordinator.createSubscription();
+        vrfCoordinator.fundSubscription(subId, FUND_AMOUNT);
+
+        // Deploy contracts (L1)
+        gameRegistry = new GameRegistry();
+        // Transfer gameAdmin to real Admin
+        gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
+        gameRegistry.setJani(jani);
+        gameRegistry.setBeekeeper(beekeeper);
+
+        honeyJar = new HoneyJar(address(this), address(gameRegistry), START_TOKEN_ID, 69);
+        gatekeeper = new Gatekeeper(address(gameRegistry));
+
+        honeyBox = new HibernationDen(
+            address(vrfCoordinator),
+            address(gameRegistry),
+            address(honeyJar),
+            address(paymentToken),
+            address(gatekeeper),
+            address(jani),
+            address(beekeeper),
+            honeyJarShare
+        );
+
+        portal = new HoneyJarPortal(100000, L1_LZ_ENDPOINT, address(honeyJar),address(honeyBox), address(gameRegistry));
+
+        mintConfig = HibernationDen.MintConfig({
+            maxClaimableHoneyJar: maxClaimableHoneyJar,
+            honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
+            honeyJarPrice_ETH: MINT_PRICE_ETH // 0.099 eth
+        });
+
+        // Set up on VRF site
+        vrfCoordinator.addConsumer(subId, address(honeyBox));
+
+        honeyBox.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
+        gameRegistry.registerGame(address(honeyBox));
+
+        /**
+         *   Generate roots
+         */
+        gateData = new bytes32[](3);
+        gateData[0] = createNode(alfaHunter, 2);
+        gateData[1] = createNode(bera, 3);
+        gateData[2] = createNode(clown, 3);
+        gateRoot = merkleLib.getRoot(gateData);
+        gatekeeper.addGate(bundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
+
+        // Deployer doesn't have any perms after setup
+        gameRegistry.renounceRole(Constants.GAME_ADMIN, address(this));
+
+        // Game Admin Actions
+        vm.startPrank(gameAdmin);
+        (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s) = _getBundleInput();
+
+        checkpoints = new uint256[](4);
+        checkpoints[0] = 3;
+        checkpoints[1] = 6;
+        checkpoints[2] = 12;
+        checkpoints[3] = maxHoneyJar;
+
+        bundleId = honeyBox.addBundle(421613, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+
+        erc721.approve(address(honeyBox), NFT_ID);
+        erc721.approve(address(honeyBox), NFT_ID + 1);
+        erc721.approve(address(honeyBox), NFT_ID + 2);
+        erc721.approve(address(honeyBox), NFT_ID + 3);
+        erc721.approve(address(honeyBox), NFT_ID + 4);
+
+        erc1155.setApprovalForAll(address(honeyBox), true);
+
+        gameRegistry.startGame(address(honeyBox));
+        honeyBox.setPortal(address(portal));
+        vm.stopPrank();
+
+        // Deployments (L2)
+        vm.selectFork(L2_FORK_ID);
+
+        vm.deal(gameAdmin, 100 ether);
+        vm.deal(alfaHunter, 100 ether);
+        vm.deal(bera, 100 ether);
+        vm.deal(clown, 100 ether);
+
+        erc1155L2 = new MockERC1155();
+        erc721L2 = new MockERC721("OOGA", "BOOGA");
+        paymentTokenL2 = new MockERC20("OHM", "OHM", 9); // OHM is 9 decimals
+
+        paymentTokenL2.mint(alfaHunter, MINT_PRICE_ERC20 * 100);
+        paymentTokenL2.mint(bera, MINT_PRICE_ERC20 * 100);
+        paymentTokenL2.mint(clown, MINT_PRICE_ERC20 * 100);
+        paymentTokenL2.mint(address(this), MINT_PRICE_ERC20 * 5);
+
+        // Chainlink setup (L2)
+        vrfCoordinatorL2 = new MockVRFCoordinator();
+        subIdL2 = vrfCoordinatorL2.createSubscription();
+        vrfCoordinatorL2.fundSubscription(subIdL2, FUND_AMOUNT);
+
+        // Deploy contracts (L2)
+        gameRegistryL2 = new GameRegistry();
+        // Transfer gameAdmin to real Admin
+        gameRegistryL2.grantRole(Constants.GAME_ADMIN, gameAdmin);
+        gameRegistryL2.setJani(jani);
+        gameRegistryL2.setBeekeeper(beekeeper);
+
+        honeyJarL2 = new HoneyJar(address(this), address(gameRegistryL2), START_TOKEN_ID, 69);
+        gatekeeperL2 = new Gatekeeper(address(gameRegistryL2));
+
+        honeyBoxL2 = new HibernationDen(
+            address(vrfCoordinatorL2),
+            address(gameRegistryL2),
+            address(honeyJarL2),
+            address(paymentTokenL2),
+            address(gatekeeperL2),
+            address(jani),
+            address(beekeeper),
+            honeyJarShare
+        );
+
+        portalL2 =
+            new HoneyJarPortal(100000, L2_LZ_ENDPOINT, address(honeyJarL2),address(honeyBoxL2), address(gameRegistryL2));
+        honeyBoxL2.setPortal(address(portalL2));
+
+        // Set trusted remotes
+        vm.selectFork(L1_FORK_ID);
+        portal.setTrustedRemote(portal.lzChainId(L2_CHAIN_ID), abi.encodePacked(address(portalL2), address(portal)));
+
+        vm.selectFork(L2_FORK_ID);
+        portalL2.setTrustedRemote(portalL2.lzChainId(L1_CHAIN_ID), abi.encodePacked(address(portal), address(portalL2)));
+
+        // Initiate xChain game start from L1
+        vm.selectFork(L1_FORK_ID);
+        vm.recordLogs();
+        vm.prank(gameAdmin);
+        honeyBox.puffPuffPassOut{value: 1 ether}(bundleId);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        lzHelper.help(L2_LZ_ENDPOINT, 100000, L2_FORK_ID, logs);
+    }
 
     function testCrossChain() public {
         // For simplicity's sake, reuse most dependencies.
         vm.selectFork(L1_FORK_ID);
-
-        uint256 l1ChainId = 5;
-        uint256 l2ChainId = 421613;
 
         // Set up portal address (contract or user)
         address portal = makeAddr("portal");
@@ -145,7 +326,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         gameRegistry.registerGame(address(l2HibernationDen));
         gameRegistry.startGame(address(l2HibernationDen));
 
-        uint8 newBundleId = l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+        uint8 newBundleId = l1HibernationDen.addBundle(L2_CHAIN_ID, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
@@ -153,7 +334,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         newCheckpoints[0] = maxHoneyJar;
 
         vm.startPrank(portal);
-        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length, newCheckpoints);
+        l2HibernationDen.startGame(L1_CHAIN_ID, newBundleId, tokenAddresses.length, newCheckpoints);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
@@ -176,8 +357,8 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         vrfCoordinator.fulfillRandomWords(1, address(l2HibernationDen));
         HibernationDen.SlumberParty memory party = l2HibernationDen.getSlumberParty(newBundleId);
         assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
-        assertEq(party.assetChainId, l1ChainId, "assetChainId is incorrect");
-        assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
+        assertEq(party.assetChainId, L1_CHAIN_ID, "assetChainId is incorrect");
+        assertEq(party.mintChainId, L2_CHAIN_ID, "mintChainId is incorrect");
         assertEq(party.fermentedJars.length, tokenAddresses.length, "fermented jars != num sleepers");
 
         // Communicate Via portal
@@ -414,5 +595,9 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
             vm.stopPrank();
             assertEq(erc721.balanceOf(winner) + erc1155.balanceOf(winner, SFT_ID), alreadyWon + 1);
         }
+    }
+
+    receive() external payable {
+        
     }
 }

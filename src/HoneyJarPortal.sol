@@ -155,7 +155,7 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
     /// @notice should only be called form ETH (ChainId=1) Doens't make sense otherwise.
     /// @dev can only be called by game instances
-    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_)
+    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_, address refundAddress_)
         external
         payable
         onlyRole(Constants.GAME_INSTANCE)
@@ -163,20 +163,21 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
         bytes memory payload = _encodeStartGame(bundleId_, numSleepers_);
-        _lzSend(lzDestId, payload, payable(msg.sender), address(0x0), bytes(""), msg.value); // TODO: estimate gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO: estimate gas
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
     }
 
-    function sendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_)
-        external
-        payable
-        onlyRole(Constants.GAME_INSTANCE)
-    {
+    function sendFermentedJars(
+        uint256 destChainId_,
+        uint8 bundleId_,
+        uint256[] calldata fermentedJarIds_,
+        address refundAddress_
+    ) external payable onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
         bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
-        _lzSend(lzDestId, payload, payable(msg.sender), address(0x0), bytes(""), msg.value); // TODO estimate Gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO estimate Gas
     }
 
     function _nonblockingLzReceive(

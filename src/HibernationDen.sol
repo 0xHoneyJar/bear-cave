@@ -24,8 +24,15 @@ import {Constants} from "src/Constants.sol";
 
 /// @notice minimal interface for the CrossChainPortal
 interface IHoneyJarPortal {
-    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_) external;
-    function sendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_) external;
+    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_, address refundAddress_)
+        external
+        payable;
+    function sendFermentedJars(
+        uint256 destChainId_,
+        uint8 bundleId_,
+        uint256[] calldata fermentedJarIds_,
+        address refundAddress_
+    ) external;
 }
 
 /// @title HibernationDen
@@ -244,7 +251,7 @@ contract HibernationDen is
     /// @notice Starts the gates within the Gatekeeper, which determine who is allowed early access and free claims
     /// @dev Bundles need to be preconfigured using addBundle from gameAdmin
     /// @dev publicMintTime is is configued to be the LAST item in the stageTimes from gameRegistry.
-    function puffPuffPassOut(uint8 bundleId_) external onlyRole(Constants.GAME_ADMIN) {
+    function puffPuffPassOut(uint8 bundleId_) external payable onlyRole(Constants.GAME_ADMIN) {
         SlumberParty storage slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
         uint256 sleeperCount = sleepoors.length;
@@ -264,7 +271,9 @@ contract HibernationDen is
             gatekeeper.startGatesForBundle(bundleId_);
         } else if (address(honeyJarPortal) != address(0)) {
             // If the portal is set, the xChain message will be sent
-            honeyJarPortal.sendStartGame(slumberParty.mintChainId, bundleId_, sleeperCount);
+            honeyJarPortal.sendStartGame{value: msg.value}(
+                slumberParty.mintChainId, bundleId_, sleeperCount, msg.sender
+            );
         }
         emit SlumberPartyStarted(bundleId_);
     }
@@ -522,7 +531,7 @@ contract HibernationDen is
 
         // TODO: does this need to be in the VRF call?
         if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0)) {
-            honeyJarPortal.sendFermentedJars(party.assetChainId, party.bundleId, honeyJarIds);
+            honeyJarPortal.sendFermentedJars(party.assetChainId, party.bundleId, honeyJarIds, msg.sender);
         }
 
         emit FermentedJarsFound(bundleId, fermentedIndexes);
