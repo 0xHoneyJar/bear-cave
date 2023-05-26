@@ -3,7 +3,8 @@
         "gameAdmin": "0xd4920Bb5A6C032eB3BcE21E0C7FdAC9EeFa8d3f1",
         "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
         "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-        "paymentToken": "0x9db2ea779cd3f9f8aeb5e58eb1223a585a4d7d68"
+        "paymentToken": "0x9db2ea779cd3f9f8aeb5e58eb1223a585a4d7d68",
+        "lzEndpoint": "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab"
     },
     "mintConfig": {
         "maxHoneyJar": 10926,
