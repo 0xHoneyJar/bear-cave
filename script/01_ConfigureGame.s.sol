@@ -37,7 +37,7 @@ contract ConfigureGame is THJScriptBase("gen2") {
 
     function setUp() public {
         // Dependencies
-        honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
+        honeyBox = HibernationDen(payable(_readAddress("HONEYBOX_ADDRESS")));
         gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
     }
 

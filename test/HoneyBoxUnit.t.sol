@@ -156,7 +156,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         assertEq(party.checkpoints[0], maxHoneyJar, "should be maxHoneyJar");
 
         gameRegistry.stopGame(address(honeyBox));
-        honeyBox.setCheckpoints(bundleId, checkpoints, 0);
+        honeyBox.setCheckpoints(bundleId, 0, checkpoints);
         gameRegistry.startGame(address(honeyBox));
 
         // Game needs to be stopped in order to modify checkpoints
@@ -259,7 +259,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         gameRegistry.stopGame(address(honeyBox));
         uint256[] memory newCheckpoints = new uint256[](1);
         newCheckpoints[0] = mintAmount;
-        honeyBox.setCheckpoints(bundleId, newCheckpoints, 0);
+        honeyBox.setCheckpoints(bundleId, 0, newCheckpoints);
         gameRegistry.startGame(address(honeyBox));
 
         honeyBox.mekHoneyJarWithERC20(bundleId, mintAmount);

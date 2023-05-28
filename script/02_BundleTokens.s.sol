@@ -22,7 +22,7 @@ contract BundleTokens is THJScriptBase("gen3") {
     ERC20 private token;
 
     function setUp() public {
-        hb = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
+        hb = HibernationDen(payable(_readAddress("HONEYBOX_ADDRESS")));
     }
 
     function run(string calldata env) public override {

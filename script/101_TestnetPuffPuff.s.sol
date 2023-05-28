@@ -21,7 +21,7 @@ contract TestnetPuffPuff is THJScriptBase("gen2") {
     uint8 private bundleId;
 
     function setUp() public {
-        honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
+        honeyBox = HibernationDen(payable(_readAddress("HONEYBOX_ADDRESS")));
     }
 
     function run(string calldata env) public override {

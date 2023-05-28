@@ -7,32 +7,27 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {ONFT721Core} from "@layerzero/token/onft/ONFT721Core.sol";
 
+import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
+import {IHoneyJarPortal} from "src/interfaces/IHoneyJarPortal.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {Constants} from "src/Constants.sol";
-import {IHoneyJar} from "src/IHoneyJar.sol";
-
-interface IHibernationDen {
-    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_) external;
-    function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds) external;
-}
+import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
 
 /// @title HoneyJarPortal
 /// @notice Manages cross chain business logic and interactions with HoneyJar NFT
 /// @dev Modeled off of @layerzero/token/onft/extension/ProxyONFT721.sol
 /// @dev setTrustedRemote must be called when initializing`
-contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IERC721Receiver {
+contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IERC721Receiver {
     using ERC165Checker for address;
-
-    uint16 public constant FUNCTTION_TYPE_START = 2;
 
     // Events
     event PortalSet(uint256 chainId, address portalAddress);
     event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
     event MessageRecieved(bytes payload);
     event HibernationDenSet(address honeyBoxAddress);
-    event StartGameProcessed(uint16 srcChainId, StartGamePayload);
-    event FermentedJarsProcessed(uint16 srcChainId, FermentedJarsPayload);
+    event StartGameProcessed(uint256 srcChainId, StartGamePayload);
+    event FermentedJarsProcessed(uint256 srcChainId, FermentedJarsPayload);
     event LzMappingSet(uint256 evmChainId, uint16 lzChainId);
 
     // Errors
@@ -55,6 +50,8 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     /// @notice mapping of chainId --> lzChainId
     /// @dev see https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids
     mapping(uint256 => uint16) public lzChainId;
+    /// @notice mapping of lzChainId --> realChainId
+    mapping(uint16 => uint256) public realChainId;
 
     constructor(
         uint256 _minGasToTransfer,
@@ -69,21 +66,26 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
         // Initial state
         // https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids#polygon-zkevm
-        lzChainId[1] = 101; // mainnet
-        lzChainId[5] = 10121; //Goerli
-        lzChainId[42161] = 110; // Arbitrum
-        lzChainId[421613] = 10143; //Atrbitrum goerli
-        lzChainId[10] = 111; //Optimism
-        lzChainId[420] = 10132; // Optimism Goerli
-        lzChainId[137] = 109; // Polygon
-        lzChainId[80001] = 10109; // Mumbai
-        lzChainId[1101] = 158; // Polygon zkEVM
-        lzChainId[1442] = 10158; // Polygon zkEVM testnet
-        lzChainId[10106] = 106; // Avalanche - Fuji
+        _setLzMapping(1, 101); // mainnet
+        _setLzMapping(5, 10121); //Goerli
+        _setLzMapping(42161, 110); // Arbitrum
+        _setLzMapping(421613, 10143); //Atrbitrum goerli
+        _setLzMapping(10, 111); //Optimism
+        _setLzMapping(420, 10132); // Optimism Goerli
+        _setLzMapping(137, 109); // Polygon
+        _setLzMapping(80001, 10109); // Mumbai
+        _setLzMapping(1101, 158); // Polygon zkEVM
+        _setLzMapping(1442, 10158); // Polygon zkEVM testnet
+        _setLzMapping(10106, 106); // Avalanche - Fuji
     }
 
     function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
+        _setLzMapping(evmChainId, lzChainId_);
+    }
+
+    function _setLzMapping(uint256 evmChainId, uint16 lzChainId_) internal {
         lzChainId[evmChainId] = lzChainId_;
+        realChainId[lzChainId_] = evmChainId;
     }
 
     /// @dev there can only be one honeybox per portal.
@@ -135,16 +137,24 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
             "ONFT721: batch size exceeds dst batch limit"
         );
 
+        address toAddress;
+        assembly {
+            toAddress := mload(add(_toAddress, 20))
+        }
+
+        bytes memory payload = _encodeSendNFT(toAddress, _tokenIds);
+
+        _checkGasLimit(
+            _dstChainId,
+            uint16(MessageTypes.SEND_NFT),
+            _adapterParams,
+            dstChainIdToTransferGas[_dstChainId] * _tokenIds.length
+        );
+
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _debitFrom(_from, _dstChainId, _toAddress, _tokenIds[i]);
         }
 
-        // Adding message types to payload
-        bytes memory payload = abi.encode(MessageTypes.SEND_NFT, _toAddress, _tokenIds);
-
-        _checkGasLimit(
-            _dstChainId, FUNCTION_TYPE_SEND, _adapterParams, dstChainIdToTransferGas[_dstChainId] * _tokenIds.length
-        );
         _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
         emit SendToChain(_dstChainId, _from, _toAddress, _tokenIds);
     }
@@ -155,28 +165,33 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
     /// @notice should only be called form ETH (ChainId=1) Doens't make sense otherwise.
     /// @dev can only be called by game instances
-    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_)
-        external
-        payable
-        onlyRole(Constants.GAME_INSTANCE)
-    {
+    function sendStartGame(
+        address refundAddress_,
+        uint256 destChainId_,
+        uint8 bundleId_,
+        uint256 numSleepers_,
+        uint256[] calldata checkpoints_
+    ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
-        bytes memory payload = _encodeStartGame(bundleId_, numSleepers_);
-        _lzSend(lzDestId, payload, payable(msg.sender), address(0x0), bytes(""), msg.value); // TODO: estimate gas
+        bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
+        // TODO: estimate & check gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO: estimate gas
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
     }
 
-    function sendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] calldata fermentedJarIds_)
-        external
-        payable
-        onlyRole(Constants.GAME_INSTANCE)
-    {
+    function sendFermentedJars(
+        address refundAddress_,
+        uint256 destChainId_,
+        uint8 bundleId_,
+        uint256[] calldata fermentedJarIds_
+    ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
         bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
-        _lzSend(lzDestId, payload, payable(msg.sender), address(0x0), bytes(""), msg.value); // TODO estimate Gas
+        // TODO: estimate & check gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO estimate Gas
     }
 
     function _nonblockingLzReceive(
@@ -207,17 +222,21 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     ////////////////////////////////////////////////////////////
 
     function _processStartGame(uint16 srcChainId, bytes memory _payload) internal {
+        uint256 realSrcChainId = realChainId[srcChainId];
+        if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         StartGamePayload memory payload = _decodeStartGame(_payload);
-        honeyBox.startGame(srcChainId, payload.bundleId, payload.bundleId); // TODO: does it matter if srcChainId is lzChainId?
+        honeyBox.startGame(realSrcChainId, payload.bundleId, payload.numSleepers, payload.checkpoints);
 
-        emit StartGameProcessed(srcChainId, payload);
+        emit StartGameProcessed(realSrcChainId, payload);
     }
 
-    function _processFermentedJars(uint16 _srcChainId, bytes memory _payload) internal {
+    function _processFermentedJars(uint16 srcChainId, bytes memory _payload) internal {
+        uint256 realSrcChainId = realChainId[srcChainId];
+        if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         FermentedJarsPayload memory payload = _decodeFermentedJars(_payload);
         honeyBox.setCrossChainFermentedJars(payload.bundleId, payload.fermentedJarIds);
 
-        emit FermentedJarsProcessed(_srcChainId, payload);
+        emit FermentedJarsProcessed(realSrcChainId, payload);
     }
 
     /// @notice a copy of the OFNFT721COre _nonBlockingrcv to keep NFT functionality the same.
@@ -242,6 +261,7 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     struct StartGamePayload {
         uint8 bundleId;
         uint256 numSleepers;
+        uint256[] checkpoints;
     }
 
     struct SendNFTPayload {
@@ -254,8 +274,16 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         uint256[] fermentedJarIds;
     }
 
-    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_) internal pure returns (bytes memory) {
-        return abi.encode(MessageTypes.START_GAME, StartGamePayload(bundleId_, numSleepers_));
+    function _encodeSendNFT(address to, uint256[] memory tokenIds) internal pure returns (bytes memory) {
+        return abi.encode(MessageTypes.SEND_NFT, SendNFTPayload(to, tokenIds));
+    }
+
+    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_, uint256[] memory checkpoints_)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(MessageTypes.START_GAME, StartGamePayload(bundleId_, numSleepers_, checkpoints_));
     }
 
     function _encodeFermentedJars(uint8 bundleId_, uint256[] memory fermentedJarIds_)
@@ -294,7 +322,13 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         return IERC721Receiver.onERC721Received.selector;
     }
 
+    /// @notice check if a tokenId exists on the chain
+    /// @dev erc721.ownerOf reverts, needed to continue functioning
     function _exists(uint256 tokenId) internal view returns (bool) {
-        return honeyJar.ownerOf(tokenId) != address(0);
+        try honeyJar.ownerOf(tokenId) returns (address) {
+            return true;
+        } catch {
+            return false;
+        }
     }
 }
