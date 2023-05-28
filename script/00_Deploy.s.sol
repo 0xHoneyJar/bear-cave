@@ -7,6 +7,7 @@ import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
+import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
@@ -100,7 +101,7 @@ contract DeployScript is THJScriptBase("gen3") {
 
         vm.startBroadcast(deployer);
 
-        HibernationDen den = new HibernationDen{salt:"anotherONe"}(
+        HibernationDen den = new HibernationDen(
             vrfCoordinator,
             gameRegistry,
             honeyJar,
@@ -112,6 +113,23 @@ contract DeployScript is THJScriptBase("gen3") {
         );
 
         console.log("-HibernationDenAddress: ", address(den));
+        vm.stopBroadcast();
+    }
+
+    function deployHoneyJarPortal(string calldata env) public {
+        string memory json = _getConfig(env);
+        // Get Deployment Addresses
+        address gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
+        address hibernationDen = _readAddress("DEN_ADDRESS");
+        address honeyJar = _readAddress("HONEYJAR_ADDRESS");
+
+        // Get Configured Addresses
+        address lzEndpoint = json.readAddress(".addresses.lzEndpoint");
+        uint256 minGas = 500000;
+
+        vm.startBroadcast(deployer);
+
+        HoneyJarPortal portal = new HoneyJarPortal(minGas, lzEndpoint, honeyJar, hibernationDen, gameRegistry);
         vm.stopBroadcast();
     }
 }

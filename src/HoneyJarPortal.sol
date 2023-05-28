@@ -257,13 +257,13 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
         uint256[] fermentedJarIds;
     }
 
-    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_) internal view returns (bytes memory) {
+    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_) internal pure returns (bytes memory) {
         return abi.encode(MessageTypes.START_GAME, StartGamePayload(bundleId_, numSleepers_));
     }
 
     function _encodeFermentedJars(uint8 bundleId_, uint256[] memory fermentedJarIds_)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         return abi.encode(MessageTypes.SET_FERMENTED_JARS, FermentedJarsPayload(bundleId_, fermentedJarIds_));

@@ -100,7 +100,7 @@ fi
 
 # Build forge params
 # Append --broadcast to the forge param if flag is provided
-forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvvv"
+forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast"
@@ -134,17 +134,20 @@ case "$method" in
     forge script script/100_TestnetDeps.s.sol:TestnetDeps --sig 'run(string)()' $network $forge_params
     ;;
   "deploy1")
-    echo "Running deploy"
+    echo "Deploying Gatekeeper"
     forge script script/00_Deploy.s.sol:DeployScript --sig 'run(string)()' $network $forge_params
     ;;
   "deploy2")
-    echo "Running deploy"
+    echo "Deploying HoneyJar"
     forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJar(string)()' $network $forge_params
     ;;
-
   "deploy3")
-    echo "Running deploy"
+    echo "Deploying HibernationDen"
     forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHibernationDen(string)()' $network $forge_params
+    ;;
+  "deploy4")
+    echo "Deploying HoneyJarPortal"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJarPortal(string)()' $network $forge_params
     ;;
   "config")
     echo "Running config"
