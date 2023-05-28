@@ -55,6 +55,8 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     /// @notice mapping of chainId --> lzChainId
     /// @dev see https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids
     mapping(uint256 => uint16) public lzChainId;
+    /// @notice mapping of lzChainId --> realChainId
+    mapping(uint16 => uint256) public realChainId;
 
     constructor(
         uint256 _minGasToTransfer,
