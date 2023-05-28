@@ -533,6 +533,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     function _getBundleInput()
         internal
+        view
         returns (address[] memory tokenAddresses, uint256[] memory tokenIDs, bool[] memory isERC1155s)
     {
         tokenAddresses = new address[](6);

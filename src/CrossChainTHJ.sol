@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
-
 abstract contract CrossChainTHJ {
     uint256 private immutable _chainId;
 

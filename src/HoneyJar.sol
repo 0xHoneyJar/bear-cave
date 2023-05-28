@@ -9,7 +9,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Constants} from "./Constants.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 
-import {IHoneyJar} from "./IHoneyJar.sol";
+import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
 
 /// @title HoneyJar
 /// @notice A stand-alone ERC721 compliant NFT

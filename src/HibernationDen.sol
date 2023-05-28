@@ -16,28 +16,18 @@ import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 
+import {IHoneyJarPortal} from "src/interfaces/IHoneyJarPortal.sol";
+import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
+import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
+import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
-import {IGatekeeper} from "src/IGatekeeper.sol";
-import {IHoneyJar} from "src/IHoneyJar.sol";
 import {Constants} from "src/Constants.sol";
-
-/// @notice minimal interface for the CrossChainPortal
-interface IHoneyJarPortal {
-    function sendStartGame(uint256 destChainId_, uint8 bundleId_, uint256 numSleepers_, address refundAddress_)
-        external
-        payable;
-    function sendFermentedJars(
-        uint256 destChainId_,
-        uint8 bundleId_,
-        uint256[] calldata fermentedJarIds_,
-        address refundAddress_
-    ) external;
-}
 
 /// @title HibernationDen
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
 contract HibernationDen is
+    IHibernationDen,
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
     ERC1155TokenReceiver,
@@ -119,7 +109,6 @@ contract HibernationDen is
     error GameInProgress();
     error AlreadyTooManyHoneyJars(uint8 bundleId);
     error FermentedJarNotFound(uint8 bundleId);
-    error NotEnoughHoneyJarMinted(uint8 bundleId);
     error GeneralMintNotOpen(uint8 bundleId);
     error InvalidBundle(uint8 bundleId);
     error NotSleeping(uint8 bundleId);
@@ -134,7 +123,6 @@ contract HibernationDen is
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
     error InvalidChain(uint256 expectedChain, uint256 actualChain);
-    error NotImplemented();
 
     /**
      * Events
@@ -149,7 +137,7 @@ contract HibernationDen is
     event HoneyJarClaimed(uint256 bundleId, uint32 gateId, address player, uint256 amount);
     event SleeperAwoke(uint8 bundleId, uint256 tokenId, uint256 jarId, address player);
     event SleeperAdded(uint8 bundleId_, SleepingNFT sleeper);
-    event CheckpointUpdated(uint256 index, bool isSet);
+    event CheckpointsUpdated(uint256 checkpointIndex, uint256[] checkpoints);
 
     /**
      * Configuration
@@ -272,7 +260,7 @@ contract HibernationDen is
         } else if (address(honeyJarPortal) != address(0)) {
             // If the portal is set, the xChain message will be sent
             honeyJarPortal.sendStartGame{value: msg.value}(
-                slumberParty.mintChainId, bundleId_, sleeperCount, msg.sender
+                msg.sender, slumberParty.mintChainId, bundleId_, sleeperCount, slumberParty.checkpoints
             );
         }
         emit SlumberPartyStarted(bundleId_);
@@ -305,7 +293,6 @@ contract HibernationDen is
         gatekeeper.startGatesForBundle(bundleId_);
 
         emit SlumberPartyStarted(bundleId_);
-
         return;
     }
 
@@ -519,22 +506,42 @@ contract HibernationDen is
         if (numFermentedJars + party.fermentedJars.length > party.sleepoors.length) {
             numFermentedJars = party.sleepoors.length - party.fermentedJars.length;
         }
-        uint256[] memory fermentedIndexes = new uint256[](numFermentedJars); // used for emitting the event
+        uint256[] memory fermentedJars = new uint256[](numFermentedJars); // used for emitting the event
 
         uint256 fermentedIndex;
         for (uint256 i = 0; i < numFermentedJars; i++) {
             fermentedIndex = randomNumbers[i] % numHoneyJars;
-            fermentedIndexes[i] = honeyJarIds[fermentedIndex];
+            fermentedJars[i] = honeyJarIds[fermentedIndex];
             party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
         }
         party.fermentedJarsFound = true;
 
-        // TODO: does this need to be in the VRF call?
-        if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0)) {
-            honeyJarPortal.sendFermentedJars(party.assetChainId, party.bundleId, honeyJarIds, msg.sender);
+        // If the portal is set && there is an ether balance
+        // TODO: Better estimate
+        if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0) && address(this).balance != 0) {
+            uint256 sendAmount = address(this).balance / party.checkpoints.length;
+            honeyJarPortal.sendFermentedJars{value: sendAmount}(
+                address(this), party.assetChainId, party.bundleId, fermentedJars
+            );
         }
 
-        emit FermentedJarsFound(bundleId, fermentedIndexes);
+        emit FermentedJarsFound(bundleId, fermentedJars);
+    }
+
+    /// @notice method that _anyone_ can call to send fermented jars across to the asset chain
+    /// @dev no permissions since its an idempotent state xfer.
+    function sendFermentedJars(uint8 bundleId_) external payable {
+        SlumberParty storage party = slumberParties[bundleId_];
+        if (party.fermentedJars.length == 0) revert FermentedJarNotFound(bundleId_);
+        if (party.assetChainId == getChainId()) revert InvalidInput("chainId");
+        if (address(honeyJarPortal) == address(0)) revert InvalidInput("PortalNotSet");
+        uint256[] memory jarIds = new uint256[](party.fermentedJars.length);
+
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            jarIds[i] = party.fermentedJars[i].id;
+        }
+
+        honeyJarPortal.sendFermentedJars{value: msg.value}(msg.sender, party.assetChainId, party.bundleId, jarIds);
     }
 
     /// @notice called by portal when the fermented jars are found on another chain
@@ -546,6 +553,8 @@ contract HibernationDen is
         if (fermentedJarIds.length == 0) revert InvalidInput("setCrossChainFermentedJars");
         SlumberParty storage party = slumberParties[bundleId];
         party.fermentedJarsFound = true;
+
+        delete party.fermentedJars; // Clear old state
         for (uint256 i = 0; i < fermentedJarIds.length; i++) {
             party.fermentedJars.push(FermentedJar(fermentedJarIds[i], false));
         }
@@ -732,7 +741,7 @@ contract HibernationDen is
     /// @notice checkpoints where there can be one winner.
     /// @param checkpoints the JarNumber that determins winners.
     /// @param checkpointIndex where in the checkpoint array the current game is in
-    function setCheckpoints(uint8 bundleId_, uint256[] calldata checkpoints, uint256 checkpointIndex)
+    function setCheckpoints(uint8 bundleId_, uint256 checkpointIndex, uint256[] calldata checkpoints)
         external
         onlyRole(Constants.GAME_ADMIN)
     {
@@ -744,6 +753,8 @@ contract HibernationDen is
 
         party.checkpoints = checkpoints;
         party.checkpointIndex = checkpointIndex;
+
+        emit CheckpointsUpdated(checkpointIndex, checkpoints);
     }
 
     /**
@@ -755,4 +766,7 @@ contract HibernationDen is
         vrfConfig = vrfConfig_;
         emit VRFConfigChanged(vrfConfig_);
     }
+
+    // Needed for LayerZero Refunds
+    receive() external payable {}
 }

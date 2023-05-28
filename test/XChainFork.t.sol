@@ -21,10 +21,18 @@ import {Constants} from "src/Constants.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 
-contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
+/// @notice tests core HibernationDen functionality across multiple chains
+contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
     using SafeCastLib for uint256;
     using Address for address;
+
+    // Copied from the portal
+    enum MessageTypes {
+        SEND_NFT,
+        START_GAME,
+        SET_FERMENTED_JARS
+    }
 
     Merkle private merkleLib;
 
@@ -82,7 +90,7 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
     uint256[] private checkpoints;
 
     //Chainlink setup
-    MockVRFCoordinator private vrfCoordinator;
+    MockVRFCoordinator private vrfCoordinator; // TODO: replace with real VRF
     MockVRFCoordinator private vrfCoordinatorL2;
     uint64 private subId;
     uint64 private subIdL2;
@@ -186,9 +194,6 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
             honeyJarShare
         );
 
-        portalL1 =
-        new HoneyJarPortal(50000, L1_LZ_ENDPOINT, address(honeyJar),address(hibernationDenL1), address(gameRegistry));
-
         mintConfig = HibernationDen.MintConfig({
             maxClaimableHoneyJar: maxClaimableHoneyJar,
             honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
@@ -197,8 +202,14 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
 
         // Set up on VRF site
         vrfCoordinator.addConsumer(subId, address(hibernationDenL1));
-
         hibernationDenL1.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
+
+        portalL1 =
+        new HoneyJarPortal(50000, L1_LZ_ENDPOINT, address(honeyJar),address(hibernationDenL1), address(gameRegistry));
+        portalL1.setMinDstGas(portalL1.lzChainId(L2_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
+        gameRegistry.grantRole(Constants.PORTAL, address(portalL1));
+        gameRegistry.grantRole(Constants.BURNER, address(portalL1));
+        gameRegistry.grantRole(Constants.MINTER, address(portalL1));
         gameRegistry.registerGame(address(hibernationDenL1));
 
         /**
@@ -269,7 +280,8 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         gameRegistryL2.setJani(jani);
         gameRegistryL2.setBeekeeper(beekeeper);
 
-        honeyJarL2 = new HoneyJar(address(this), address(gameRegistryL2), START_TOKEN_ID, 69);
+        // StartTokenID is mutually exclusive from HoneyJarL1
+        honeyJarL2 = new HoneyJar(address(this), address(gameRegistryL2), 5000, 69);
         gatekeeperL2 = new Gatekeeper(address(gameRegistryL2));
         // use BundleId from l1.addBundle()
         gatekeeperL2.addGate(bundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
@@ -288,10 +300,18 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         mintConfigL2 = mintConfig; // same ol mintConfig
         vrfCoordinatorL2.addConsumer(subIdL2, address(hibernationDenL2));
         hibernationDenL2.initialize(HibernationDen.VRFConfig("", subIdL2, 3, 10000000), mintConfigL2);
+        vm.deal(address(hibernationDenL2), 6 ether); // It will make the xChain calls.
 
         portalL2 =
         new HoneyJarPortal(50000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
         hibernationDenL2.setPortal(address(portalL2));
+        portalL2.setMinDstGas(portalL2.lzChainId(L1_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
+
+        gameRegistryL2.grantRole(Constants.PORTAL, address(portalL2));
+        gameRegistryL2.grantRole(Constants.BURNER, address(portalL2));
+        gameRegistryL2.grantRole(Constants.MINTER, address(portalL2));
+        gameRegistryL2.registerGame(address(hibernationDenL2));
+        gameRegistryL2.startGame(address(hibernationDenL2));
 
         // Set trusted remotes
         vm.selectFork(L1_FORK_ID);
@@ -317,17 +337,11 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         lzHelper.help(
             L2_LZ_ENDPOINT,
             L2_DEFAULT_LIBRARY,
-            100000,
+            500000,
             0xe9bded5f24a4168e4f3bf44e00298c993b22376aad8c58c7dda9718a54cbea82,
             L2_FORK_ID,
             logs
         );
-        // TODO: Doesn't work.
-        //      │   ├─ [47785] HoneyJarPortal::lzReceive(10121 [1.012e4], 0x15cf58144ef33af1e14b5208015d11f9143e27b9756e0562323adcda4430d6cb456d9151f605290b, 2, 0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
-        // │   │   │   ├─ [9594] HoneyJarPortal::nonblockingLzReceive(10121 [1.012e4], 0x15cf58144ef33af1e14b5208015d11f9143e27b9756e0562323adcda4430d6cb456d9151f605290b, 2, 0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
-        // │   │   │   │   ├─ [212] HibernationDen::c4f71b2b(000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
-        // │   │   │   │   │   └─ ← ()
-        // │   │   │   │   └─ ← "EvmError: Revert"
 
         vm.selectFork(L2_FORK_ID);
 
@@ -335,40 +349,67 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
         vm.warp(block.timestamp + 72 hours);
 
         vm.startPrank(alfaHunter);
-        // hibernationDenL1.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5); Fails as expected
-        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        // Mints need to be broken up. else the VRF gets fucked.
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 4}(bundleId, 4);
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 1}(bundleId, 1);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 1}(bundleId, 1);
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 4}(bundleId, 4);
         vm.stopPrank();
 
         vm.startPrank(clown);
-        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 5}(bundleId, 5);
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 2}(bundleId, 2);
+        hibernationDenL2.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 3}(bundleId, 3);
         vm.stopPrank();
 
-        // Get winnors
-        vrfCoordinator.fulfillRandomWords(1, address(hibernationDenL2));
+        vrfCoordinatorL2.fulfillRandomWords(1, address(hibernationDenL2)); // 3
+        vrfCoordinatorL2.fulfillRandomWords(2, address(hibernationDenL2)); // 6
+        vrfCoordinatorL2.fulfillRandomWords(3, address(hibernationDenL2)); // 12
+        vrfCoordinatorL2.fulfillRandomWords(4, address(hibernationDenL2)); // 15
+
         HibernationDen.SlumberParty memory party = hibernationDenL2.getSlumberParty(bundleId);
         assertEq(party.fermentedJarsFound, true, "fermentedJarsFound should be true");
         assertEq(party.assetChainId, L1_CHAIN_ID, "assetChainId is incorrect");
         assertEq(party.mintChainId, L2_CHAIN_ID, "mintChainId is incorrect");
         assertEq(party.fermentedJars.length, tokenAddresses.length, "fermented jars != num sleepers");
 
-        vm.recordLogs();
-        logs = vm.getRecordedLogs();
-        lzHelper.help(0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab, 100000, 421613, logs);
-        vm.stopPrank();
+        // Send fermentedJars xChain (should happen automatically)
+        // hibernationDenL2.sendFermentedJars{value: 1 ether}(bundleId);
 
         // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper.
+        // Bridge all the winners
+        address winner;
+        HibernationDen.FermentedJar memory fermentedJar;
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            fermentedJar = party.fermentedJars[i];
+            winner = honeyJarL2.ownerOf(fermentedJar.id);
+            vm.startPrank(winner);
+            portalL2.sendFrom{value: 1 ether}(
+                winner,
+                portalL2.lzChainId(L1_CHAIN_ID),
+                abi.encode(winner),
+                fermentedJar.id,
+                payable(winner),
+                address(0x0),
+                abi.encodePacked(uint16(1), uint256(250000)) // min is 225K
+            );
+            vm.stopPrank();
+        }
 
-        // Test out a particular winner
-        uint256 fermentedJarId = party.fermentedJars[0].id;
-        address winner = honeyJar.ownerOf(fermentedJarId);
+        logs = vm.getRecordedLogs();
+        lzHelper.help(
+            L1_LZ_ENDPOINT,
+            L1_DEFAULT_LIBRARY,
+            500000,
+            0xe9bded5f24a4168e4f3bf44e00298c993b22376aad8c58c7dda9718a54cbea82,
+            L1_FORK_ID,
+            logs
+        );
 
-        vm.startPrank(winner);
-        // hibernationDenL2.wakeSleeper(bundleId, fermentedJarId);  This fails like it should
-        hibernationDenL1.wakeSleeper(bundleId, fermentedJarId);
+        vm.selectFork(L1_FORK_ID);
+        _validateWinners();
     }
 
     function _getBundleInput()

@@ -12,7 +12,7 @@ contract StartGame is THJScriptBase("gen3") {
     function run(string calldata env) public override {
         vm.startBroadcast();
 
-        address honeyBox = _readAddress("HONEYBOX_ADDRESS");
+        address honeyBox = payable(_readAddress("HONEYBOX_ADDRESS"));
         gr = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
         gr.startGame(honeyBox);
 
