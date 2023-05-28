@@ -31,8 +31,8 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
     event MessageRecieved(bytes payload);
     event HibernationDenSet(address honeyBoxAddress);
-    event StartGameProcessed(uint16 srcChainId, StartGamePayload);
-    event FermentedJarsProcessed(uint16 srcChainId, FermentedJarsPayload);
+    event StartGameProcessed(uint256 srcChainId, StartGamePayload);
+    event FermentedJarsProcessed(uint256 srcChainId, FermentedJarsPayload);
     event LzMappingSet(uint256 evmChainId, uint16 lzChainId);
 
     // Errors
@@ -71,21 +71,22 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
 
         // Initial state
         // https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids#polygon-zkevm
-        lzChainId[1] = 101; // mainnet
-        lzChainId[5] = 10121; //Goerli
-        lzChainId[42161] = 110; // Arbitrum
-        lzChainId[421613] = 10143; //Atrbitrum goerli
-        lzChainId[10] = 111; //Optimism
-        lzChainId[420] = 10132; // Optimism Goerli
-        lzChainId[137] = 109; // Polygon
-        lzChainId[80001] = 10109; // Mumbai
-        lzChainId[1101] = 158; // Polygon zkEVM
-        lzChainId[1442] = 10158; // Polygon zkEVM testnet
-        lzChainId[10106] = 106; // Avalanche - Fuji
+        setLzMapping(1, 101); // mainnet
+        setLzMapping(5, 10121); //Goerli
+        setLzMapping(42161, 110); // Arbitrum
+        setLzMapping(421613, 10143); //Atrbitrum goerli
+        setLzMapping(10, 111); //Optimism
+        setLzMapping(420, 10132); // Optimism Goerli
+        setLzMapping(137, 109); // Polygon
+        setLzMapping(80001, 10109); // Mumbai
+        setLzMapping(1101, 158); // Polygon zkEVM
+        setLzMapping(1442, 10158); // Polygon zkEVM testnet
+        setLzMapping(10106, 106); // Avalanche - Fuji
     }
 
-    function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
+    function setLzMapping(uint256 evmChainId, uint16 lzChainId_) public onlyRole(Constants.GAME_ADMIN) {
         lzChainId[evmChainId] = lzChainId_;
+        realChainId[lzChainId_] = evmChainId;
     }
 
     /// @dev there can only be one honeybox per portal.
@@ -210,17 +211,21 @@ contract HoneyJarPortal is GameRegistryConsumer, CrossChainTHJ, ONFT721Core, IER
     ////////////////////////////////////////////////////////////
 
     function _processStartGame(uint16 srcChainId, bytes memory _payload) internal {
+        uint256 realSrcChainId = realChainId[srcChainId];
+        if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         StartGamePayload memory payload = _decodeStartGame(_payload);
-        honeyBox.startGame(srcChainId, payload.bundleId, payload.bundleId); // TODO: does it matter if srcChainId is lzChainId?
+        honeyBox.startGame(realSrcChainId, payload.bundleId, payload.numSleepers); // TODO: does it matter if srcChainId is lzChainId?
 
-        emit StartGameProcessed(srcChainId, payload);
+        emit StartGameProcessed(realSrcChainId, payload);
     }
 
-    function _processFermentedJars(uint16 _srcChainId, bytes memory _payload) internal {
+    function _processFermentedJars(uint16 srcChainId, bytes memory _payload) internal {
+        uint256 realSrcChainId = realChainId[srcChainId];
+        if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         FermentedJarsPayload memory payload = _decodeFermentedJars(_payload);
         honeyBox.setCrossChainFermentedJars(payload.bundleId, payload.fermentedJarIds);
 
-        emit FermentedJarsProcessed(_srcChainId, payload);
+        emit FermentedJarsProcessed(realSrcChainId, payload);
     }
 
     /// @notice a copy of the OFNFT721COre _nonBlockingrcv to keep NFT functionality the same.

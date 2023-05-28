@@ -285,10 +285,12 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
             honeyJarShare
         );
 
+        mintConfigL2 = mintConfig; // same ol mintConfig
         vrfCoordinatorL2.addConsumer(subIdL2, address(hibernationDenL2));
+        hibernationDenL2.initialize(HibernationDen.VRFConfig("", subIdL2, 3, 10000000), mintConfigL2);
 
         portalL2 =
-        new HoneyJarPortal(100000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
+        new HoneyJarPortal(50000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
         hibernationDenL2.setPortal(address(portalL2));
 
         // Set trusted remotes
@@ -320,6 +322,14 @@ contract XChainHibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenRece
             L2_FORK_ID,
             logs
         );
+        // TODO: Doesn't work.
+        //      │   ├─ [47785] HoneyJarPortal::lzReceive(10121 [1.012e4], 0x15cf58144ef33af1e14b5208015d11f9143e27b9756e0562323adcda4430d6cb456d9151f605290b, 2, 0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
+        // │   │   │   ├─ [9594] HoneyJarPortal::nonblockingLzReceive(10121 [1.012e4], 0x15cf58144ef33af1e14b5208015d11f9143e27b9756e0562323adcda4430d6cb456d9151f605290b, 2, 0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
+        // │   │   │   │   ├─ [212] HibernationDen::c4f71b2b(000000000000000000000000000000000000000000000000000000000000000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006)
+        // │   │   │   │   │   └─ ← ()
+        // │   │   │   │   └─ ← "EvmError: Revert"
+
+        vm.selectFork(L2_FORK_ID);
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
         vm.warp(block.timestamp + 72 hours);
