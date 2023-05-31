@@ -517,7 +517,6 @@ contract HibernationDen is
         party.fermentedJarsFound = true;
 
         // If the portal is set && there is an ether balance
-        // TODO: Better estimate
         if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0) && address(this).balance != 0) {
             uint256 sendAmount = address(this).balance / party.checkpoints.length;
             honeyJarPortal.sendFermentedJars{value: sendAmount}(
@@ -703,6 +702,7 @@ contract HibernationDen is
     //=============== SETTERS ================//
 
     /// @notice sets HoneyJarPortal which is responsible for xChain communication.
+    /// @dev intentionally allow 0x0 to disable automatic xChain comms
     function setPortal(address portal_) external onlyRole(Constants.GAME_ADMIN) {
         honeyJarPortal = IHoneyJarPortal(portal_);
 

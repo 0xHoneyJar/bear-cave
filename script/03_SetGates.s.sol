@@ -7,17 +7,14 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 contract SetGates is THJScriptBase("gen3") {
     using stdJson for string;
 
-    Gatekeeper private gk;
-
-    function setUp() public {
-        gk = Gatekeeper(_readAddress("GATEKEEPER_ADDRESS"));
-    }
+    function setUp() public {}
 
     function run(string calldata env) public override {
-        vm.startBroadcast();
         string memory json = _getConfig(env);
-
+        Gatekeeper gk = Gatekeeper(json.readAddress(".deployments.gatekeeper"));
         uint256 bundleId = uint8(json.readUint(".bundleId")); // BundleId has to be less than 255
+
+        vm.startBroadcast();
 
         // TODO: could be moved into config
         //     function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)

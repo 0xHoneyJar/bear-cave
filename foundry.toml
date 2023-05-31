@@ -37,4 +37,7 @@ arbitrum-goerli= "${ARB_GOERLI_URL}"
 arbitrum = "${ARBITRUM_URL}"
 
 [etherscan]
-goerli = { key = "${ETHERSCAN_API_KEY}" }
+mainnet = { key = "${ETHERSCAN_API_KEY_ETH}" }
+arbitrum= { key = "${ETHERSCAN_API_KEY_ARBITRUM}" }
+goerli = { key = "${ETHERSCAN_API_KEY_GOERLI}" }
+arbitrum-goerli = { key = "${ETHERSCAN_API_KEY_AB_GOERLI}" }

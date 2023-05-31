@@ -7,6 +7,8 @@ import {GameRegistry} from "src/GameRegistry.sol";
 abstract contract THJScriptBase is Script {
     string private gen;
 
+    error NotImplemented();
+
     constructor(string memory gen_) {
         gen = gen_;
     }

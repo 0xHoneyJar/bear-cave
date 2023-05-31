@@ -27,6 +27,13 @@ contract DeployScript is THJScriptBase("gen3") {
     }
 
     function run(string calldata env) public override {
+        string memory json = _getConfig(env);
+        console.log("chainId: ", json.readUint(".chainId"));
+        console.log("NO DEFAULT BEHAVIOR", env);
+        revert NotImplemented();
+    }
+
+    function deployHelpers(string calldata env) public {
         // Existing deployments (if it fails)
         // gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
         // honeyJar = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
@@ -48,22 +55,6 @@ contract DeployScript is THJScriptBase("gen3") {
 
         // Deploy gatekeeper
         new Gatekeeper(address(gameRegistry));
-
-        // // Deploy HoneyJar with Create2
-        // bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarOogaBooga"));
-        // honeyJar = new HoneyJar{salt: salt}(deployer, address(gameRegistry), honeyJarStartIndex, honeyJarAmount);
-
-        // Deploy HibernationDen
-        // honeyBox = new HibernationDen(
-        //     address(vrfCoordinator),
-        //     address(gameRegistry),
-        //     address(honeyJar),
-        //     address(paymentToken),
-        //     address(gatekeeper),
-        //     jani,
-        //     beekeeper,
-        //     revShare
-        // );
 
         vm.stopBroadcast();
     }
@@ -125,7 +116,7 @@ contract DeployScript is THJScriptBase("gen3") {
 
         // Get Configured Addresses
         address lzEndpoint = json.readAddress(".addresses.lzEndpoint");
-        uint256 minGas = 500000;
+        uint256 minGas = 200000;
 
         vm.startBroadcast(deployer);
 

@@ -16,29 +16,25 @@ contract BundleTokens is THJScriptBase("gen3") {
     uint256 private SFT_ID = 4;
     uint256 private NFT_ID = 4;
 
-    HibernationDen private hb;
     ERC721 private nft;
     ERC1155 private sft;
     ERC20 private token;
 
-    function setUp() public {
-        hb = HibernationDen(payable(_readAddress("HONEYBOX_ADDRESS")));
-    }
+    function setUp() public {}
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
+        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.hibernationDen")));
 
         address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
         uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+        uint256 chainId = json.readUint(".chainId");
+        uint256[] memory checkpoints = json.readUintArray(".checkpoints");
 
         vm.startBroadcast();
-
-        uint256 CHAIN_ID = 0; // ETH
-        uint256[] memory checkpoints; // TODO: put the real checkpoints here.
-
         // Identify tokenID to hibernate
-        uint8 bundleId = hb.addBundle(CHAIN_ID, checkpoints, addresses, tokenIds, isERC1155s);
+        uint8 bundleId = hibernationDen.addBundle(chainId, checkpoints, addresses, tokenIds, isERC1155s);
         console.log("BundleID: ", bundleId);
 
         vm.stopBroadcast();

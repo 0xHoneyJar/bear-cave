@@ -24,6 +24,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     // Events
     event PortalSet(uint256 chainId, address portalAddress);
     event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
+    event SendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] fermentedJarIds_);
     event MessageRecieved(bytes payload);
     event HibernationDenSet(address honeyBoxAddress);
     event StartGameProcessed(uint256 srcChainId, StartGamePayload);
@@ -163,7 +164,8 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     //////////////////  Game Methods  //////////////////
     //////////////////////////////////////////////////////
 
-    /// @notice should only be called form ETH (ChainId=1) Doens't make sense otherwise.
+    /// @notice should only be called from ETH (ChainId=1) Doens't make sense otherwise.
+    /// @notice Caller MUST estimate fees and pass in appropriate value to this method.
     /// @dev can only be called by game instances
     function sendStartGame(
         address refundAddress_,
@@ -174,13 +176,17 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
+
         bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
-        // TODO: estimate & check gas
-        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO: estimate gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value);
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
     }
 
+    /// @notice caller must estimate gas and send as msg.value.
+    /// @param destChainId_ real chainId the message is sent to (should be L1)
+    /// @param bundleId_ the bundleId
+    /// @param fermentedJarIds_ list of jars to be fermented.
     function sendFermentedJars(
         address refundAddress_,
         uint256 destChainId_,
@@ -189,9 +195,11 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
+
         bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
-        // TODO: estimate & check gas
-        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value); // TODO estimate Gas
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value);
+
+        emit SendFermentedJars(destChainId_, bundleId_, fermentedJarIds_);
     }
 
     function _nonblockingLzReceive(

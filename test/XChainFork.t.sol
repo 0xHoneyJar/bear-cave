@@ -89,8 +89,8 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint8 private bundleId;
     uint256[] private checkpoints;
 
-    //Chainlink setup
-    MockVRFCoordinator private vrfCoordinator; // TODO: replace with real VRF
+    //Chainlink setup (Real VRF doesn't work because foundry EVM doesn't support arb precompiles)
+    MockVRFCoordinator private vrfCoordinator;
     MockVRFCoordinator private vrfCoordinatorL2;
     uint64 private subId;
     uint64 private subIdL2;

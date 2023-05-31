@@ -10,11 +10,13 @@ contract StartGame is THJScriptBase("gen3") {
     GameRegistry private gr;
 
     function run(string calldata env) public override {
+        string memory json = _getConfig(env);
+        address hibernationDen = json.readAddress(".deployments.hibernationDen");
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+
         vm.startBroadcast();
 
-        address honeyBox = payable(_readAddress("HONEYBOX_ADDRESS"));
-        gr = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-        gr.startGame(honeyBox);
+        gr.startGame(hibernationDen);
 
         vm.stopBroadcast();
     }

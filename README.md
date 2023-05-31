@@ -90,15 +90,15 @@ Destination Chain:
 Source chain: (ETH)
 - `AddBundle`
 - `PuffPuffPassOut`
-- `startGatesForToken` 
-    if xChain bundle --> HJP `startXChainGame()`
-- honeybox.mint should not work. (bundle.isCrossChain);
+    - if xChain bundle --> HJP `startGame()`
+    - else:  `startGatesForToken` 
+- honeybox.mint should not work. (bundle.assetChainId != bundle.mintChainId);
 
 Destination Chain: (ARB)
 - HibernationDen.startGame() --> bundleConfig but no bundle
-- GateKeeper: rcv StartGates for token.
+- GateKeeper: startGatesForToken
 - GameRegistry: startGame
-- Players can call honeyBox.claim, earlyMint, mint on times. 
+- Players can call honeyBox.claim, earlyMint, mint on appropriate times. 
 - Last mint: Chainlink VRF from bundleConfig 
 - get winning tokenIds
 - HJP --> send to honeyBox(source)
@@ -108,5 +108,3 @@ Source Chain (ETH):
 
 WakeSleeper: ETH:
 - Validate msg.sender is owner of token
-- arb.honeybox.sign I AM OWNER. 
-- eth.honeyBox.claim I AM OWNER --> send to msg.sender. 

@@ -4,61 +4,79 @@ pragma solidity 0.8.17;
 import "./THJScriptBase.sol";
 
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
-
-import {GameRegistry} from "src/GameRegistry.sol";
-import {HibernationDen} from "src/HibernationDen.sol";
-
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
+
+import {GameRegistry} from "src/GameRegistry.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
+import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
+import {Constants} from "src/Constants.sol";
 
 // Sets up HibernationDen as a game
 contract ConfigureGame is THJScriptBase("gen2") {
     using stdJson for string;
     using SafeCastLib for uint256;
 
-    // Chainlink Config
-    address private vrfCoordinator;
-    bytes32 private vrfKeyhash;
-    uint64 private vrfSubId;
+    // Copied from the portal
+    enum MessageTypes {
+        SEND_NFT,
+        START_GAME,
+        SET_FERMENTED_JARS
+    }
 
     // Dependencies
     ERC721 private nft;
     ERC1155 private sft;
     ERC20 private token;
 
-    // Deployment vars
-
-    HibernationDen private honeyBox;
-    GameRegistry private gameRegistry;
-
-    HibernationDen.MintConfig private mintConfig;
-    HibernationDen.VRFConfig private vrfConfig;
-
-    function setUp() public {
-        // Dependencies
-        honeyBox = HibernationDen(payable(_readAddress("HONEYBOX_ADDRESS")));
-        gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-    }
+    function setUp() public {}
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        // Chainlink VRF Config
-        vrfKeyhash = json.readBytes32(".vrf.keyhash");
-        vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
-        vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
+        bytes32 vrfKeyhash = json.readBytes32(".vrf.keyhash");
+        uint64 vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
+        HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
 
-        // MintConfig
-        bytes memory rawMintConfig = json.parseRaw(".mintConfig");
-        mintConfig = abi.decode(rawMintConfig, (HibernationDen.MintConfig));
+        HibernationDen.MintConfig memory mintConfig =
+            abi.decode(json.parseRaw(".mintConfig"), (HibernationDen.MintConfig));
+
+        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.hibernationDen")));
+        HoneyJarPortal portal = HoneyJarPortal(payable(json.readAddress(".deployments.portal")));
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
 
         vm.startBroadcast();
 
-        honeyBox.initialize(vrfConfig, mintConfig);
+        hibernationDen.initialize(vrfConfig, mintConfig);
+        registry.grantRole(Constants.PORTAL, address(portal));
+        registry.grantRole(Constants.BURNER, address(portal));
+        registry.grantRole(Constants.MINTER, address(portal));
+        registry.registerGame(address(hibernationDen));
 
-        // Register game with gameRegistry
-        gameRegistry.registerGame(address(honeyBox));
+        vm.stopBroadcast();
+    }
+
+    function configurePortals(string calldata envL1, string calldata envL2) public {
+        string memory l1Json = _getConfig(envL1);
+        string memory l2Json = _getConfig(envL2);
+
+        uint256 l1ChainId = l1Json.readUint(".chainId");
+        uint256 l2ChainId = l2Json.readUint(".chainId");
+
+        HoneyJarPortal portalL1 = HoneyJarPortal(payable(l1Json.readAddress(".deployments.portal")));
+        HoneyJarPortal portalL2 = HoneyJarPortal(payable(l2Json.readAddress(".deployments.portal")));
+
+        vm.startBroadcast();
+
+        vm.selectFork(l1ChainId);
+
+        portalL1.setMinDstGas(portalL1.lzChainId(l2ChainId), uint16(MessageTypes.SEND_NFT), 225000);
+        portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
+
+        vm.selectFork(l2ChainId);
+        portalL2.setMinDstGas(portalL2.lzChainId(l1ChainId), uint16(MessageTypes.SEND_NFT), 225000);
+        portalL2.setTrustedRemote(portalL2.lzChainId(l1ChainId), abi.encodePacked(address(portalL1), address(portalL2)));
 
         vm.stopBroadcast();
     }
