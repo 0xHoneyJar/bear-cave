@@ -105,7 +105,7 @@ forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast"
   if [ "$no_verify" = false ]; then
-    forge_params="$forge_params --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+    forge_params="$forge_params --verify"
   fi
 fi
 
@@ -150,9 +150,13 @@ case "$method" in
     forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJarPortal(string)()' $network $forge_params
     ;;
   "config")
-    echo "Running config"
+    echo "Configuring Game"
     forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'run(string)()' $network $forge_params
-    ;;    
+    ;;
+  "config-portals")
+    echo "Configuring Portals"
+    forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'configurePortals(string,string)()' $network arbitrum-goerli $forge_params
+    ;;        
   "addBundle") 
     echo "Running addBundle"
     forge script script/02_BundleTokens.s.sol:BundleTokens --sig 'run(string)()' $network $forge_params

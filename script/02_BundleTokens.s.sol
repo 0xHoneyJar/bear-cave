@@ -22,19 +22,20 @@ contract BundleTokens is THJScriptBase("gen3") {
 
     function setUp() public {}
 
+    // Notes: Only ETH
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
-        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.hibernationDen")));
+        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.den")));
 
+        uint256 mintChainId = json.readUint(".mintChainId");
+        uint256[] memory checkpoints = json.readUintArray(".checkpoints");
         address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
         uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
-        uint256 chainId = json.readUint(".chainId");
-        uint256[] memory checkpoints = json.readUintArray(".checkpoints");
 
         vm.startBroadcast();
         // Identify tokenID to hibernate
-        uint8 bundleId = hibernationDen.addBundle(chainId, checkpoints, addresses, tokenIds, isERC1155s);
+        uint8 bundleId = hibernationDen.addBundle(mintChainId, checkpoints, addresses, tokenIds, isERC1155s);
         console.log("BundleID: ", bundleId);
 
         vm.stopBroadcast();

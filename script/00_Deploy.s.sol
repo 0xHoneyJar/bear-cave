@@ -17,14 +17,7 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 contract DeployScript is THJScriptBase("gen3") {
     using stdJson for string;
 
-    // Users to grant permissions
-    address private deployer;
-
-    function setUp() public {
-        // Dependencies
-        // If a deployment fails uncomment lines of existing deployments
-        deployer = vm.envAddress("DEPLOYER_ADDRESS");
-    }
+    function setUp() public {}
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
@@ -34,18 +27,13 @@ contract DeployScript is THJScriptBase("gen3") {
     }
 
     function deployHelpers(string calldata env) public {
-        // Existing deployments (if it fails)
-        // gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-        // honeyJar = HoneyJar(_readAddress("HONEYJAR_ADDRESS"));
-        // honeyBox = HibernationDen(_readAddress("HONEYBOX_ADDRESS"));
-
         // Read Config
         string memory json = _getConfig(env);
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
-        vm.startBroadcast(deployer);
+        vm.startBroadcast();
 
         // Deploy gameRegistry and give gameAdmin permisisons
         GameRegistry gameRegistry = new GameRegistry();
@@ -62,12 +50,13 @@ contract DeployScript is THJScriptBase("gen3") {
     function deployHoneyJar(string calldata env) public {
         string memory json = _getConfig(env);
 
-        address gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
+        address gameRegistry = json.readAddress(".deployments.registry");
+        address deployer = json.readAddress(".addresses.deployer");
 
         uint256 honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
         uint256 honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
 
-        vm.startBroadcast(deployer);
+        vm.startBroadcast();
 
         bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
@@ -79,9 +68,9 @@ contract DeployScript is THJScriptBase("gen3") {
     function deployHibernationDen(string calldata env) public {
         string memory json = _getConfig(env);
 
-        address gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
-        address gatekeeper = _readAddress("GATEKEEPER_ADDRESS");
-        address honeyJar = _readAddress("HONEYJAR_ADDRESS");
+        address gameRegistry = json.readAddress(".deployments.registry");
+        address gatekeeper = json.readAddress(".deployments.gatekeeper");
+        address honeyJar = json.readAddress(".deployments.honeyjar");
 
         address paymentToken = json.readAddress(".addresses.paymentToken");
         address vrfCoordinator = json.readAddress(".vrf.coordinator");
@@ -90,7 +79,7 @@ contract DeployScript is THJScriptBase("gen3") {
 
         uint256 revShare = json.readUint(".revShare");
 
-        vm.startBroadcast(deployer);
+        vm.startBroadcast();
 
         HibernationDen den = new HibernationDen(
             vrfCoordinator,
@@ -110,16 +99,15 @@ contract DeployScript is THJScriptBase("gen3") {
     function deployHoneyJarPortal(string calldata env) public {
         string memory json = _getConfig(env);
         // Get Deployment Addresses
-        address gameRegistry = _readAddress("GAMEREGISTRY_ADDRESS");
-        address hibernationDen = _readAddress("DEN_ADDRESS");
-        address honeyJar = _readAddress("HONEYJAR_ADDRESS");
+        address gameRegistry = json.readAddress(".deployments.registry");
+        address hibernationDen = json.readAddress(".deployments.den");
+        address honeyJar = json.readAddress(".deployments.honeyjar");
 
         // Get Configured Addresses
         address lzEndpoint = json.readAddress(".addresses.lzEndpoint");
         uint256 minGas = 200000;
 
-        vm.startBroadcast(deployer);
-
+        vm.startBroadcast();
         HoneyJarPortal portal = new HoneyJarPortal(minGas, lzEndpoint, honeyJar, hibernationDen, gameRegistry);
         vm.stopBroadcast();
     }

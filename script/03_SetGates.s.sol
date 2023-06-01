@@ -9,6 +9,7 @@ contract SetGates is THJScriptBase("gen3") {
 
     function setUp() public {}
 
+    // Note: Only Arbitrum
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
         Gatekeeper gk = Gatekeeper(json.readAddress(".deployments.gatekeeper"));

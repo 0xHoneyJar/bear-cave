@@ -1,4 +1,12 @@
 {
+    "chainId": 1,
+    "deployments" : {
+        "registry": null,
+        "portal": null,
+        "den": null,
+        "honeyjar": null,
+        "gatekeeper": null
+    },
     "addresses": {
         "gameAdmin": "0xd4920Bb5A6C032eB3BcE21E0C7FdAC9EeFa8d3f1",
         "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",

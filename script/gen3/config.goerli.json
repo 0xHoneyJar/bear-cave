@@ -1,4 +1,12 @@
 {
+    "chainId": 5, 
+    "deployments": {
+        "registry": "0x99599f74692d9d1CDfb66ff73470621E4C500F67",
+        "gatekeeper": "0x8C52c491d11f764f03d533a62393131eB2423B40",
+        "honeyjar": "0x1665D35Cf56a0020cc73856cf9C729793e96ee62",
+        "den": "0xb5282b1E717BAC278a33964AE7Dd4C9B871aB806",
+        "portal": "0x1399706d571ae4E915f32099995eE0ad9107AD96"
+    },
     "addresses": {
         "gameAdmin": "0xd4920Bb5A6C032eB3BcE21E0C7FdAC9EeFa8d3f1",
         "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
@@ -11,6 +19,12 @@
         "price_ERC20": 16000000000,
         "price_ETH": 110000000000000000
     },
+    "mintChainId": 421613,
+    "checkpoints": [
+        2,
+        10,
+        20
+    ],
     "honeyJar": {
         "startIndex": 0,
         "maxMintableForChain": 69
