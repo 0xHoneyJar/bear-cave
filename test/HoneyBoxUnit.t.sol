@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import "forge-std/Test.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
+import {MerkleProofLib} from "solmate/utils/MerkleProofLib.sol";
 
 import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
@@ -451,30 +452,21 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testClaimHoneyJar() public {
         // initial conditions
 
-        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 0);
-        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 1);
-        gatekeeper.addGate(bundleId, 0x4135c2b0e6d88c1cf3fbb9a75f6a8695737fb5e3bb0efc09d95eeb7fdec2b948, 6969, 2);
+        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 0);
+        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 1);
+        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 2);
         _puffPuffPassOut(bundleId);
 
-        bytes32[] memory proof = new bytes32[](11);
-        proof[0] = 0x2cab18c6136eee630c87d06ee09d821becc2ab5de6884ec207caa6efbf106dfc;
-        proof[1] = 0x4050c58f7f1b02c5ab26124e25dbee16bdd575ae58f48de5caca4819b669db38;
-        proof[2] = 0x6ecb27ca41e2b2a9984fd4b44f01652a1ea666deb47158aee4f667c02c0d6331;
-        proof[3] = 0x84f50225cb4b0751536690e95944e89deeb058bbf6a9a93a0b8c0a389262ff1a;
-        proof[4] = 0x9dcde3885e47f382fddc73d7cc5b992245e718e837309d9585d9dffa1dbfebe6;
-        proof[5] = 0xef2ef4e06ee9416d61bdc94af8443294afd09dc52024f6684f90d7a53a492fa4;
-        proof[6] = 0xf23a29367916e77c2d0c4cf1028644ccbff08fb01528ad364b43783b1ac48e64;
-        proof[7] = 0xf511c06624aa37de81ca3636dc5fb1f07fc4c899d178b71ef253219f3854ae95;
-        proof[8] = 0xb281427fdfe85dd2596444f48f541fe1b67abc9cf017046d62f557be67bb0c2a;
-        proof[9] = 0x1bd731646c7f0b4aeca11b7bfe2ccbea48990cfded41b82da665f25ecdcb6f6f;
-        proof[10] = 0x26f092416571d53df969f9c8bc85a0fdc197603b71ee8dc78f587751b3972e22;
+        bytes32[] memory proof = new bytes32[](2);
+        proof[0] = 0x07189c8078b720aa32203e633b6306a20af69850c74810b4bde04fced05a0d83;
+        proof[1] = 0xabd698d00bafd364b5f11213c236867297c8b65632feb6269dfbc03c7ad5dd45;
 
         // The first gate is a blank one, skip it for this test.
         (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) =
             gatekeeper.tokenToGates(bundleId, 1);
 
-        vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
-        honeyBox.claim(bundleId, 1, 0, 2, proof); // results in 2
+        vm.prank(address(0x6B2aA501eec12D1b1BD6c0082f2C0eC245112828));
+        honeyBox.claim(bundleId, 1, 0, 4, proof); // results in 2
 
         // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }

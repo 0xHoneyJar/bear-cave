@@ -31,8 +31,8 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
     MockERC721 private honeyJar;
     MockERC1155 private mockBear;
 
-    function createNode(address player, uint32 amount) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(player, amount));
+    function createNode(uint256 index, address player, uint32 amount) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(index, player, amount));
     }
 
     function getProof1(uint256 idx) private view returns (bytes32[] memory) {
@@ -57,10 +57,10 @@ contract GateKeeperTest is Test, ERC1155TokenReceiver {
         data2 = new bytes32[](gate2Users.length);
 
         for (uint8 i = 0; i < gate1Users.length; ++i) {
-            data1[i] = createNode(gate1Users[i], i);
+            data1[i] = createNode(i, gate1Users[i], i);
         }
         for (uint8 i = 0; i < gate2Users.length; ++i) {
-            data2[i] = createNode(gate2Users[i], i);
+            data2[i] = createNode(i, gate2Users[i], i);
         }
 
         bytes32 root1 = merkleLib.getRoot(data1);
