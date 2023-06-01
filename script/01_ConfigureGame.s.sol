@@ -32,6 +32,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
 
     function setUp() public {}
 
+    /// @notice Run on both chains
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
