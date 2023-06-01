@@ -452,6 +452,12 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testClaimHoneyJar() public {
         // initial conditions
 
+        gameRegistry.stopGame(address(honeyBox));
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = 250;
+        honeyBox.setCheckpoints(bundleId, 0, checkpoints);
+        gameRegistry.startGame(address(honeyBox));
+
         gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 0);
         gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 1);
         gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 2);
@@ -464,8 +470,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         // The first gate is a blank one, skip it for this test.
         (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) =
             gatekeeper.tokenToGates(bundleId, 1);
-
-            honeyBox.setCheckpoints(bundleId, 0, checkpoints);
 
         vm.prank(address(0x6B2aA501eec12D1b1BD6c0082f2C0eC245112828));
         honeyBox.claim(bundleId, 1, 0, 8, proof); // 8 honey jars
