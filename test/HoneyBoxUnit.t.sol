@@ -452,21 +452,23 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testClaimHoneyJar() public {
         // initial conditions
 
-        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 0);
-        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 1);
-        gatekeeper.addGate(bundleId, 0x16374b81dbe16ec11df4885eb4d05d03a022f2824939236ec030b158871a9ada, 6969, 2);
+        gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 0);
+        gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 1);
+        gatekeeper.addGate(bundleId, 0x5ddffdfb550cf9900d8dbac1b14b7307fa3a30e8f60d3195f3f655a9fbd25867, 6969, 2);
         _puffPuffPassOut(bundleId);
 
         bytes32[] memory proof = new bytes32[](2);
-        proof[0] = 0x07189c8078b720aa32203e633b6306a20af69850c74810b4bde04fced05a0d83;
-        proof[1] = 0xabd698d00bafd364b5f11213c236867297c8b65632feb6269dfbc03c7ad5dd45;
+        proof[0] = 0xd5c2c0155ccf575d6c49cca465d793d316c66fd251ae976923e8fcd6c9072292;
+        proof[1] = 0xa2a4bde641e1ed088b64590d9267010fd51b85e605d4c44cab88a9ac1f60fcac;
 
         // The first gate is a blank one, skip it for this test.
         (bool enabled, uint8 stageIndex, uint32 claimedCount, uint32 maxClaimable, bytes32 gateRoot, uint256 activeAt) =
             gatekeeper.tokenToGates(bundleId, 1);
 
+            honeyBox.setCheckpoints(bundleId, 0, checkpoints);
+
         vm.prank(address(0x6B2aA501eec12D1b1BD6c0082f2C0eC245112828));
-        honeyBox.claim(bundleId, 1, 0, 4, proof); // results in 2
+        honeyBox.claim(bundleId, 1, 0, 8, proof); // 8 honey jars
 
         // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }

@@ -7,6 +7,8 @@ import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {Constants} from "src/Constants.sol";
 
+import {console} from "forge-std/console.sol";
+
 /**
  * GateKeeper
  *  @notice state needs to be reset after each game.
@@ -97,9 +99,13 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
         Gate storage gate = gates[gateId];
         if (!gate.enabled) revert Gate_NotEnabled(gateId);
         if (gate.activeAt > block.timestamp) revert Gate_NotActive(gateId, gate.activeAt);
-
+        console.log(index, player, amount);
+        console.logBytes32(gate.gateRoot);
+        console.logBytes32(proof[0]);
+        console.logBytes32(proof[1]);
         bytes32 leaf = keccak256(abi.encodePacked(index, player, amount));
         validProof = MerkleProofLib.verify(proof, gate.gateRoot, leaf);
+        console.log(validProof);
     }
 
     /**
