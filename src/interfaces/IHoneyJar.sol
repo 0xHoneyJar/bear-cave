@@ -13,4 +13,8 @@ interface IHoneyJar is IERC721 {
     function burn(uint256 _id) external;
 
     function nextTokenId() external view returns (uint256);
+
+    function setFermented(uint256 id) external;
+
+    function isFermented(uint256) external view returns (bool);
 }

@@ -15,4 +15,5 @@ library Constants {
     // Special ERC permissions
     bytes32 internal constant MINTER = "MINTER";
     bytes32 internal constant BURNER = "BURNER";
+    bytes32 internal constant FERMENTER = "FERMENTER";
 }

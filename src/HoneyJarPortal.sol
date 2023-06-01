@@ -36,6 +36,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     error HoneyJarNotInPortal(uint256 tokenId);
     error OwnerNotCaller();
     error LzMappingMissing(uint256 chainId);
+    error NotImplemented();
 
     enum MessageTypes {
         SEND_NFT,
@@ -110,13 +111,77 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         honeyJar.burn(_tokenId);
     }
 
-    function _creditTo(uint16, address _toAddress, uint256 _tokenId) internal override {
+    /// @notice taken from ONFT721Core.sol to support fermentedFlags
+    // When a srcChain has the ability to transfer more chainIds in a single tx than the dst can do.
+    // Needs the ability to iterate and stop if the minGasToTransferAndStore is not met
+    function _creditTill(
+        uint16 _srcChainId,
+        address _toAddress,
+        uint256 _startIndex,
+        uint256[] memory _tokenIds,
+        bool[] memory _isFermented
+    ) internal returns (uint256) {
+        uint256 i = _startIndex;
+        while (i < _tokenIds.length) {
+            // if not enough gas to process, store this index for next loop
+            if (gasleft() < minGasToTransferAndStore) break;
+
+            _creditTo(_srcChainId, _toAddress, _tokenIds[i], _isFermented[i]);
+            i++;
+        }
+
+        // indicates the next index to send of tokenIds,
+        // if i == tokenIds.length, we are finished
+        return i;
+    }
+
+    /// @notice a required override for the ONFT721Core contract.
+    /// @dev This will never be called
+    function _creditTo(uint16, address, uint256) internal pure override {
+        revert NotImplemented();
+    }
+
+    /// @notice modified version of the ONFT721Core method with the additional _isFermented param.
+    function _creditTo(uint16, address _toAddress, uint256 _tokenId, bool _isFermented) internal {
         // This shouldn't happen, but just in case.
         if (_exists(_tokenId) && honeyJar.ownerOf(_tokenId) != address(this)) revert HoneyJarNotInPortal(_tokenId);
         if (!_exists(_tokenId)) {
             honeyJar.mintTokenId(_toAddress, _tokenId); //HoneyJar Portal should have MINTER Perms on HoneyJar
         } else {
             honeyJar.safeTransferFrom(address(this), _toAddress, _tokenId);
+        }
+
+        if (_isFermented) {
+            honeyJar.setFermented(_tokenId);
+        }
+    }
+
+    /// @notice Copied from ONFTCORE.sol to include isFermented
+    // Public function for anyone to clear and deliver the remaining batch sent tokenIds
+    function clearCredits(bytes memory _payload) external override {
+        bytes32 hashedPayload = keccak256(_payload);
+        require(storedCredits[hashedPayload].creditsRemain, "no credits stored");
+
+        SendNFTPayload memory payload = _decodeSendNFT(_payload);
+
+        uint256 nextIndex = _creditTill(
+            storedCredits[hashedPayload].srcChainId,
+            storedCredits[hashedPayload].toAddress,
+            storedCredits[hashedPayload].index,
+            payload.tokenIds,
+            payload.isFermented
+        );
+        require(nextIndex > storedCredits[hashedPayload].index, "not enough gas to process credit transfer");
+
+        if (nextIndex == payload.tokenIds.length) {
+            // cleared the credits, delete the element
+            delete storedCredits[hashedPayload];
+            emit CreditCleared(hashedPayload);
+        } else {
+            // store the next index to mint
+            storedCredits[hashedPayload] = StoredCredit(
+                storedCredits[hashedPayload].srcChainId, storedCredits[hashedPayload].toAddress, nextIndex, true
+            );
         }
     }
 
@@ -143,7 +208,13 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
             toAddress := mload(add(_toAddress, 20))
         }
 
-        bytes memory payload = _encodeSendNFT(toAddress, _tokenIds);
+        // Lengths will always be equal
+        bool[] memory isFermented = new bool[](_tokenIds.length);
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            isFermented[i] = honeyJar.isFermented(_tokenIds[i]);
+        }
+
+        bytes memory payload = _encodeSendNFT(toAddress, _tokenIds, isFermented);
 
         _checkGasLimit(
             _dstChainId,
@@ -250,8 +321,9 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @notice a copy of the OFNFT721COre _nonBlockingrcv to keep NFT functionality the same.
     function _processSendNFTMessage(uint16 _srcChainId, bytes memory _srcAddress, bytes memory _payload) internal {
         SendNFTPayload memory payload = _decodeSendNFT(_payload);
+        bool[] memory isFermented = payload.isFermented;
 
-        uint256 nextIndex = _creditTill(_srcChainId, payload.to, 0, payload.tokenIds);
+        uint256 nextIndex = _creditTill(_srcChainId, payload.to, 0, payload.tokenIds, payload.isFermented);
         if (nextIndex < payload.tokenIds.length) {
             // not enough gas to complete transfers, store to be cleared in another tx
             bytes32 hashedPayload = keccak256(_payload);
@@ -275,6 +347,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     struct SendNFTPayload {
         address to;
         uint256[] tokenIds;
+        bool[] isFermented;
     }
 
     struct FermentedJarsPayload {
@@ -282,8 +355,12 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         uint256[] fermentedJarIds;
     }
 
-    function _encodeSendNFT(address to, uint256[] memory tokenIds) internal pure returns (bytes memory) {
-        return abi.encode(MessageTypes.SEND_NFT, SendNFTPayload(to, tokenIds));
+    function _encodeSendNFT(address to, uint256[] memory tokenIds, bool[] memory isFermented)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(MessageTypes.SEND_NFT, SendNFTPayload(to, tokenIds, isFermented));
     }
 
     function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_, uint256[] memory checkpoints_)

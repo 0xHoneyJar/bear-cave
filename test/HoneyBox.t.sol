@@ -368,19 +368,12 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.mintChainId, l2ChainId, "mintChainId is incorrect");
         assertEq(party.fermentedJars.length, tokenAddresses.length, "fermented jars != num sleepers");
 
-        // Communicate Via portal
-        vm.startPrank(portal);
-        uint256[] memory fermentedJarIds = new uint256[](party.fermentedJars.length);
-        for (uint256 i = 0; i < party.fermentedJars.length; i++) {
-            fermentedJarIds[i] = party.fermentedJars[i].id;
-        }
-        l1HibernationDen.setCrossChainFermentedJars(newBundleId, fermentedJarIds);
-        vm.stopPrank();
-
         // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper.
 
         // Test out a particular winner
         uint256 fermentedJarId = party.fermentedJars[0].id;
+        assertTrue(honeyJar.isFermented(fermentedJarId), "jar should be fermented");
+        // Jar shoudl be used.
         address winner = honeyJar.ownerOf(fermentedJarId);
 
         vm.startPrank(winner);

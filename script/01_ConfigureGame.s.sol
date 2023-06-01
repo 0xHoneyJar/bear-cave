@@ -52,6 +52,7 @@ contract ConfigureGame is THJScriptBase("gen2") {
         registry.grantRole(Constants.PORTAL, address(portal));
         registry.grantRole(Constants.BURNER, address(portal));
         registry.grantRole(Constants.MINTER, address(portal));
+        registry.grantRole(Constants.FERMENTER, address(portal));
         registry.registerGame(address(hibernationDen));
 
         vm.stopBroadcast();

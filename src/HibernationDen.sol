@@ -123,6 +123,7 @@ contract HibernationDen is
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
     error InvalidChain(uint256 expectedChain, uint256 actualChain);
+    error JarAlreadyUsed(uint8 bundleId, uint256 honeyJarId);
 
     /**
      * Events
@@ -508,20 +509,21 @@ contract HibernationDen is
         }
         uint256[] memory fermentedJars = new uint256[](numFermentedJars); // used for emitting the event
 
-        uint256 fermentedIndex;
-        for (uint256 i = 0; i < numFermentedJars; i++) {
-            fermentedIndex = randomNumbers[i] % numHoneyJars;
-            fermentedJars[i] = honeyJarIds[fermentedIndex];
-            party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
-        }
         party.fermentedJarsFound = true;
 
-        // If the portal is set && there is an ether balance
-        if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0) && address(this).balance != 0) {
-            uint256 sendAmount = address(this).balance / party.checkpoints.length;
-            honeyJarPortal.sendFermentedJars{value: sendAmount}(
-                address(this), party.assetChainId, party.bundleId, fermentedJars
-            );
+        uint256 fermentedIndex;
+        bool isFermented;
+        for (uint256 i = 0; i < numFermentedJars; i++) {
+            fermentedIndex = randomNumbers[i] % numHoneyJars;
+            isFermented = honeyJar.isFermented(honeyJarIds[fermentedIndex]);
+            // TODO: what happens if the honeyjar is already fermented.
+            if (isFermented && fermentedIndex != honeyJarIds.length - 1) {
+                fermentedIndex += 1; // Best guess to attempt to get a non-fermented jar.
+            }
+
+            fermentedJars[i] = honeyJarIds[fermentedIndex];
+            honeyJar.setFermented(honeyJarIds[fermentedIndex]);
+            party.fermentedJars.push(FermentedJar(honeyJarIds[fermentedIndex], false));
         }
 
         emit FermentedJarsFound(bundleId, fermentedJars);
@@ -569,32 +571,28 @@ contract HibernationDen is
             revert NotJarOwner();
         }
 
+        // Validate Jar is fermented
+        bool isFermented = honeyJar.isFermented(jarId);
+        if (!isFermented) {
+            revert NotFermentedJarOwner(bundleId_, jarId);
+        }
+
         SlumberParty storage party = slumberParties[bundleId_];
         if (party.assetChainId != getChainId()) revert InvalidChain(party.assetChainId, getChainId()); // Can only claim on chains with the asset
         if (party.numUsed == party.sleepoors.length) revert PartyAlreadyWoke(bundleId_);
-        if (!party.fermentedJarsFound) revert FermentedJarNotFound(bundleId_);
 
-        FermentedJar[] storage fermentedJars = party.fermentedJars;
-
-        uint256 numFermentedJars = fermentedJars.length;
-        uint256 sleeperIndex = 0;
-        for (uint256 i = 0; i < numFermentedJars; ++i) {
-            if (fermentedJars[i].id != jarId) continue;
-            if (fermentedJars[i].isUsed) continue; // Same jar can win multiple times.
-            // The caller is the owner of the Fermented jar and its unused
-            fermentedJars[i].isUsed = true;
-            sleeperIndex = party.numUsed; // Use the next available sleeper
-            party.numUsed++;
-
-            // party.numUsed is the index of the sleeper to wake up
-            _transferSleeper(party.sleepoors[sleeperIndex], address(this), msg.sender);
-            emit SleeperAwoke(bundleId_, party.sleepoors[i].tokenId, jarId, msg.sender);
-            // Early return out of loop if successful
-            return;
+        // Update Internal Accounting
+        uint256 sleeperIndex = party.numUsed; // Gets the next available sleeper
+        party.numUsed++;
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            if (party.fermentedJars[i].id != jarId) continue;
+            party.fermentedJars[i].isUsed = true;
         }
 
-        // If you complete the for loop without returning then you don't own the right NFT
-        revert NotFermentedJarOwner(bundleId_, jarId);
+        // xfer tokens
+        _transferSleeper(party.sleepoors[sleeperIndex], address(this), msg.sender);
+
+        emit SleeperAwoke(bundleId_, party.sleepoors[sleeperIndex].tokenId, jarId, msg.sender);
     }
 
     /// @notice transfers NFT defined by sleeper_ to the caller of of the method

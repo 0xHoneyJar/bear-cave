@@ -10,6 +10,9 @@ import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {Constants} from "src/Constants.sol";
 
+/// @title BearPouch
+/// @notice Extracting the business logic for payments
+/// @dev Currently unused, but can be used to extract functionality from HibernationDen
 contract BearPouch is GameRegistryConsumer {
     using SafeERC20 for IERC20;
 

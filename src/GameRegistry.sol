@@ -39,6 +39,7 @@ contract GameRegistry is AccessControl {
     /// @notice enabling the game means that the game is in "progress"
     function startGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _grantRole(Constants.MINTER, game_);
+        _grantRole(Constants.FERMENTER, game_);
         games[game_] = true;
         emit GameStarted(game_);
     }
@@ -46,6 +47,7 @@ contract GameRegistry is AccessControl {
     /// @notice stops the game which removes the mintor role and sets enable = false
     function stopGame(address game_) external onlyRole(Constants.GAME_ADMIN) {
         _revokeRole(Constants.MINTER, game_);
+        _revokeRole(Constants.FERMENTER, game_);
         games[game_] = false;
         emit GameStopped(game_);
     }

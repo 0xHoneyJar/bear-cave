@@ -210,6 +210,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.grantRole(Constants.PORTAL, address(portalL1));
         gameRegistry.grantRole(Constants.BURNER, address(portalL1));
         gameRegistry.grantRole(Constants.MINTER, address(portalL1));
+        gameRegistry.grantRole(Constants.FERMENTER, address(portalL1));
         gameRegistry.registerGame(address(hibernationDenL1));
 
         /**
@@ -310,7 +311,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistryL2.grantRole(Constants.PORTAL, address(portalL2));
         gameRegistryL2.grantRole(Constants.BURNER, address(portalL2));
         gameRegistryL2.grantRole(Constants.MINTER, address(portalL2));
+        gameRegistryL2.grantRole(Constants.FERMENTER, address(portalL2));
         gameRegistryL2.registerGame(address(hibernationDenL2));
+
         gameRegistryL2.startGame(address(hibernationDenL2));
 
         // Set trusted remotes
@@ -444,7 +447,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     function _validateWinners() internal {
         HibernationDen.SlumberParty memory party = hibernationDenL1.getSlumberParty(bundleId);
-        assertTrue(party.fermentedJarsFound);
+        assertTrue(party.fermentedJarsFound, "fermented jars not found");
 
         address winner;
         uint256 alreadyWon;
@@ -461,7 +464,11 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             vm.startPrank(winner);
             hibernationDenL1.wakeSleeper(bundleId, fermentedJar.id); // Validate an NFT transfer occured.
             vm.stopPrank();
-            assertEq(erc721.balanceOf(winner) + erc1155.balanceOf(winner, SFT_ID), alreadyWon + 1);
+            assertEq(
+                erc721.balanceOf(winner) + erc1155.balanceOf(winner, SFT_ID),
+                alreadyWon + 1,
+                "should have won something"
+            );
         }
     }
 
