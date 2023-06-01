@@ -57,21 +57,22 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     /// @inheritdoc IGatekeeper
     function calculateClaimable(
         uint256 bundleId,
-        uint256 index,
+        uint256 gateIndex,
         address player,
+        uint256 index,
         uint32 amount,
         bytes32[] calldata proof
     ) external view returns (uint32 claimAmount) {
         // If proof was already used within the gate, there are 0 left to claim
         bytes32 proofHash = keccak256(abi.encode(proof));
-        if (consumedProofs[index][proofHash]) return 0;
+        if (consumedProofs[gateIndex][proofHash]) return 0;
 
-        Gate storage gate = tokenToGates[bundleId][index];
+        Gate storage gate = tokenToGates[bundleId][gateIndex];
         uint32 claimedCount = gate.claimedCount;
         if (claimedCount >= gate.maxClaimable) revert TooMuchHoneyJarInGate(index);
 
         claimAmount = amount;
-        bool validProof = validateProof(bundleId, index, player, amount, proof);
+        bool validProof = validateProof(bundleId, gateIndex, player, index, amount, proof);
         if (!validProof) revert GatekeeperInvalidProof();
 
         if (amount + claimedCount > gate.maxClaimable) {
@@ -80,21 +81,24 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     }
 
     /// @inheritdoc IGatekeeper
-    function validateProof(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
-        public
-        view
-        returns (bool validProof)
-    {
+    function validateProof(
+        uint256 bundleId,
+        uint256 gateId,
+        address player,
+        uint256 index,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) public view returns (bool validProof) {
         Gate[] storage gates = tokenToGates[bundleId];
         if (gates.length == 0) revert NoGates();
-        if (index >= gates.length) revert Gate_OutOfBounds(index);
+        if (gateId >= gates.length) revert Gate_OutOfBounds(index);
         if (proof.length == 0) revert GatekeeperInvalidProof();
 
-        Gate storage gate = gates[index];
-        if (!gate.enabled) revert Gate_NotEnabled(index);
-        if (gate.activeAt > block.timestamp) revert Gate_NotActive(index, gate.activeAt);
+        Gate storage gate = gates[gateId];
+        if (!gate.enabled) revert Gate_NotEnabled(gateId);
+        if (gate.activeAt > block.timestamp) revert Gate_NotActive(gateId, gate.activeAt);
 
-        bytes32 leaf = keccak256(abi.encodePacked(player, amount));
+        bytes32 leaf = keccak256(abi.encodePacked(index, player, amount));
         validProof = MerkleProofLib.verify(proof, gate.gateRoot, leaf);
     }
 

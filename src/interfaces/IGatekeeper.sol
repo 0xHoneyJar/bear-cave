@@ -13,27 +13,37 @@ interface IGatekeeper {
 
     /// @notice validate how much a player can claim for a particular token and gate.
     /// @param bundleId the ID of the bundle in the game.
-    /// @param index the gate index the player is claiming
+    /// @param gateId the gate index the player is claiming
+    /// @param player the address of the player claiming
+    /// @param index the index of the claim within the gate
     /// @param amount the exact number of tokens a player wants to claim
     /// @param proof merkle proof associated with the amount
     /// @return claimAmount the number of tokens available for claim
     function calculateClaimable(
         uint256 bundleId,
-        uint256 index,
+        uint256 gateId,
         address player,
+        uint256 index,
         uint32 amount,
         bytes32[] calldata proof
     ) external returns (uint32 claimAmount);
 
     /// @notice Validates proof -- does not modify the state.
     /// @param bundleId the ID of the bundle in the game.
-    /// @param index the gate index the player is claiming
+    /// @param gateId the gate index the player is claiming
+    /// @param player the address of the player claiming
+    /// @param index the index of the claim within the gate
     /// @param amount the exact number of tokens a player wants to claim
     /// @param proof merkle proof associated with the amount
     /// @return validProof boolean representing the validity of the proof given
-    function validateProof(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
-        external
-        returns (bool validProof);
+    function validateProof(
+        uint256 bundleId,
+        uint256 gateId,
+        address player,
+        uint256 index,
+        uint32 amount,
+        bytes32[] calldata proof
+    ) external returns (bool validProof);
 
     // Permissioned Methods -- Should not be open for everyone to call.
 

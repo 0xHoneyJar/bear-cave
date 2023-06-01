@@ -375,13 +375,14 @@ contract HibernationDen is
     function earlyMekHoneyJarWithERC20(
         uint8 bundleId,
         uint32 gateId,
+        uint256 index,
         uint32 proofAmount,
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
         _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
+        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, index, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
         return _distributeERC20AndMintHoneyJar(bundleId, mintAmount);
     }
@@ -393,13 +394,14 @@ contract HibernationDen is
     function earlyMekHoneyJarWithEth(
         uint8 bundleId,
         uint32 gateId,
+        uint256 index,
         uint32 proofAmount,
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external payable returns (uint256) {
         _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
+        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, index, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
         return _distributeETHAndMintHoneyJar(bundleId, mintAmount);
     }
@@ -649,12 +651,16 @@ contract HibernationDen is
     /// @notice Allows a player to claim free HoneyJar based on elegibility (FCFS)
     /// @dev free claims are determined by the gatekeeper and the accounting is done in this method
     /// @param gateId id of gate from Gatekeeper.
+    /// @param index index of claim
     /// @param amount amount player is claiming
     /// @param proof valid proof that entitles msg.sender to amount.
-    function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public nonReentrant {
+    function claim(uint8 bundleId_, uint32 gateId, uint256 index, uint32 amount, bytes32[] calldata proof)
+        public
+        nonReentrant
+    {
         // Gatekeeper tracks per-player/per-gate claims
         if (proof.length == 0) revert Claim_InvalidProof();
-        uint32 numClaim = gatekeeper.calculateClaimable(bundleId_, gateId, msg.sender, amount, proof);
+        uint32 numClaim = gatekeeper.calculateClaimable(bundleId_, gateId, msg.sender, index, amount, proof);
         if (numClaim == 0) {
             return;
         }
@@ -687,15 +693,17 @@ contract HibernationDen is
     function claimAll(
         uint8 bundleId_,
         uint32[] calldata gateIds,
+        uint256[] calldata indexes,
         uint32[] calldata amounts,
         bytes32[][] calldata proofs
     ) external {
         uint256 inputLength = proofs.length;
         if (inputLength != gateIds.length) revert InvalidInput("claimAll");
+        if (inputLength != indexes.length) revert InvalidInput("claimAll");
         if (inputLength != amounts.length) revert InvalidInput("claimAll");
 
         for (uint256 i = 0; i < inputLength; ++i) {
-            claim(bundleId_, gateIds[i], amounts[i], proofs[i]);
+            claim(bundleId_, gateIds[i], indexes[i], amounts[i], proofs[i]);
         }
     }
 
