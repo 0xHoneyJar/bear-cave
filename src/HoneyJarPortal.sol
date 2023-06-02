@@ -30,6 +30,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     event StartGameProcessed(uint256 srcChainId, StartGamePayload);
     event FermentedJarsProcessed(uint256 srcChainId, FermentedJarsPayload);
     event LzMappingSet(uint256 evmChainId, uint16 lzChainId);
+    event AdapterParamsSet(MessageTypes msgType, uint16 version, uint256 gasLimit);
 
     // Errors
     error InvalidToken(address tokenAddress);
@@ -54,8 +55,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @notice mapping of lzChainId --> realChainId
     mapping(uint16 => uint256) public realChainId;
 
-    // TODO: put a map of messagetype to adapterParams
-    // SetMinGas and check against sending
+    /// @notice adapter params for each messageType
     mapping(MessageTypes => bytes) public msgAdapterParams;
 
     constructor(
@@ -83,25 +83,43 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         _setLzMapping(1442, 10158); // Polygon zkEVM testnet
         _setLzMapping(10106, 106); // Avalanche - Fuji
 
-        // TODO: Validate these.
-        msgAdapterParams[MessageTypes.START_GAME] = abi.encodePacked(uint16(1), uint256(500000));
-        msgAdapterParams[MessageTypes.SET_FERMENTED_JARS] = abi.encodePacked(uint16(1), uint256(500000));
+        _setAdapterParams(MessageTypes.START_GAME, 1, 50000);
+        _setAdapterParams(MessageTypes.SET_FERMENTED_JARS, 1, 500000);
     }
 
-    function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
-        _setLzMapping(evmChainId, lzChainId_);
-    }
-
-    function _setLzMapping(uint256 evmChainId, uint16 lzChainId_) internal {
-        lzChainId[evmChainId] = lzChainId_;
-        realChainId[lzChainId_] = evmChainId;
-    }
+    ///////////////////////////////////////////////////////////
+    //////////////////  Admin Functions     ///////////////////
+    ///////////////////////////////////////////////////////////
 
     /// @dev there can only be one honeybox per portal.
     function setHibernationDen(address honeyBoxAddress_) external onlyRole(Constants.GAME_ADMIN) {
         honeyBox = IHibernationDen(honeyBoxAddress_);
 
         emit HibernationDenSet(honeyBoxAddress_);
+    }
+
+    function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
+        _setLzMapping(evmChainId, lzChainId_);
+    }
+
+    function setAdapterParams(MessageTypes msgType, uint16 version, uint256 gasLimit)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        _setAdapterParams(msgType, version, gasLimit);
+    }
+
+    function _setAdapterParams(MessageTypes msgType, uint16 version, uint256 gasLimit) internal {
+        msgAdapterParams[msgType] = abi.encodePacked(version, gasLimit);
+
+        emit AdapterParamsSet(msgType, version, gasLimit);
+    }
+
+    function _setLzMapping(uint256 evmChainId, uint16 lzChainId_) internal {
+        lzChainId[evmChainId] = lzChainId_;
+        realChainId[lzChainId_] = evmChainId;
+
+        emit LzMappingSet(evmChainId, lzChainId_);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
@@ -187,12 +205,12 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
         bytes memory adapterParams = msgAdapterParams[MessageTypes.START_GAME];
 
-        // TODO: make this work.
+        // Will check adapterParams against minDstGas
         _checkGasLimit(
-            _dstChainId,
+            lzDestId,
             uint16(MessageTypes.START_GAME),
             adapterParams,
-            1000 * numSleepers_.length // Padding for each NFT being stored  TODO: store this
+            1000 * numSleepers_ // Padding for each NFT being stored
         );
 
         bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
@@ -213,6 +231,14 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
+        bytes memory adapterParams = msgAdapterParams[MessageTypes.SET_FERMENTED_JARS];
+
+        _checkGasLimit(
+            lzDestId,
+            uint16(MessageTypes.SET_FERMENTED_JARS),
+            adapterParams,
+            1000 * fermentedJarIds_.length // Padding for each NFT being stored
+        );
 
         bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
         _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value);
