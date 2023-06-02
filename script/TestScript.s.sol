@@ -2,43 +2,33 @@
 pragma solidity 0.8.17;
 
 import {HibernationDen} from "src/HibernationDen.sol";
-import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
+import {GameRegistry} from "src/GameRegistry.sol";
+import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
+import {Constants} from "src/Constants.sol";
 
 import "./THJScriptBase.sol";
 
-contract MyContract {
-    uint16 private immutable _chainId;
-
-    constructor() {
-        _chainId = SafeCastLib.safeCastTo16(block.chainid);
-    }
-}
-
 /// @notice this script is only meant to test do not use for production
-contract TestScript is THJScriptBase("gen2") {
-    // using stdJson for string;
+contract TestScript is THJScriptBase("gen3") {
+    using stdJson for string;
 
     function run(string calldata env) public override {
-        // string memory json = _getConfig(env);
+        string memory json = _getConfig(env);
 
-        // HoneyJar honeyJar = HoneyJar(vm.envAddress("HONEYJAR_ADDRESS"));
         // ReadConfig
-        // address deployer = json.readAddress(".addresses.beekeeper");
+        GameRegistry gr = GameRegistry(json.readAddress(".deployments.registry"));
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+        HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
 
-        // vm.startBroadCast(gameAdmin); // Simulate with GameAdmin
+        uint256[] memory checkpoints = new uint256[](3);
+        checkpoints[0] = 2;
+        checkpoints[1] = 10;
+        checkpoints[2] = 20;
+
         vm.startBroadcast();
+        // gr.grantRole(Constants.PORTAL, 0xF951bA8107D7BF63733188E64D7E07bD27b46Af7);
 
-        MyContract deployment = new MyContract();
-        // HibernationDen den = new HibernationDen(
-        // 0x6D80646bEAdd07cE68cab36c27c626790bBcf17f,
-        // 0x0B9a7a17D0EBc02EF1832ea040Cb629eCa83AD14,
-        // 0x613a642C473D4DB6363Bd9c58c1ef101dDf40232,
-        // 0x9Db2ea779Cd3F9F8aEB5E58EB1223a585a4D7D68,
-        // 0x0B9a7a17D0EBc02EF1832ea040Cb629eCa83AD14,
-        // 0xF951bA8107D7BF63733188E64D7E07bD27b46Af7,
-        // 0xF951bA8107D7BF63733188E64D7E07bD27b46Af7,
-        //     223300000000000000
-        // );
+        den.startGame(5, 1, 10, checkpoints);
         vm.stopBroadcast();
     }
 }

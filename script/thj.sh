@@ -10,6 +10,7 @@ usage() {
     echo "             Loads environment variables from .env and a file specific to the <network> parameter  "
     echo "Options:"
     echo "  -n, --network       : The network for which the .env file should be loaded. Expected filename(.env.<network>). (Required)"
+    echo "  -n2 --network2      : Second Network to config against"
     echo "  <method>            : The method to be performed. Supported methods are (Required)" 
     echo "                         - Options [testnetDeps|deploy|config|addBundle|setGates|startGame]"
     echo "  --no-load-env       : Optional flag to skip loading environment variables from .env file."
@@ -23,6 +24,7 @@ broadcast=false
 resume=false
 load_env=true
 network=""
+network2=""
 method=""
 forge_params=""
 no_verify=false
@@ -62,6 +64,10 @@ while [[ "$#" -gt 0 ]]; do
         exit 1
       fi
       ;;
+    -n2|--network2)
+     network2="$2"
+     shift 2
+     ;;
     *)
       if [ -z "$method" ]; then
         method="$1"
@@ -154,8 +160,8 @@ case "$method" in
     forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'run(string)()' $network $forge_params
     ;;
   "config-portals")
-    echo "Configuring Portals"
-    forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'configurePortals(string,string)()' $network arbitrum-goerli $forge_params
+    echo "Configuring Portals between $network and $network2"
+    forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'configurePortals(string,string)()' $network $network2 $forge_params
     ;;        
   "addBundle") 
     echo "Running addBundle"
@@ -169,9 +175,13 @@ case "$method" in
     echo "Running startGame"
     forge script script/04_StartGame.s.sol:StartGame --sig 'run(string)()' $network $forge_params
     ;;
+  "testnetApprove")
+    echo "Running testnetApprove"
+    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
+    ;;
   "testnetPuffPuff")
     echo "Running testnetPuffPuff"
-    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
+    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'estimateAndPuff(string)()' $network $forge_params
     ;;
   *)
     echo "Error: Unsupported method."

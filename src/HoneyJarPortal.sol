@@ -167,6 +167,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @notice should only be called from ETH (ChainId=1) Doens't make sense otherwise.
     /// @notice Caller MUST estimate fees and pass in appropriate value to this method.
     /// @dev can only be called by game instances
+    /// @dev estimated gas around 492236 - 642115
     function sendStartGame(
         address refundAddress_,
         uint256 destChainId_,

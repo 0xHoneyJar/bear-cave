@@ -74,13 +74,5 @@ contract ConfigureGame is THJScriptBase("gen3") {
         portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
 
         vm.stopBroadcast();
-
-        // For some reason doesn't work on arb
-        // vm.startBroadcast();
-        // portalL2.setMinDstGas(portalL2.lzChainId(l1ChainId), uint16(MessageTypes.SEND_NFT), 225000);
-        // cast abi-encode "method(address,address)" 0x1399706d571ae4E915f32099995eE0ad9107AD96 0xc5c9ac6a978957AD0F4004C7D798a9D9141FFb22
-        // portalL2.setTrustedRemote(portalL2.lzChainId(l1ChainId), abi.encodePacked(address(portalL1), address(portalL2)));
-
-        // vm.stopBroadcast();
     }
 }
