@@ -54,6 +54,10 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @notice mapping of lzChainId --> realChainId
     mapping(uint16 => uint256) public realChainId;
 
+    // TODO: put a map of messagetype to adapterParams
+    // SetMinGas and check against sending
+    mapping(MessageTypes => bytes) public msgAdapterParams;
+
     constructor(
         uint256 _minGasToTransfer,
         address _lzEndpoint,
@@ -78,6 +82,10 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         _setLzMapping(1101, 158); // Polygon zkEVM
         _setLzMapping(1442, 10158); // Polygon zkEVM testnet
         _setLzMapping(10106, 106); // Avalanche - Fuji
+
+        // TODO: Validate these.
+        msgAdapterParams[MessageTypes.START_GAME] = abi.encodePacked(uint16(1), uint256(500000));
+        msgAdapterParams[MessageTypes.SET_FERMENTED_JARS] = abi.encodePacked(uint16(1), uint256(500000));
     }
 
     function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
@@ -177,9 +185,18 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     ) external payable override onlyRole(Constants.GAME_INSTANCE) {
         uint16 lzDestId = lzChainId[destChainId_];
         if (lzDestId == 0) revert LzMappingMissing(destChainId_);
+        bytes memory adapterParams = msgAdapterParams[MessageTypes.START_GAME];
+
+        // TODO: make this work.
+        _checkGasLimit(
+            _dstChainId,
+            uint16(MessageTypes.START_GAME),
+            adapterParams,
+            1000 * numSleepers_.length // Padding for each NFT being stored  TODO: store this
+        );
 
         bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
-        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value);
+        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), adapterParams, msg.value);
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
     }
