@@ -480,6 +480,7 @@ contract HibernationDen is
 
     /// @notice method that _anyone_ can call to send fermented jars across to the asset chain
     /// @dev no permissions since its an idempotent state xfer.
+    /// @dev estimated gas round 279628 - 376242
     function sendFermentedJars(uint8 bundleId_) external payable {
         SlumberParty storage party = slumberParties[bundleId_];
         if (party.fermentedJars.length == 0) revert FermentedJarNotFound(bundleId_);
@@ -503,9 +504,10 @@ contract HibernationDen is
         if (fermentedJarIds.length == 0) revert InvalidInput("setCrossChainFermentedJars");
         SlumberParty storage party = slumberParties[bundleId];
         party.fermentedJarsFound = true;
-
-        delete party.fermentedJars; // Clear old state
-        for (uint256 i = 0; i < fermentedJarIds.length; i++) {
+        uint256 alreadySaved = party.fermentedJars.length;
+        // Only additive updates
+        // Don't resave existing jars, because it has internal `isUsed` state.
+        for (uint256 i = alreadySaved; i < fermentedJarIds.length; i++) {
             party.fermentedJars.push(FermentedJar(fermentedJarIds[i], false));
         }
 
