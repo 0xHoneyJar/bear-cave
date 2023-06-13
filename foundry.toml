@@ -4,7 +4,6 @@ out = 'out'
 libs = ['lib']
 test = 'test'
 script = 'script'
-
 remappings = [
     '@openzeppelin/=lib/openzeppelin-contracts/',
     '@layerzero/=lib/solidity-examples/contracts/',
@@ -12,7 +11,6 @@ remappings = [
     'chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/contracts/src/v0.8/',
     'solmate/=lib/solmate/src/'
 ]
-
 fs_permissions = [
     {access = "write", path = "./deployments/"},
     {access = "read", path = "./script/"}
@@ -21,7 +19,6 @@ fs_permissions = [
 # known error codes are: ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]
 # additional warnings can be added using their numeric error code: ["license", 1337]
 ignored_error_codes = ["unused-param", "unused-var"]
-
 solc_version = "0.8.17"
 vir_ir = true
 optimizer = true

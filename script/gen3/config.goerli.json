@@ -12,7 +12,8 @@
         "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
         "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
         "paymentToken": "0xcbD331954e0f7184AE8fCbFb93D87ddc3cB171B4",
-        "lzEndpoint": "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23"
+        "lzEndpoint": "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
+        "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
     },
     "mintConfig": {
         "maxHoneyJar_claimable": 1708,

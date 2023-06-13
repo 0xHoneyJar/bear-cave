@@ -11,12 +11,16 @@ import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {Constants} from "src/Constants.sol";
 
-import "./THJScriptBase.sol";
+import {THJScriptBase} from "./THJScriptBase.sol";
 import "forge-std/Test.sol";
 
 /// @notice this script is only meant to test do not use for production
 contract ValidateScript is THJScriptBase("gen3"), Test {
     using stdJson for string;
+
+    Vm internal unsafeVM;
+    string private RPC_GOERLI;
+    string private RPC_ARB_GOERLI;
 
     enum MessageTypes {
         SEND_NFT,
@@ -24,16 +28,13 @@ contract ValidateScript is THJScriptBase("gen3"), Test {
         SET_FERMENTED_JARS
     }
 
-    function setUp() public {}
-
-    function run(string calldata env) public override {
-        // TODO:
-        // validate VRF consumer.
-        // Validate minDstGas
-
-        // vm.startBroadcast();
-        // vm.stopBroadcast();
+    function setUp() public {
+        unsafeVM = Vm(VM_ADDRESS); // Use the vm from Test
+        RPC_GOERLI = vm.envString("GOERLI_URL");
+        RPC_ARB_GOERLI = vm.envString("ARB_GOERLI_URL");
     }
+
+    function run(string calldata env) public override {}
 
     function validate(string calldata l1, string calldata l2) public {
         string memory l1json = _getConfig(l1);
@@ -70,43 +71,49 @@ contract ValidateScript is THJScriptBase("gen3"), Test {
         ////////////////////////////////////////
         ///////////////  L1 Checks /////////////
         ////////////////////////////////////////
-        uint256 forkId = vm.createFork(l1ChainId);
+        uint256 forkId = unsafeVM.createFork(RPC_GOERLI);
         HibernationDen.SlumberParty memory party = den_l1.getSlumberParty(bundleId);
 
         // Check that the party has the correct number of sleepoors
-        assert(party.sleepoors.length == addresses.length, "invalid sleepoors");
+        assertEq(party.sleepoors.length, addresses.length, "invalid sleepoors");
         // Check that the trustedRemote on the portal is the same as the portal on L2
         uint256 mintChainId = l1json.readUint(".mintChainId");
-        assert(party.mintChainId == mintChainId, "MintChainID does not match");
+        assertEq(party.mintChainId, mintChainId, "MintChainID does not match");
         uint16 lzChainId = p_l1.lzChainId(mintChainId);
-        address portalL2 = p_l1.getTrustedRemoteAddress(lzChainId);
-        assert(portalL2 == address(p_l2), "invalid trusted remote address");
+        bytes memory data = p_l1.getTrustedRemoteAddress(lzChainId);
+        address portalL2;
+        assembly {
+            portalL2 := mload(add(data, 20))
+        }
+        assertEq(portalL2, address(p_l2), "invalid trusted remote address");
 
-        uint256 minGas = p_l1.minDstGasLookup(lzChainId, MessageTypes.START_GAME);
-        assert(minGas > 400000, "MinGas for startGame too low");
+        uint256 minGas = p_l1.minDstGasLookup(lzChainId, uint16(MessageTypes.START_GAME));
+        assertGe(minGas, 400000, "MinGas for startGame too low");
 
         ////////////////////////////////////////
         ///////////////  L2 Checks /////////////
         ////////////////////////////////////////
-        uint256 l2ForkId = vm.createFork(l2ChainId);
+        uint256 l2ForkId = unsafeVM.createFork(RPC_ARB_GOERLI);
         // check that bundleId is an empty party
         party = den_l2.getSlumberParty(bundleId);
-        assert(party.sleepoors.length == 0, "bundleId already exists on chain");
-        Gatekeeper.Gate[] memory gates = gk_l2.tokenToGates(bundleId);
-        assert(gates.length > 0, "no gates set for bundleId");
+        // Checking the first gate
+        assertEq(party.sleepoors.length, 0, "bundleId already exists on chain");
+        (bool enabled,,,, bytes32 gateRoot,) = gk_l2.tokenToGates(bundleId, 0);
+
+        assertTrue(gateRoot != bytes32(0), "gateroot isn't set 0");
+        assertTrue(enabled, "gate not enabled");
 
         lzChainId = p_l2.lzChainId(l2ForkId);
-        portalL2 = p_l2.getTrustedRemoteAddress(lzChainId);
-        assert(portalL2 == address(p_l1), "trusted remote address is not L1 portal");
-
-        minGas = p_l2.minDstGasLookup(lzChainId, MessageTypes.SET_FERMENTED_JARS);
-        assert(minGas > 400000, "MinGas for SET_FERMENTED_JARS too low");
-
-        Gatekeeper.Gate memory gate;
-        for (uint256 i = 0; i < gates.length; i++) {
-            gate = gates[i];
-            assert(gate.enabled == true, "gate not enabled");
+        data = p_l2.getTrustedRemoteAddress(lzChainId);
+        assembly {
+            portalL2 := mload(add(data, 20))
         }
+        assertEq(portalL2, address(p_l1), "trusted remote address is not L1 portal");
+
+        minGas = p_l2.minDstGasLookup(lzChainId, uint16(MessageTypes.SET_FERMENTED_JARS));
+        assertGe(minGas, 400000, "MinGas for SET_FERMENTED_JARS too low");
+
         // Validate vrf consumer is set
+        // Validate minDstGas
     }
 }
