@@ -24,7 +24,7 @@ interface IHibernationDen {
     struct SlumberParty {
         /// @dev unique ID representing the bundle
         uint8 bundleId;
-        /// @dev the block.timestamp when the mint() function can be called. Should be set at game-start
+        /// @dev the block.timestamp when the mint() function can be called. Should be set at game-start and is used as a proxy to determine if a game has started
         uint256 publicMintTime;
         /// @dev chainId that can wakeSleeper
         uint256 assetChainId;

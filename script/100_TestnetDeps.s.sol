@@ -20,20 +20,7 @@ contract TestnetDeps is THJScriptBase("gen3") {
         MockERC1155 erc1155 = new MockERC1155();
         MockERC721 erc721 = new MockERC721("MOCK", "mNFT");
 
-        erc721.mint(gameAdmin, 0);
-        erc721.mint(gameAdmin, 1);
-        erc721.mint(gameAdmin, 2);
-        erc721.mint(gameAdmin, 3);
-        erc721.mint(gameAdmin, 4);
-        erc721.mint(gameAdmin, 5);
-        erc721.mint(gameAdmin, 6);
-
-        erc1155.mint(gameAdmin, 0, 1, "");
-        erc1155.mint(gameAdmin, 1, 1, "");
-        erc1155.mint(gameAdmin, 2, 1, "");
-        erc1155.mint(gameAdmin, 3, 1, "");
-        erc1155.mint(gameAdmin, 4, 1, "");
-        erc1155.mint(gameAdmin, 5, 1, "");
+        // TestnetPuffPuff.sol will mint the erc721 and erc1155 based on config
 
         MockERC20 paymentToken = new MockERC20("OHM", "OHM", 9);
         paymentToken.mint(gameAdmin, 99 * 1e8 * 100);
