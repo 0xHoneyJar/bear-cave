@@ -3,14 +3,14 @@ pragma solidity 0.8.19;
 
 interface IHoneyJarPortal {
     function sendStartGame(
-        address refundAddress_,
+        address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
         uint256 numSleepers_,
         uint256[] calldata checkpoints_
     ) external payable;
     function sendFermentedJars(
-        address refundAddress_,
+        address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
         uint256[] calldata fermentedJarIds_

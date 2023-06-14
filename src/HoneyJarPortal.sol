@@ -23,11 +23,10 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     using ERC165Checker for address;
 
     // Events
-    event PortalSet(uint256 chainId, address portalAddress);
     event StartCrossChainGame(uint256 chainId, uint8 bundleId, uint256 numSleepers);
     event SendFermentedJars(uint256 destChainId_, uint8 bundleId_, uint256[] fermentedJarIds_);
     event MessageRecieved(bytes payload);
-    event HibernationDenSet(address honeyBoxAddress);
+    event HibernationDenSet(address denAddress);
     event StartGameProcessed(uint256 srcChainId, StartGamePayload);
     event FermentedJarsProcessed(uint256 srcChainId, FermentedJarsPayload);
     event LzMappingSet(uint256 evmChainId, uint16 lzChainId);
@@ -47,7 +46,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
 
     // Dependencies
     IHoneyJar public immutable honeyJar;
-    IHibernationDen public honeyBox;
+    IHibernationDen public hibernationDen;
 
     // Internal State
     /// @notice mapping of chainId --> lzChainId
@@ -59,16 +58,13 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @notice adapter params for each messageType
     mapping(MessageTypes => bytes) public msgAdapterParams;
 
-    constructor(
-        uint256 _minGasToTransfer,
-        address _lzEndpoint,
-        address _honeyJar,
-        address _honeyBox,
-        address _gameRegistry
-    ) ONFT721Core(_minGasToTransfer, _lzEndpoint) GameRegistryConsumer(_gameRegistry) {
+    constructor(uint256 _minGasToTransfer, address _lzEndpoint, address _honeyJar, address _den, address _gameRegistry)
+        ONFT721Core(_minGasToTransfer, _lzEndpoint)
+        GameRegistryConsumer(_gameRegistry)
+    {
         if (!_honeyJar.supportsInterface(type(IERC721).interfaceId)) revert InvalidToken(_honeyJar);
         honeyJar = IHoneyJar(_honeyJar);
-        honeyBox = IHibernationDen(_honeyBox);
+        hibernationDen = IHibernationDen(_den);
 
         // Initial state
         // https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids#polygon-zkevm
@@ -93,10 +89,10 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     ///////////////////////////////////////////////////////////
 
     /// @dev there can only be one honeybox per portal.
-    function setHibernationDen(address honeyBoxAddress_) external onlyRole(Constants.GAME_ADMIN) {
-        honeyBox = IHibernationDen(honeyBoxAddress_);
+    function setHibernationDen(address denAddress_) external onlyRole(Constants.GAME_ADMIN) {
+        hibernationDen = IHibernationDen(denAddress_);
 
-        emit HibernationDenSet(honeyBoxAddress_);
+        emit HibernationDenSet(denAddress_);
     }
 
     function setLzMapping(uint256 evmChainId, uint16 lzChainId_) external onlyRole(Constants.GAME_ADMIN) {
@@ -123,6 +119,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         emit LzMappingSet(evmChainId, lzChainId_);
     }
 
+    // Needs to be public since the overriding function in ONFT is public
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
@@ -131,7 +128,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     //////////////////  ONFT Transfer        ///////////////////
     ////////////////////////////////////////////////////////////
 
-    /// @notice burns the token that is bridges. Contract needs BURNER role
+    /// @notice burns the token that is bridged. Contract needs BURNER role
     function _debitFrom(address _from, uint16, bytes memory, uint256 _tokenId) internal override {
         if (_from != _msgSender()) revert OwnerNotCaller();
         honeyJar.burn(_tokenId);
@@ -179,7 +176,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
             dstChainIdToTransferGas[_dstChainId] * _tokenIds.length
         );
 
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
+        for (uint256 i = 0; i < _tokenIds.length; ++i) {
             _debitFrom(_from, _dstChainId, _toAddress, _tokenIds[i]);
         }
 
@@ -191,12 +188,12 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     //////////////////  Game Methods  //////////////////
     //////////////////////////////////////////////////////
 
-    /// @notice should only be called from ETH (ChainId=1) Doens't make sense otherwise.
+    /// @notice should only be called from ETH (ChainId=1)
     /// @notice Caller MUST estimate fees and pass in appropriate value to this method.
     /// @dev can only be called by game instances
     /// @dev estimated gas around 492236 - 642115
     function sendStartGame(
-        address refundAddress_,
+        address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
         uint256 numSleepers_,
@@ -215,7 +212,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         );
 
         bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
-        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), adapterParams, msg.value);
+        _lzSend(lzDestId, payload, refundAddress_, address(0x0), adapterParams, msg.value);
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
     }
@@ -225,7 +222,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     /// @param bundleId_ the bundleId
     /// @param fermentedJarIds_ list of jars to be fermented.
     function sendFermentedJars(
-        address refundAddress_,
+        address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
         uint256[] calldata fermentedJarIds_
@@ -242,7 +239,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         );
 
         bytes memory payload = _encodeFermentedJars(bundleId_, fermentedJarIds_);
-        _lzSend(lzDestId, payload, payable(refundAddress_), address(0x0), bytes(""), msg.value);
+        _lzSend(lzDestId, payload, refundAddress_, address(0x0), bytes(""), msg.value);
 
         emit SendFermentedJars(destChainId_, bundleId_, fermentedJarIds_);
     }
@@ -278,7 +275,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         uint256 realSrcChainId = realChainId[srcChainId];
         if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         StartGamePayload memory payload = _decodeStartGame(_payload);
-        honeyBox.startGame(realSrcChainId, payload.bundleId, payload.numSleepers, payload.checkpoints);
+        hibernationDen.startGame(realSrcChainId, payload.bundleId, payload.numSleepers, payload.checkpoints);
 
         emit StartGameProcessed(realSrcChainId, payload);
     }
@@ -287,7 +284,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         uint256 realSrcChainId = realChainId[srcChainId];
         if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         FermentedJarsPayload memory payload = _decodeFermentedJars(_payload);
-        honeyBox.setCrossChainFermentedJars(payload.bundleId, payload.fermentedJarIds);
+        hibernationDen.setCrossChainFermentedJars(payload.bundleId, payload.fermentedJarIds);
 
         emit FermentedJarsProcessed(realSrcChainId, payload);
     }

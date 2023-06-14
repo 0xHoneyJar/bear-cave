@@ -183,16 +183,16 @@ contract HibernationDen is
     }
 
     /// @notice Who is partying without me?
-    function getSlumberParty(uint8 _bundleId) external view returns (SlumberParty memory) {
+    function getSlumberParty(uint8 _bundleId) external view override returns (SlumberParty memory) {
         return slumberParties[_bundleId];
     }
 
     /// @notice Once a bundle is configured, transfers the configured assets into this contract.
     /// @notice Starts the gates within the Gatekeeper, which determine who is allowed early access and free claims
     /// @dev Bundles need to be preconfigured using addBundle from gameAdmin
-    /// @dev publicMintTime is is configued to be the LAST item in the stageTimes from gameRegistry.
+    /// @dev publicMintTime is is configured to be the LAST item in the stageTimes from gameRegistry.
     function puffPuffPassOut(uint8 bundleId_) external payable onlyRole(Constants.GAME_ADMIN) {
-        SlumberParty storage slumberParty = slumberParties[bundleId_]; // Will throw index out of bounds if not valid bundleId_
+        SlumberParty storage slumberParty = slumberParties[bundleId_];
         SleepingNFT[] storage sleepoors = slumberParty.sleepoors;
         uint256 sleeperCount = sleepoors.length;
         if (sleeperCount == 0) revert InvalidBundle(bundleId_);
@@ -212,7 +212,7 @@ contract HibernationDen is
         } else if (address(honeyJarPortal) != address(0)) {
             // If the portal is set, the xChain message will be sent
             honeyJarPortal.sendStartGame{value: msg.value}(
-                msg.sender, slumberParty.mintChainId, bundleId_, sleeperCount, slumberParty.checkpoints
+                payable(msg.sender), slumberParty.mintChainId, bundleId_, sleeperCount, slumberParty.checkpoints
             );
         }
         emit SlumberPartyStarted(bundleId_);
@@ -223,6 +223,7 @@ contract HibernationDen is
     /// @dev can only be called by the HoneyJar Portal
     function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
         external
+        override
         onlyRole(Constants.PORTAL)
     {
         if (checkpoints.length > numSleepers_) revert InvalidInput("startGame::checkpoints");
@@ -237,9 +238,9 @@ contract HibernationDen is
         party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
-        // Push empty sleepers.
+
         SleepingNFT memory emptyNft;
-        for (uint256 i = 0; i < numSleepers_; i++) {
+        for (uint256 i = 0; i < numSleepers_; ++i) {
             party.sleepoors.push(emptyNft);
         }
         gatekeeper.startGatesForBundle(bundleId_);
@@ -250,7 +251,7 @@ contract HibernationDen is
 
     /// @notice admin function to add more sleepers to the party once a bundle is started
     /// @param sleeper the NFT being added
-    /// @param transfer to indicates if a transfer should be called. -- false: if an NFT is yeted in/airdroped
+    /// @param transfer to indicates if a transfer should be called. -- false: if an NFT is yeeted in/airdropped
     function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper, bool transfer)
         external
         onlyRole(Constants.GAME_ADMIN)
@@ -418,12 +419,11 @@ contract HibernationDen is
     /// @notice Forcing function to find a winning HoneyJars. 1 for each item in the bundle
     /// @notice Should only be called when the last honeyJars is minted.
     function _fermentJars(uint8 bundleId_) internal {
-        // account for already already winners.
         SlumberParty storage party = slumberParties[bundleId_];
         uint32 numWords = 1;
-        party.checkpointIndex += 1;
+        ++party.checkpointIndex;
 
-        // When the index is the length of the checkpoints array, you've overflowed
+        // When the index is the length of the checkpoints array, you've overflowed and you ferment remaining jars
         if (party.checkpointIndex == party.checkpoints.length) {
             uint256 numSleepers = slumberParties[bundleId_].sleepoors.length;
             uint256 numFermented = slumberParties[bundleId_].fermentedJars.length;
@@ -458,7 +458,7 @@ contract HibernationDen is
         if (numFermentedJars + party.fermentedJars.length > party.sleepoors.length) {
             numFermentedJars = party.sleepoors.length - party.fermentedJars.length;
         }
-        uint256[] memory fermentedJars = new uint256[](numFermentedJars); // used for emitting the event
+        uint256[] memory fermentedJars = new uint256[](numFermentedJars);
 
         uint256 fermentedIndex;
         for (uint256 i = 0; i < numFermentedJars; i++) {
@@ -472,7 +472,7 @@ contract HibernationDen is
         if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0) && address(this).balance != 0) {
             uint256 sendAmount = address(this).balance / party.checkpoints.length;
             honeyJarPortal.sendFermentedJars{value: sendAmount}(
-                address(this), party.assetChainId, party.bundleId, fermentedJars
+                payable(address(this)), party.assetChainId, party.bundleId, fermentedJars
             );
         }
 
@@ -493,13 +493,16 @@ contract HibernationDen is
             jarIds[i] = party.fermentedJars[i].id;
         }
 
-        honeyJarPortal.sendFermentedJars{value: msg.value}(msg.sender, party.assetChainId, party.bundleId, jarIds);
+        honeyJarPortal.sendFermentedJars{value: msg.value}(
+            payable(msg.sender), party.assetChainId, party.bundleId, jarIds
+        );
     }
 
     /// @notice called by portal when the fermented jars are found on another chain
     /// @dev should only be called by PORTAL since this changes who is the winner
     function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds)
         external
+        override
         onlyRole(Constants.PORTAL)
     {
         if (fermentedJarIds.length == 0) revert InvalidInput("setCrossChainFermentedJars");
@@ -508,7 +511,7 @@ contract HibernationDen is
         uint256 alreadySaved = party.fermentedJars.length;
         // Only additive updates
         // Don't resave existing jars, because it has internal `isUsed` state.
-        for (uint256 i = alreadySaved; i < fermentedJarIds.length; i++) {
+        for (uint256 i = alreadySaved; i < fermentedJarIds.length; ++i) {
             party.fermentedJars.push(FermentedJar(fermentedJarIds[i], false));
         }
 
@@ -600,14 +603,13 @@ contract HibernationDen is
      *
      */
 
-    /// @notice Allows a player to claim free HoneyJar based on elegibility (FCFS)
+    /// @notice Allows a player to claim free HoneyJar based on eligibility (FCFS)
     /// @dev free claims are determined by the gatekeeper and the accounting is done in this method
     /// @param gateId id of gate from Gatekeeper.
     /// @param amount amount player is claiming
     /// @param proof valid proof that entitles msg.sender to amount.
     function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public nonReentrant {
         // Gatekeeper tracks per-player/per-gate claims
-        if (proof.length == 0) revert Claim_InvalidProof();
         uint32 numClaim = gatekeeper.calculateClaimable(bundleId_, gateId, msg.sender, amount, proof);
         if (numClaim == 0) {
             return;
@@ -624,7 +626,7 @@ contract HibernationDen is
         // Update the amount minted.
         claimed[bundleId_] += numClaim;
 
-        // Can be combined with "claim" call above, but keeping separate to separate view + modification on gatekeeper
+        // Can be combined with calculateClaimable call above, but keeping separate to separate view + modification on gatekeeper
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
 
         // If for some reason this fails, GG no honeyJar for you
@@ -636,7 +638,7 @@ contract HibernationDen is
     /// @dev Helper function to process all free cams. More client-sided computation.
     /// @param bundleId_ the bundle to claim tokens for.
     /// @param gateIds the list of gates to claim. The txn will revert if an ID for an inactive gate is included.
-    /// @param amounts the list of amounts being claimed for the repsective gates.
+    /// @param amounts the list of amounts being claimed for the respective gates.
     /// @param proofs the list of proofs associated with the respective gates
     function claimAll(
         uint8 bundleId_,
@@ -693,7 +695,7 @@ contract HibernationDen is
     }
 
     /// @notice checkpoints where there can be one winner.
-    /// @param checkpoints the JarNumber that determins winners.
+    /// @param checkpoints the JarNumber that determines winners.
     /// @param checkpointIndex where in the checkpoint array the current game is in
     function setCheckpoints(uint8 bundleId_, uint256 checkpointIndex, uint256[] calldata checkpoints)
         external

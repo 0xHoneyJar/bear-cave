@@ -15,16 +15,15 @@ contract SetGates is THJScriptBase("gen3") {
         string memory json = _getConfig(env);
         Gatekeeper gk = Gatekeeper(json.readAddress(".deployments.gatekeeper"));
         uint256 bundleId = uint8(json.readUint(".bundleId")); // BundleId has to be less than 255
+        // TODO: When does general mint start?
 
         vm.startBroadcast();
 
         // TODO: could be moved into config
         //     function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
-        gk.addGate(bundleId, 0xe49335ad42e05dc5aa1e8693818d134ec2d6ff73f497c0922e0858f247df3f46, 214, 0);
-        gk.addGate(bundleId, 0xbde4b24cf08db3f0654c553460aca20cab43b4d1084fa0717f09f7c21b6bf14a, 0, 0);
-        gk.addGate(bundleId, 0x38b29dc9dc9ec1e2dee50a690fbfd0bee7f90da444312cbffe368bd1da1ae9c6, 1494, 0);
-        gk.addGate(bundleId, 0xfbd52266364adc4aa98a42fdb32b9212f7a31b07711bfcbe13c758d7d094245b, 0, 1);
-        gk.addGate(bundleId, 0x7c8d585f39c5b12ca7f08f4b9abdc44d300f9bd6f1ad96798e61cf89bec421db, 0, 1);
+        gk.addGate(bundleId, 0x8caa438bc275ce2d266d67297054888df90c2cc2cd256bbe7a6f50ed605269c4, 214, 0); // IG
+        gk.addGate(bundleId, 0x093dce164993a0878f91817bd0363c68adaf8eb6ea72fa275ad644d050fa3a09, 1000, 0); // BG
+        gk.addGate(bundleId, 0xbb5c72e4fd398ac4b6647eb5746c12b695820935f228ecdd47375266a991f6d6, 1378, 0); // HG
 
         console.log("--- Gates Added");
 

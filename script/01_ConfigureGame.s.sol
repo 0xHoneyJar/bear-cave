@@ -74,7 +74,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
         vm.startBroadcast();
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SEND_NFT), 225000);
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.START_GAME), 500000); // Should match adapterParams
-        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 500000); // Should match adapterParams
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 350000); // Should match adapterParams
         portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
 
         vm.stopBroadcast();
