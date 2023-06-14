@@ -373,8 +373,7 @@ contract HibernationDen is
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
     function _distributeERC20AndMintHoneyJar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
-        uint256 price = mintConfig.honeyJarPrice_ERC20;
-        _distribute(price * amount_);
+        _distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
 
         // Mint da honey
         return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
