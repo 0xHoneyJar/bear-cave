@@ -44,7 +44,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
     {
         startingTokenId = startTokenId_;
         _nextTokenId = startTokenId_;
-        maxTokenId = startTokenId_ + mintAmount_ - 1;
+        maxTokenId = startTokenId_ + mintAmount_;
     }
 
     /// @notice view function for frontend

@@ -22,7 +22,7 @@ contract BundleTokens is THJScriptBase("gen3") {
 
     function setUp() public {}
 
-    // Notes: Only ETH
+    // Notes: Only ETH -- Remember to update bundleId once done.
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
         HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.den")));
@@ -37,7 +37,7 @@ contract BundleTokens is THJScriptBase("gen3") {
         // Identify tokenID to hibernate
 
         uint8 bundleId = hibernationDen.addBundle(mintChainId, checkpoints, addresses, tokenIds, isERC1155s);
-        console.log("BundleID: ", bundleId);
+        console.log("UPDATE CONFIG WITH BundleID: ", bundleId);
 
         vm.stopBroadcast();
     }

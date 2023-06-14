@@ -9,6 +9,7 @@ import {HibernationDen} from "src/HibernationDen.sol";
 contract StartGame is THJScriptBase("gen3") {
     using stdJson for string;
 
+    // Notes: call on both chains
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
         address payable den = payable(json.readAddress(".deployments.den"));

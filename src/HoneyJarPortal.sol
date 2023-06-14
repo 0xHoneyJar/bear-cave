@@ -80,7 +80,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         _setLzMapping(1442, 10158); // Polygon zkEVM testnet
         _setLzMapping(10106, 106); // Avalanche - Fuji
 
-        _setAdapterParams(MessageTypes.START_GAME, 1, 50000);
+        _setAdapterParams(MessageTypes.START_GAME, 1, 500000);
         _setAdapterParams(MessageTypes.SET_FERMENTED_JARS, 1, 500000);
     }
 
