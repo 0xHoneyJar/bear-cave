@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {HibernationDen} from "src/HibernationDen.sol";
+
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";

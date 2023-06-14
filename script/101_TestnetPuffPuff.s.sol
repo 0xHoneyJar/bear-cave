@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "./THJScriptBase.sol";
+
 import {ILayerZeroEndpoint} from "@layerzero/interfaces/ILayerZeroEndpoint.sol";
 
 import {MockERC1155} from "test/mocks/MockERC1155.sol";

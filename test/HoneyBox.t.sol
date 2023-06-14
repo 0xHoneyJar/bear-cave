@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
+
 import "murky/Merkle.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
@@ -298,7 +299,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     function testCrossChain() public {
         // For simplicity's sake, reuse most dependencies.
         uint256 l1ChainId = block.chainid;
-        uint256 l2ChainId = l1ChainId + 10000;
+        uint256 l2ChainId = block.chainid + 10000;
 
         // Set up portal address (contract or user)
         address portal = makeAddr("portal");

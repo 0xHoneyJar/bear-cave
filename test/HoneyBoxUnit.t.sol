@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
+
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 

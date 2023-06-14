@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "./THJScriptBase.sol";
+
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
