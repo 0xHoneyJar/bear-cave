@@ -252,6 +252,7 @@ contract HibernationDen is
     /// @notice admin function to add more sleepers to the party once a bundle is started
     /// @param sleeper the NFT being added
     /// @param transfer to indicates if a transfer should be called. -- false: if an NFT is yeeted in/airdropped
+    /// @dev If this done during a cross chain deployment, you MUST add an empty sleeper to the other chain
     function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper, bool transfer)
         external
         onlyRole(Constants.GAME_ADMIN)

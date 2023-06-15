@@ -33,6 +33,10 @@ contract DeployScript is THJScriptBase("gen3") {
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
+        // Initializing StageTimes
+        uint256[] memory stageTimes = new uint256[](1);
+        stageTimes[0] = 0 hours;
+
         vm.startBroadcast();
 
         // Deploy gameRegistry and give gameAdmin permisisons
@@ -40,6 +44,7 @@ contract DeployScript is THJScriptBase("gen3") {
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
         gameRegistry.setJani(jani);
         gameRegistry.setBeekeeper(beekeeper);
+        gameRegistry.setStageTimes(stageTimes);
 
         // Deploy gatekeeper
         new Gatekeeper(address(gameRegistry));
@@ -93,6 +98,8 @@ contract DeployScript is THJScriptBase("gen3") {
         );
 
         console.log("-HibernationDenAddress: ", address(den));
+        console.log("---REMEMBER TO ADD DEN AS A VRF CONSUMER---");
+
         vm.stopBroadcast();
     }
 

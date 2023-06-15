@@ -14,16 +14,17 @@ contract TestnetDeps is THJScriptBase("gen3") {
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
+        address deployer = json.readAddress(".address.deployer");
+        // MockERC20 paymentToken = MockERC20(json.readAddress(".addresses.paymentToken"));
 
         vm.startBroadcast();
 
         MockERC1155 erc1155 = new MockERC1155();
         MockERC721 erc721 = new MockERC721("MOCK", "mNFT");
-
         // TestnetPuffPuff.sol will mint the erc721 and erc1155 based on config
 
         MockERC20 paymentToken = new MockERC20("OHM", "OHM", 9);
-        paymentToken.mint(gameAdmin, 99 * 1e8 * 100);
+        paymentToken.mint(deployer, 99 * 1e8 * 100);
 
         console.log("ERC721: ", address(erc721));
         console.log("ERC1155: ", address(erc1155));
