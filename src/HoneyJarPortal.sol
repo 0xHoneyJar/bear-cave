@@ -132,7 +132,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
     function _debitFrom(address _from, uint16, bytes memory, uint256 _tokenId) internal override {
         if (_from != _msgSender()) revert OwnerNotCaller();
         if (honeyJar.ownerOf(_tokenId) != _from) revert OwnerNotCaller();
-        
+
         honeyJar.burn(_tokenId);
     }
 
