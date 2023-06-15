@@ -179,6 +179,10 @@ case "$method" in
     echo "Running sendJars"
     forge script script/05_SendJars.s.sol:SendFermentedJars --sig 'run(string)()' $network $forge_params
     ;;
+  "addToParty")
+    echo "Running sendJars"
+    forge script script/06_AddToParty.s.sol:AddToParty --sig 'run(string)()' $network $forge_params
+    ;;
   "testnetApprove")
     echo "Running testnetApprove"
     forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
