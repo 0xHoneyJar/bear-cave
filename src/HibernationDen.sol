@@ -468,14 +468,6 @@ contract HibernationDen is
         }
         party.fermentedJarsFound = true;
 
-        // If the portal is set && there is an ether balance
-        if (party.assetChainId != getChainId() && address(honeyJarPortal) != address(0) && address(this).balance != 0) {
-            uint256 sendAmount = address(this).balance / party.checkpoints.length;
-            honeyJarPortal.sendFermentedJars{value: sendAmount}(
-                payable(address(this)), party.assetChainId, party.bundleId, fermentedJars
-            );
-        }
-
         emit FermentedJarsFound(bundleId, fermentedJars);
     }
 

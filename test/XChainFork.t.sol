@@ -376,8 +376,8 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         assertEq(party.mintChainId, L2_CHAIN_ID, "mintChainId is incorrect");
         assertEq(party.fermentedJars.length, tokenAddresses.length, "fermented jars != num sleepers");
 
-        // Send fermentedJars xChain (should happen automatically)
-        // hibernationDenL2.sendFermentedJars{value: 1 ether}(bundleId);
+        // Send fermentedJars xChain (Does not happen automatically)
+        hibernationDenL2.sendFermentedJars{value: 1 ether}(bundleId);
 
         // Players **MUST** bridge their winning NFT to the assetChainId in order to wake sleeper.
         // Bridge all the winners
@@ -445,7 +445,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
     function _validateWinners() internal {
         HibernationDen.SlumberParty memory party = hibernationDenL1.getSlumberParty(bundleId);
-        assertTrue(party.fermentedJarsFound);
+        assertTrue(party.fermentedJarsFound, "fermentedJars not found");
 
         address winner;
         uint256 alreadyWon;
