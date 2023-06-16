@@ -59,7 +59,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
         vm.stopBroadcast();
     }
 
-    // Note: only ETH
+    // Note: on both L1 and L2
     function configurePortals(string calldata envL1, string calldata envL2) public {
         string memory l1Json = _getConfig(envL1);
         string memory l2Json = _getConfig(envL2);
@@ -75,6 +75,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SEND_NFT), 225000);
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.START_GAME), 500000); // Should match adapterParams
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 350000); // Should match adapterParams
+        portalL1.setDstChainIdToBatchLimit(lzChainIDL2, 3); // Allow max batch of 3
         portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
 
         vm.stopBroadcast();
