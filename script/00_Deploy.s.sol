@@ -9,6 +9,7 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
@@ -79,6 +80,7 @@ contract DeployScript is THJScriptBase("gen3") {
 
         address paymentToken = json.readAddress(".addresses.paymentToken");
         address vrfCoordinator = json.readAddress(".vrf.coordinator");
+        uint64 subId = uint64(json.readUint(".vrf.subId"));
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
@@ -98,6 +100,7 @@ contract DeployScript is THJScriptBase("gen3") {
         );
 
         console.log("-HibernationDenAddress: ", address(den));
+        VRFCoordinatorV2Interface(vrfCoordinator).addConsumer(subId, address(den));
         console.log("---REMEMBER TO ADD DEN AS A VRF CONSUMER---");
 
         vm.stopBroadcast();

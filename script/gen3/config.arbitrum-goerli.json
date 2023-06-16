@@ -1,5 +1,6 @@
 {
     "chainId": 421613,
+    "assetChainId": 5, 
     "deployments": {
         "registry": "0x65f92852b7429990302AEb869C9746E2E19e8742",
         "gatekeeper": "0x9028f33A40e4F5CFe1808B61154D426c1d5FC587",
