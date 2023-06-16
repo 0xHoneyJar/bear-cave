@@ -30,13 +30,19 @@ contract TestScript is THJScriptBase("gen3") {
 
         HibernationDen.SlumberParty memory party = den.getSlumberParty(bundleId);
 
-        bytes memory startGamePayload = abi.encode(
+        uint256[] memory fermentedJarIds = new uint256[](party.fermentedJars.length);
+
+        for (uint256 i = 0; i < fermentedJarIds.length; ++i) {
+            fermentedJarIds[i] = party.fermentedJars[i].id;
+        }
+
+        bytes memory payload = abi.encode(
             HoneyJarPortal.MessageTypes.SET_FERMENTED_JARS,
-            HoneyJarPortal.FermentedJarsPayload(bundleId, party.fermentedJars);
+            HoneyJarPortal.FermentedJarsPayload(bundleId, fermentedJarIds)
         );
 
         uint16 lzChainId = portal.lzChainId(assetChainId);
-        (uint256 nativeFee,) = lz.estimateFees(lzChainId, address(den), startGamePayload, false, "");
+        (uint256 nativeFee,) = lz.estimateFees(lzChainId, address(den), payload, false, "");
         console.log("ETH REQUIRED: ", nativeFee);
 
         // ReadConfig
