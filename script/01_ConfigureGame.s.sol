@@ -39,7 +39,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
         bytes32 vrfKeyhash = json.readBytes32(".vrf.keyHash");
         uint64 vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
         // Pull gas limit from here: https://docs.chain.link/vrf/v2/subscription/supported-networks
-        HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000);
+        HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000); // Max CallbackLimit
 
         HibernationDen.MintConfig memory mintConfig =
             abi.decode(json.parseRaw(".mintConfig"), (HibernationDen.MintConfig));

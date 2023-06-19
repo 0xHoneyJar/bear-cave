@@ -21,10 +21,19 @@
         "price_ETH": 110000000000000000
     },
     "mintChainId": 42161,
-    "checkpoints": [ 420, 690, 1420, 3333, 4200, 6969, 10089 ],
+    "checkpoints": [
+        420,
+        690,
+        1420,
+        3333,
+        4200,
+        6969,
+        10089
+    ],
     "honeyJar": {
         "startIndex": 0,
-        "maxMintableForChain": 1
+        "maxMintableForChain": 1,
+        "baseURI": "https://0xHoneyJar.xyz/api/metadata_gen2?id="
     },
     "revShare": 223300000000000000,
     "vrf": {
