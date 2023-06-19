@@ -1,12 +1,12 @@
 {
     "chainId": 42161,
-    "assetChainId": 5,
+    "assetChainId": 1,
     "deployments": {
-        "registry": "",
-        "gatekeeper": "",
-        "honeyjar": "",
-        "den": "",
-        "portal": ""
+        "registry": "0x4208befD8f546282aB43A30085774513227B656C",
+        "gatekeeper": "0xD060D34DB3052BeE6fC614D1e4708E6fF7Ae31bc",
+        "honeyjar": "0x1b2751328F41D1A0b91f3710EDcd33E996591B72",
+        "den": "0x37AA84e2B62A18894610227ACB4D3c77346D9c27",
+        "portal": "0xb474f03c2c1e15596260CDa307f7827cdD3Fb749"
     },
     "addresses": {
         "gameAdmin": "0xD7f7439F1aE18D45dC1c5ea2ab70ad84601CaEC5",

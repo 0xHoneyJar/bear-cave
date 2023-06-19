@@ -39,6 +39,7 @@ contract ConfigureGame is THJScriptBase("gen3") {
         bytes32 vrfKeyhash = json.readBytes32(".vrf.keyHash");
         uint64 vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
         // Pull gas limit from here: https://docs.chain.link/vrf/v2/subscription/supported-networks
+        // Validate maxConfirmations with each chain you deploy to. 3 may not be enough!
         HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000); // Max CallbackLimit
 
         HibernationDen.MintConfig memory mintConfig =
@@ -73,8 +74,8 @@ contract ConfigureGame is THJScriptBase("gen3") {
 
         vm.startBroadcast();
         portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SEND_NFT), 225000);
-        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.START_GAME), 500000); // Should match adapterParams
-        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 350000); // Should match adapterParams
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.START_GAME), 500000); // Should match portal.adapterParams
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 350000); // Should match portal.adapterParams
         portalL1.setDstChainIdToBatchLimit(lzChainIDL2, 3); // Allow max batch of 3
         portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
 

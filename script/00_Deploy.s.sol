@@ -61,11 +61,13 @@ contract DeployScript is THJScriptBase("gen3") {
 
         uint256 honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
         uint256 honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
+        string memory baseURI = json.readString(".honeyJar.baseURI");
 
         vm.startBroadcast();
 
         bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
+        honeyJar.setBaseURI(baseURI);
 
         console.log("- HoneyJarAddress: ", address(honeyJar));
         vm.stopBroadcast();
@@ -100,7 +102,7 @@ contract DeployScript is THJScriptBase("gen3") {
         );
 
         console.log("-HibernationDenAddress: ", address(den));
-        VRFCoordinatorV2Interface(vrfCoordinator).addConsumer(subId, address(den));
+        // VRFCoordinatorV2Interface(vrfCoordinator).addConsumer(subId, address(den));
         console.log("---REMEMBER TO ADD DEN AS A VRF CONSUMER---");
 
         vm.stopBroadcast();
