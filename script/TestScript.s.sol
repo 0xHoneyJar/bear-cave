@@ -17,10 +17,11 @@ contract TestScript is THJScriptBase("gen3") {
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
-        // GameRegistry registry = GameRegistry(0xc54692f4EBc5858c21F7bBea1BD1e2BcFe1090EE);
-        // MockERC20 paymentToken = MockERC20(0x9Db2ea779Cd3F9F8aEB5E58EB1223a585a4D7D68);
 
-        // ReadConfig
+        startGame(json);
+    }
+
+    function sendFermented(string memory json) internal {
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
         ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addressess.lzEndpoint"));
         HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
@@ -45,16 +46,40 @@ contract TestScript is THJScriptBase("gen3") {
         (uint256 nativeFee,) = lz.estimateFees(lzChainId, address(den), payload, false, "");
         console.log("ETH REQUIRED: ", nativeFee);
 
-        // ReadConfig
         vm.startBroadcast();
 
-        // Destination Address (src chain, src Address, payload);
+        // SRC address
         lz.retryPayload(10121, abi.encodePacked(0x1399706d571ae4E915f32099995eE0ad9107AD96), payload);
 
-        // paymentToken.mint(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34, 1000 * 1e9)
-        // registry.grantRole(Constants.PORTAL, 0x700d64fF07e672072850a9F581Ea9c43645B4502);
-        // registry.grantRole(Constants.BURNER, 0x700d64fF07e672072850a9F581Ea9c43645B4502);
-        // registry.grantRole(Constants.MINTER, 0x700d64fF07e672072850a9F581Ea9c43645B4502);
+        vm.stopBroadcast();
+    }
+
+    /// @notice this script is only meant to test do not use for production
+    /// @notice mimicks the behavior of the portal to start a cross chain game. Run on L2
+    function startGame(string memory json) internal {
+        ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addressess.lzEndpoint"));
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+        HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+        address deployer = json.readAddress(".addresses.deployer");
+        uint256 assetChainId = json.readUint(".assetChainId");
+
+        bytes memory payload =
+            hex"00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000260000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000001A400000000000000000000000000000000000000000000000000000000000002B2000000000000000000000000000000000000000000000000000000000000058C0000000000000000000000000000000000000000000000000000000000000D0500000000000000000000000000000000000000000000000000000000000010680000000000000000000000000000000000000000000000000000000000001B390000000000000000000000000000000000000000000000000000000000002769";
+        (, HoneyJarPortal.StartGamePayload memory startGamePayload) =
+            abi.decode(payload, (HoneyJarPortal.MessageTypes, HoneyJarPortal.StartGamePayload));
+
+        console.log(startGamePayload.bundleId, "bundleId");
+        console.log(startGamePayload.numSleepers, "numSleepers");
+        for (uint256 i = 0; i < startGamePayload.checkpoints.length; ++i) {
+            console.log(startGamePayload.checkpoints[i]);
+        }
+        vm.startBroadcast();
+        registry.grantRole(Constants.PORTAL, deployer);
+        den.startGame(
+            assetChainId, startGamePayload.bundleId, startGamePayload.numSleepers, startGamePayload.checkpoints
+        );
+        registry.renounceRole(Constants.PORTAL, deployer);
         vm.stopBroadcast();
     }
 }
