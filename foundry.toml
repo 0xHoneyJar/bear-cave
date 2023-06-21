@@ -13,7 +13,7 @@ remappings = [
 ]
 fs_permissions = [
     {access = "write", path = "./deployments/"},
-    {access = "read", path = "./script/"}
+    {access = "read-write", path = "./script/"}
 ]
 
 # known error codes are: ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]

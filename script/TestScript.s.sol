@@ -8,6 +8,7 @@ import {GameRegistry} from "src/GameRegistry.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
+import {HoneyJar} from "src/HoneyJar.sol";
 
 import "./THJScriptBase.sol";
 
@@ -18,7 +19,8 @@ contract TestScript is THJScriptBase("gen3") {
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        startGame(json);
+        // startGame(json);
+        sendMijani(json);
     }
 
     function sendFermented(string memory json) internal {
@@ -80,6 +82,22 @@ contract TestScript is THJScriptBase("gen3") {
             assetChainId, startGamePayload.bundleId, startGamePayload.numSleepers, startGamePayload.checkpoints
         );
         registry.renounceRole(Constants.PORTAL, deployer);
+        vm.stopBroadcast();
+    }
+
+    function sendMijani(string memory json) internal {
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+        HoneyJar hj = HoneyJar(json.readAddress(".deployments.honeyjar"));
+        address deployer = json.readAddress(".addresses.deployer");
+        address gameAdmin = json.readAddress(".addresses.gameAdmin");
+        address mijaniSafe = 0x3FC232c07DCF2759AF9270f0a7D3856B9E8CCcBA;
+        uint256 startId = 528;
+        uint256 endId = 588;
+
+        vm.startBroadcast();
+        for (uint256 i = startId; i < endId; ++i) {
+            hj.transferFrom(deployer, mijaniSafe, i);
+        }
         vm.stopBroadcast();
     }
 }

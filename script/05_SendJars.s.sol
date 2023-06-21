@@ -18,6 +18,9 @@ contract SendFermentedJars is THJScriptBase("gen3") {
 
         HibernationDen.SlumberParty memory party = den.getSlumberParty(bundleId);
         assert(party.sleepoors.length > 0);
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            console.log("fermentedJar: ", party.fermentedJars[i].id);
+        }
 
         vm.startBroadcast();
         den.sendFermentedJars{value: 0.2 ether}(bundleId);
