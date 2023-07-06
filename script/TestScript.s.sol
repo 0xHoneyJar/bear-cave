@@ -20,7 +20,7 @@ contract TestScript is THJScriptBase("gen3") {
         string memory json = _getConfig(env);
 
         // startGame(json);
-        sendMijani(json);
+        checkDenJars(json);
     }
 
     function sendFermented(string memory json) internal {
@@ -99,5 +99,16 @@ contract TestScript is THJScriptBase("gen3") {
             hj.transferFrom(deployer, mijaniSafe, i);
         }
         vm.stopBroadcast();
+    }
+
+    function checkDenJars(string memory json) internal {
+        uint8 bundleId = uint8(json.readUint(".bundleId"));
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+
+        HibernationDen.SlumberParty memory party = den.getSlumberParty(bundleId);
+
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            console.log(party.fermentedJars[i].id, party.fermentedJars[i].isUsed);
+        }
     }
 }
