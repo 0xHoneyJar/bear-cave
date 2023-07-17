@@ -20,6 +20,7 @@ import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 import {IHoneyJarPortal} from "src/interfaces/IHoneyJarPortal.sol";
 import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
 import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
+import {IBearPouch} from "src/interfaces/IBearPouch.sol";
 import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
@@ -114,19 +115,13 @@ contract HibernationDen is
     VRFConfig private vrfConfig;
 
     /**
-     * bearPouch
-     */
-    address payable private immutable beekeeper; // rev share
-    address payable private immutable jani;
-    uint256 public immutable honeyJarShare; // as a WAD
-
-    /**
      * Dependencies
      */
     IGatekeeper public immutable gatekeeper;
     IHoneyJar public immutable honeyJar;
     VRFCoordinatorV2Interface internal immutable vrfCoordinator;
     IHoneyJarPortal public honeyJarPortal;
+    IBearPouch public bearPouch;
 
     /**
      * Internal Storage
@@ -150,20 +145,19 @@ contract HibernationDen is
     constructor(
         address _vrfCoordinator,
         address _gameRegistry,
-        address _honeyJarAddress,
-        address _paymentToken,
-        address _gatekeeper,
-        address _jani,
-        address _beekeeper,
-        uint256 _honeyJarShare
+        IHoneyJar _honeyJar,
+        IERC20 _paymentToken,
+        IGatekeeper _gatekeeper,
+        IBearPouch _bearPouch
     ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
-        honeyJar = IHoneyJar(_honeyJarAddress);
-        paymentToken = IERC20(_paymentToken);
-        gatekeeper = IGatekeeper(_gatekeeper);
-        jani = payable(_jani);
-        beekeeper = payable(_beekeeper);
-        honeyJarShare = _honeyJarShare;
+        honeyJar = _honeyJar;
+        paymentToken = _paymentToken;
+        gatekeeper = _gatekeeper;
+        bearPouch = _bearPouch;
+
+        // Need the bearPouch to move funds from this contract for distribution
+        paymentToken.approve(address(bearPouch), type(uint256).max);
     }
 
     /// @notice additional parameters that are required to get the game running
@@ -374,7 +368,7 @@ contract HibernationDen is
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
     function _distributeERC20AndMintHoneyJar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
-        _distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
+        bearPouch.distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
 
         // Mint da honey
         return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
@@ -386,7 +380,7 @@ contract HibernationDen is
         uint256 price = mintConfig.honeyJarPrice_ETH;
         if (msg.value != price * amount_) revert WrongAmount_ETH(price * amount_, msg.value);
 
-        _distribute(0);
+        bearPouch.distribute{value: price * amount_}(0);
 
         return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
     }
@@ -554,31 +548,6 @@ contract HibernationDen is
         } else {
             //  ERC721
             IERC721(sleeper_.tokenAddress).safeTransferFrom(from, to, sleeper_.tokenId);
-        }
-    }
-
-    /**
-     * BearPouch owner methods
-     *      Can move into another contract for portability
-     * depends on:
-     *     Exclusive: beekeeper, jani, honeyJarShare
-     *     shared: paymentToken
-     */
-
-    /// @dev requires that beekeeper and jani addresses are set.
-    /// @param amountERC20 is zero if we're only distributing the ETH
-    function _distribute(uint256 amountERC20) internal {
-        uint256 beekeeperShareERC20 = amountERC20.mulWadUp(honeyJarShare);
-        uint256 beekeeperShareETH = (msg.value).mulWadUp(honeyJarShare);
-
-        if (beekeeperShareERC20 != 0) {
-            paymentToken.safeTransferFrom(msg.sender, beekeeper, beekeeperShareERC20);
-            paymentToken.safeTransferFrom(msg.sender, jani, amountERC20 - beekeeperShareERC20);
-        }
-
-        if (beekeeperShareETH != 0) {
-            SafeTransferLib.safeTransferETH(beekeeper, beekeeperShareETH);
-            SafeTransferLib.safeTransferETH(jani, msg.value - beekeeperShareETH);
         }
     }
 

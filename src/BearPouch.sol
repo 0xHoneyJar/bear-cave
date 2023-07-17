@@ -8,40 +8,53 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
+import {IBearPouch} from "src/interfaces/IBearPouch.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {Constants} from "src/Constants.sol";
 
-contract BearPouch is GameRegistryConsumer {
+contract BearPouch is IBearPouch, GameRegistryConsumer {
     using SafeERC20 for IERC20;
-
     using FixedPointMathLib for uint256;
 
-    address private jani;
-    address private beekeeper;
-    uint256 private honeyJarShare;
+    error InvalidDistributionConfig(uint256 shareSum);
+    error ZeroValue();
 
     IERC20 public paymentToken;
 
-    constructor(address gameRegistry_, address paymentToken_, address jani_, address beekeeper_, uint256 honeyJarShare_)
+    DistributionConfig[] private distributions;
+
+    constructor(address gameRegistry_, address paymentToken_, DistributionConfig[] memory _distributions)
         GameRegistryConsumer(gameRegistry_)
     {
         paymentToken = IERC20(paymentToken_);
-        jani = jani_;
-        beekeeper = beekeeper_;
-        honeyJarShare = honeyJarShare_;
+
+        uint256 shareSum = 0;
+        for (uint256 i = 0; i < _distributions.length; i++) {
+            shareSum += _distributions[i].share;
+        }
+
+        if (shareSum != 1e18) revert InvalidDistributionConfig(shareSum);
+
+        distributions = _distributions;
     }
 
     function distribute(uint256 amountERC20) external payable onlyRole(Constants.GAME_INSTANCE) {
-        uint256 beekeeperShareERC20 = amountERC20.mulWadUp(honeyJarShare);
-        uint256 beekeeperShareETH = (msg.value).mulWadUp(honeyJarShare);
+        if (amountERC20 == 0 && msg.value == 0) revert ZeroValue();
 
-        if (beekeeperShareERC20 != 0) {
-            paymentToken.safeTransferFrom(msg.sender, beekeeper, beekeeperShareERC20);
-            paymentToken.safeTransferFrom(msg.sender, jani, amountERC20 - beekeeperShareERC20);
-        }
-        if (beekeeperShareETH != 0) {
-            SafeTransferLib.safeTransferETH(beekeeper, beekeeperShareETH);
-            SafeTransferLib.safeTransferETH(jani, msg.value - beekeeperShareETH);
+        for (uint256 i = 0; i < distributions.length; i++) {
+            // xFer the tokens
+            if (amountERC20 != 0) {
+                paymentToken.safeTransferFrom(
+                    msg.sender, distributions[i].recipient, amountERC20.mulWadUp(distributions[i].share)
+                );
+            }
+
+            // xfer the ETH
+            if (msg.value != 0) {
+                SafeTransferLib.safeTransferETH(
+                    distributions[i].recipient, (msg.value).mulWadUp(distributions[i].share)
+                );
+            }
         }
     }
 }
