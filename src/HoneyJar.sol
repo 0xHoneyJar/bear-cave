@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {LibString} from "solmate/utils/LibString.sol";
+
 import {Create2Ownable} from "src/Create2Ownable.sol";
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -9,7 +10,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Constants} from "./Constants.sol";
 import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
 
-import {IHoneyJar} from "./IHoneyJar.sol";
+import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
 
 /// @title HoneyJar
 /// @notice A stand-alone ERC721 compliant NFT

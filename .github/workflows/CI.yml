@@ -25,13 +25,13 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: nightly
-
+            - name: Copy Deps
+              run: cp .env.example .env
             - name: Run Forge build
               run: |
                   forge --version
                   forge build --sizes
               id: build
-
             - name: Run Forge tests
               run: |
                   forge test -vvv

@@ -1,64 +1,83 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "./THJScriptBase.sol";
 
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
-
-import {GameRegistry} from "src/GameRegistry.sol";
-import {HoneyBox} from "src/HoneyBox.sol";
-
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-// Sets up HoneyBox as a game
-contract ConfigureGame is THJScriptBase {
+import {GameRegistry} from "src/GameRegistry.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
+import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
+import {Constants} from "src/Constants.sol";
+
+// Sets up HibernationDen as a game
+contract ConfigureGame is THJScriptBase("gen3") {
     using stdJson for string;
     using SafeCastLib for uint256;
 
-    // Chainlink Config
-    address private vrfCoordinator;
-    bytes32 private vrfKeyhash;
-    uint64 private vrfSubId;
+    // Copied from the portal
+    enum MessageTypes {
+        SEND_NFT,
+        START_GAME,
+        SET_FERMENTED_JARS
+    }
 
     // Dependencies
     ERC721 private nft;
     ERC1155 private sft;
     ERC20 private token;
 
-    // Deployment vars
+    function setUp() public {}
 
-    HoneyBox private honeyBox;
-    GameRegistry private gameRegistry;
-
-    HoneyBox.MintConfig private mintConfig;
-    HoneyBox.VRFConfig private vrfConfig;
-
-    function setUp() public {
-        // Dependencies
-        honeyBox = HoneyBox(_readAddress("HONEYBOX_ADDRESS"));
-        gameRegistry = GameRegistry(_readAddress("GAMEREGISTRY_ADDRESS"));
-    }
-
+    /// @notice Run on both chains
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        // Chainlink VRF Config
-        vrfKeyhash = json.readBytes32(".vrf.keyhash");
-        vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
-        vrfConfig = HoneyBox.VRFConfig(vrfKeyhash, vrfSubId, 3, 10000000);
+        bytes32 vrfKeyhash = json.readBytes32(".vrf.keyHash");
+        uint64 vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
+        // Pull gas limit from here: https://docs.chain.link/vrf/v2/subscription/supported-networks
+        // Validate maxConfirmations with each chain you deploy to. 3 may not be enough!
+        HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000); // Max CallbackLimit
 
-        // MintConfig
-        bytes memory rawMintConfig = json.parseRaw(".mintConfig");
-        mintConfig = abi.decode(rawMintConfig, (HoneyBox.MintConfig));
+        HibernationDen.MintConfig memory mintConfig =
+            abi.decode(json.parseRaw(".mintConfig"), (HibernationDen.MintConfig));
+
+        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.den")));
+        HoneyJarPortal portal = HoneyJarPortal(payable(json.readAddress(".deployments.portal")));
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
 
         vm.startBroadcast();
 
-        honeyBox.initialize(vrfConfig, mintConfig);
+        hibernationDen.initialize(vrfConfig, mintConfig);
+        registry.grantRole(Constants.PORTAL, address(portal));
+        registry.grantRole(Constants.BURNER, address(portal));
+        registry.grantRole(Constants.MINTER, address(portal));
+        registry.registerGame(address(hibernationDen));
 
-        // Register game with gameRegistry
-        gameRegistry.registerGame(address(honeyBox));
+        vm.stopBroadcast();
+    }
+
+    // Note: on both L1 and L2
+    function configurePortals(string calldata envL1, string calldata envL2) public {
+        string memory l1Json = _getConfig(envL1);
+        string memory l2Json = _getConfig(envL2);
+
+        uint256 l1ChainId = l1Json.readUint(".chainId");
+        uint256 l2ChainId = l2Json.readUint(".chainId");
+
+        HoneyJarPortal portalL1 = HoneyJarPortal(payable(l1Json.readAddress(".deployments.portal")));
+        HoneyJarPortal portalL2 = HoneyJarPortal(payable(l2Json.readAddress(".deployments.portal")));
+        uint16 lzChainIDL2 = portalL1.lzChainId(l2ChainId);
+
+        vm.startBroadcast();
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SEND_NFT), 225000);
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.START_GAME), 500000); // Should match portal.adapterParams
+        portalL1.setMinDstGas(lzChainIDL2, uint16(MessageTypes.SET_FERMENTED_JARS), 350000); // Should match portal.adapterParams
+        portalL1.setDstChainIdToBatchLimit(lzChainIDL2, 3); // Allow max batch of 3
+        portalL1.setTrustedRemote(portalL1.lzChainId(l2ChainId), abi.encodePacked(address(portalL2), address(portalL1)));
 
         vm.stopBroadcast();
     }

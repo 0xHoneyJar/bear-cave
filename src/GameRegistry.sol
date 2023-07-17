@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+
 import {Constants} from "./Constants.sol";
 
 /// @title GameRegistry
@@ -26,6 +27,7 @@ contract GameRegistry is AccessControl {
         stageTimes.push(4 hours);
     }
 
+    /// @notice stores enabled state for the games.
     mapping(address => bool) public games; // Address -> enabled
 
     /// @notice registers the game with the GameRegistry

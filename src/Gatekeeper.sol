@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {MerkleProofLib} from "solmate/utils/MerkleProofLib.sol";
 
-import {IGatekeeper} from "./IGatekeeper.sol";
-import {GameRegistryConsumer} from "./GameRegistryConsumer.sol";
-import {Constants} from "./Constants.sol";
+import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
+import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
+import {Constants} from "src/Constants.sol";
 
 /**
  * GateKeeper

@@ -7,7 +7,7 @@ Core Concepts:
 
 Core components:
 - GameRegistry
-- HoneyBox
+- HibernationDen
 - Gatekeeper
 - HoneyJar NFT
 - HoneyJar Portal
@@ -21,7 +21,7 @@ Game Contracts can have three states within the registry:
 - Started: Grants `MINTER` permissions. for the NFTs within the ecosystem. 
 - Stopped: Revokes `MINTER` permissions
 
-##  HoneyBox
+##  HibernationDen
 
 Contains all core business logic for THJ games. 
 `MintConfig` specifies the number of claimable & mintable NFTS. 
@@ -73,7 +73,7 @@ When transfering a token to another chain, the token is **BURNED** on the source
 Contracts that need to exist on each chain:
 - GameRegistry: Maybe sync from source chain?
 - Gatekeeper: Maybe sync from source chain? 
-- HoneyBox-lite: only reponsible for minting and tracking tokens 
+- HibernationDen-lite: only reponsible for minting and tracking tokens 
 - HoneyJar 
 
 ### Flow
@@ -81,7 +81,7 @@ Contracts that need to exist on each chain:
 
 Destination Chain:
 - Deploy:
-    - HoneyBox
+    - HibernationDen
     - Gatekeeper
     - GameRegistry
     - NFT
@@ -90,15 +90,15 @@ Destination Chain:
 Source chain: (ETH)
 - `AddBundle`
 - `PuffPuffPassOut`
-- `startGatesForToken` 
-    if xChain bundle --> HJP `startXChainGame()`
-- honeybox.mint should not work. (bundle.isCrossChain);
+    - if xChain bundle --> HJP `startGame()`
+    - else:  `startGatesForToken` 
+- honeybox.mint should not work. (bundle.assetChainId != bundle.mintChainId);
 
 Destination Chain: (ARB)
-- HoneyBox.startGame() --> bundleConfig but no bundle
-- GateKeeper: rcv StartGates for token.
+- HibernationDen.startGame() --> bundleConfig but no bundle
+- GateKeeper: startGatesForToken
 - GameRegistry: startGame
-- Players can call honeyBox.claim, earlyMint, mint on times. 
+- Players can call honeyBox.claim, earlyMint, mint on appropriate times. 
 - Last mint: Chainlink VRF from bundleConfig 
 - get winning tokenIds
 - HJP --> send to honeyBox(source)
@@ -108,5 +108,3 @@ Source Chain (ETH):
 
 WakeSleeper: ETH:
 - Validate msg.sender is owner of token
-- arb.honeybox.sign I AM OWNER. 
-- eth.honeyBox.claim I AM OWNER --> send to msg.sender. 

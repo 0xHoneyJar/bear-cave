@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
+
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {HoneyJar} from "src/HoneyJar.sol";
@@ -10,7 +11,7 @@ import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
 contract MockGameRegistry {
     bool internal returnVal;
 
-    function hasRole(bytes32 role_, address account_) public view returns (bool) {
+    function hasRole(bytes32, address) public view returns (bool) {
         return returnVal;
     }
 

@@ -11,6 +11,7 @@ bin/
 
 # Dotenv file
 .env
+.env\.*
 
 # Node fun
 node_modules

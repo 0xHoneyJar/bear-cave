@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
+
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeCastLib} from "solmate/utils/SafeCastLib.sol";
 
@@ -16,14 +17,15 @@ import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {UserFactory} from "test/utils/UserFactory.sol";
 import {Random} from "test/utils/Random.sol";
 
-import {HoneyBox} from "src/HoneyBox.sol";
+import {HibernationDen} from "src/HibernationDen.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
+import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 
 import {console2} from "forge-std/console2.sol";
 
-contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
+contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -45,8 +47,8 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
     address private anotherUser;
 
     GameRegistry private gameRegistry;
-    HoneyBox private honeyBox;
-    HoneyBox.MintConfig private mintConfig;
+    HibernationDen private honeyBox;
+    HibernationDen.MintConfig private mintConfig;
     HoneyJar private honeyJar;
 
     //Chainlink setup
@@ -83,8 +85,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         honeyJar = new HoneyJar(address(this), address(gameRegistry), 0, 1e9);
 
         // MintConfig
-        mintConfig = HoneyBox.MintConfig({
-            maxHoneyJar: maxHoneyJar,
+        mintConfig = HibernationDen.MintConfig({
             maxClaimableHoneyJar: 5,
             honeyJarPrice_ERC20: MINT_PRICE_ERC20, // 9.9 OHM
             honeyJarPrice_ETH: MINT_PRICE_ETH // 0.099 eth
@@ -94,7 +95,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
         // Deploy the honeyBox
-        honeyBox = new HoneyBox(
+        honeyBox = new HibernationDen(
             address(vrfCoordinator),
             address(gameRegistry),
             address(honeyJar),
@@ -106,18 +107,23 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         );
 
         vrfCoordinator.addConsumer(subId, address(honeyBox));
-        honeyBox.initialize(HoneyBox.VRFConfig("", subId, 3, 10000000), mintConfig);
+        honeyBox.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
 
         gameRegistry.registerGame(address(honeyBox));
-        gameRegistry.startGame(address(honeyBox));
         bundleId = _addBundle(0);
 
-        // HoneyBox needs at least one gate to function.
+        // uint256[] memory checkpoints = new uint256[](2);
+        // checkpoints[0] = 2;
+        // checkpoints[1] = 4;
+        // honeyBox.setCheckpoints(bundleId, checkpoints);
+        // HibernationDen needs at least one gate to function.
         gatekeeper.addGate(bundleId, 0x00000000000000, 6969, 0);
+
+        gameRegistry.startGame(address(honeyBox));
     }
 
     function testFail_alreadyInitialized() public {
-        honeyBox.initialize(HoneyBox.VRFConfig("", 1, 3, 10000000), mintConfig);
+        honeyBox.initialize(HibernationDen.VRFConfig("", 1, 3, 10000000), mintConfig);
     }
 
     // ============= Hibernating  ==================== //
@@ -139,12 +145,42 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _addBundle(0);
     }
 
+    function testCheckpoints() public {
+        uint256[] memory checkpoints = new uint256[](2);
+        checkpoints[0] = 2;
+        checkpoints[1] = 4;
+
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+
+        assertEq(party.checkpointIndex, 0, "Checkpoints should be first index");
+        assertEq(party.checkpoints.length, 1, "should only be one item in the checkpoints");
+        assertEq(party.checkpoints[0], maxHoneyJar, "should be maxHoneyJar");
+
+        gameRegistry.stopGame(address(honeyBox));
+        honeyBox.setCheckpoints(bundleId, 0, checkpoints);
+        gameRegistry.startGame(address(honeyBox));
+
+        // Game needs to be stopped in order to modify checkpoints
+
+        party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.checkpointIndex, 0, "checkpointIndex is not 0");
+        assertEq(party.checkpoints.length, 2, "incorrect checkpoint length");
+        assertEq(party.checkpoints, checkpoints, "checkpoints don't match");
+    }
+
+    function testChainId() public {
+        bundleId = _addBundle(0);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.mintChainId, block.chainid);
+        assertEq(party.assetChainId, block.chainid);
+    }
+
     function testAddToParty() public {
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         uint256 numSleepers = party.sleepoors.length;
 
         // Add random addr
-        HoneyBox.SleepingNFT memory newSleeper;
+        HibernationDen.SleepingNFT memory newSleeper;
         newSleeper.isERC1155 = false;
         newSleeper.tokenId = 1;
         newSleeper.tokenAddress = makeAddr("token");
@@ -222,7 +258,9 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         // increase mint limits
         gameRegistry.stopGame(address(honeyBox));
-        honeyBox.setMaxHoneyJar(mintAmount + 1);
+        uint256[] memory newCheckpoints = new uint256[](1);
+        newCheckpoints[0] = mintAmount;
+        honeyBox.setCheckpoints(bundleId, 0, newCheckpoints);
         gameRegistry.startGame(address(honeyBox));
 
         honeyBox.mekHoneyJarWithERC20(bundleId, mintAmount);
@@ -234,7 +272,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _puffPuffPassOut(bundleId);
 
         // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
-        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithETH.selector, bundleId, 2);
+        bytes memory request = abi.encodeWithSelector(HibernationDen.mekHoneyJarWithETH.selector, bundleId, 2);
         bytes memory response = address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH * 2);
         uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
 
@@ -258,7 +296,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _makeMultipleHoney(bundleId, maxHoneyJar);
 
         _simulateVRF(bundleId);
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         assertEq(party.fermentedJarsFound, true, "Fermented Jar is not found");
     }
 
@@ -317,7 +355,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         _simulateVRF(bundleId);
 
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         _wakeAll(bundleId, party.fermentedJars);
 
         assertEq(erc1155.balanceOf(address(this), 0), 1, "the bear didn't wake up");
@@ -332,12 +370,12 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
 
         _simulateVRF(bundleId);
 
-        HoneyBox.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
         _wakeAll(bundleId, party.fermentedJars);
         _wakeAll(bundleId, party.fermentedJars);
     }
 
-    function _wakeAll(uint8 bundleId_, HoneyBox.FermentedJar[] memory jars) internal {
+    function _wakeAll(uint8 bundleId_, HibernationDen.FermentedJar[] memory jars) internal {
         for (uint256 i = 0; i < jars.length; i++) {
             honeyBox.wakeSleeper(bundleId_, jars[i].id);
         }
@@ -365,8 +403,8 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _simulateVRF(bundleId);
         _simulateVRF(secondBundleId);
 
-        HoneyBox.SlumberParty memory party1 = honeyBox.getSlumberParty(bundleId);
-        HoneyBox.SlumberParty memory party2 = honeyBox.getSlumberParty(secondBundleId);
+        HibernationDen.SlumberParty memory party1 = honeyBox.getSlumberParty(bundleId);
+        HibernationDen.SlumberParty memory party2 = honeyBox.getSlumberParty(secondBundleId);
 
         _wakeAll(bundleId, party1.fermentedJars);
         _wakeAll(secondBundleId, party2.fermentedJars);
@@ -402,7 +440,7 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         _puffPuffPassOut(bundleId);
 
         // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
-        bytes memory request = abi.encodeWithSelector(HoneyBox.mekHoneyJarWithETH.selector, bundleId, 1);
+        bytes memory request = abi.encodeWithSelector(HibernationDen.mekHoneyJarWithETH.selector, bundleId, 1);
         address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH);
 
         uint256 beekeeperExpected = MINT_PRICE_ETH.mulWadUp(honeyJarShare);
@@ -442,6 +480,64 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }
 
+    ////////////////////////////////////////
+    ////////    Cross Chain Tests //////////
+    ////////////////////////////////////////
+
+    function testDiffChainId() public {
+        uint256 wrongChainId = 123;
+        uint256 tokenId = 123;
+        bundleId = _addBundleForChain(wrongChainId, tokenId);
+
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
+        assertEq(party.mintChainId, wrongChainId);
+        assertEq(party.assetChainId, block.chainid);
+    }
+
+    function testFailMekHoneyJar_diffChainId() public {
+        uint256 wrongChainId = 123;
+        uint256 tokenId = 123;
+        erc721.mint(address(this), tokenId);
+
+        bundleId = _addBundleForChain(wrongChainId, tokenId);
+        _puffPuffPassOut(bundleId);
+
+        // Errors out with #invalid chain
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH}(bundleId, 1);
+    }
+
+    function testFailStartGame_bundleAlreadyExists() public {
+        // Give this address portal role in order to call method
+        gameRegistry.grantRole("PORTAL", address(this));
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, 8, new uint256[](1));
+    }
+
+    function testStartGameXChain() public {
+        // simulates getting a message saying "start the game"
+        // Give this address portal role in order to call method
+        gameRegistry.grantRole("PORTAL", address(this));
+        uint8 newBundleId = bundleId + 1;
+        uint256 numSleepers = 8;
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
+
+        // Bundle needs to exist before game is started.
+        gatekeeper.addGate(newBundleId, bytes32(0), 6969, 0);
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), newBundleId, numSleepers, checkpoints);
+        vm.warp(block.timestamp + 72 hours);
+
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(newBundleId, maxHoneyJar);
+
+        _simulateVRF(newBundleId);
+
+        HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(newBundleId);
+        assertEq(party.fermentedJarsFound, true, "expected fermentedJarsFound");
+        assertEq(party.sleepoors.length, numSleepers);
+
+        // This call should fail because its not a real NFT
+        // honeyBox.wakeSleeper(config.bundleId, party.fermentedJars[0].id);
+    }
+
     // ============= Claiming will be an integration test  ==================== //
 
     /**
@@ -470,6 +566,22 @@ contract HoneyBoxUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiver {
         bool[] memory isERC1155 = new bool[](2);
         isERC1155[0] = true;
         isERC1155[1] = false;
-        return honeyBox.addBundle(tokenAddresses, tokenIds, isERC1155);
+
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155);
+    }
+
+    function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
+        address[] memory tokenAddresses = new address[](1);
+        tokenAddresses[0] = address(erc721);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = tokenId_;
+        bool[] memory isERC1155 = new bool[](1);
+        isERC1155[0] = false;
+
+        uint256[] memory checkpoints = new uint256[](1);
+        checkpoints[0] = maxHoneyJar;
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 }

@@ -10,6 +10,7 @@ usage() {
     echo "             Loads environment variables from .env and a file specific to the <network> parameter  "
     echo "Options:"
     echo "  -n, --network       : The network for which the .env file should be loaded. Expected filename(.env.<network>). (Required)"
+    echo "  -n2 --network2      : Second Network to config against"
     echo "  <method>            : The method to be performed. Supported methods are (Required)" 
     echo "                         - Options [testnetDeps|deploy|config|addBundle|setGates|startGame]"
     echo "  --no-load-env       : Optional flag to skip loading environment variables from .env file."
@@ -23,6 +24,7 @@ broadcast=false
 resume=false
 load_env=true
 network=""
+network2=""
 method=""
 forge_params=""
 no_verify=false
@@ -62,6 +64,10 @@ while [[ "$#" -gt 0 ]]; do
         exit 1
       fi
       ;;
+    -n2|--network2)
+     network2="$2"
+     shift 2
+     ;;
     *)
       if [ -z "$method" ]; then
         method="$1"
@@ -105,7 +111,7 @@ forge_params="--rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --slow -vvvv"
 if [ "$broadcast" = true ]; then
   forge_params="${forge_params} --broadcast"
   if [ "$no_verify" = false ]; then
-    forge_params="$forge_params --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+    forge_params="$forge_params --verify"
   fi
 fi
 
@@ -121,6 +127,10 @@ echo ""
 
 # Perform different methods based on the parameter passed
 case "$method" in
+  "localNode")
+    echo "Running local fork of $network"
+    anvil --fork-url $RPC_URL
+    ;;
   "test")
     echo "Forge Params ${forge_params}"
     forge script script/TestScript.s.sol:TestScript --sig 'run(string)()' $network $forge_params
@@ -130,22 +140,29 @@ case "$method" in
     forge script script/100_TestnetDeps.s.sol:TestnetDeps --sig 'run(string)()' $network $forge_params
     ;;
   "deploy1")
-    echo "Running deploy"
-    forge script script/00_Deploy.s.sol:DeployScript --sig 'run(string)()' $network $forge_params
+    echo "Deploying Gatekeeper & GameRegistry"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHelpers(string)()' $network $forge_params
     ;;
   "deploy2")
-    echo "Running deploy"
+    echo "Deploying HoneyJar"
     forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJar(string)()' $network $forge_params
     ;;
-
   "deploy3")
-    echo "Running deploy"
-    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyBox(string)()' $network $forge_params
+    echo "Deploying HibernationDen"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHibernationDen(string)()' $network $forge_params
+    ;;
+  "deploy4")
+    echo "Deploying HoneyJarPortal"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJarPortal(string)()' $network $forge_params
     ;;
   "config")
-    echo "Running config"
+    echo "Configuring Game"
     forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'run(string)()' $network $forge_params
-    ;;    
+    ;;
+  "config-portals")
+    echo "Configuring Portals between $network and $network2"
+    forge script script/01_ConfigureGame.s.sol:ConfigureGame --sig 'configurePortals(string,string)()' $network $network2 $forge_params
+    ;;        
   "addBundle") 
     echo "Running addBundle"
     forge script script/02_BundleTokens.s.sol:BundleTokens --sig 'run(string)()' $network $forge_params
@@ -158,9 +175,25 @@ case "$method" in
     echo "Running startGame"
     forge script script/04_StartGame.s.sol:StartGame --sig 'run(string)()' $network $forge_params
     ;;
+  "sendJars")
+    echo "Running sendJars"
+    forge script script/05_SendJars.s.sol:SendFermentedJars --sig 'run(string)()' $network $forge_params
+    ;;
+  "addToParty")
+    echo "Running sendJars"
+    forge script script/06_AddToParty.s.sol:AddToParty --sig 'run(string)()' $network $forge_params
+    ;;
+  "testnetApprove")
+    echo "Running testnetApprove"
+    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
+    ;;
   "testnetPuffPuff")
     echo "Running testnetPuffPuff"
-    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'run(string)()' $network $forge_params
+    forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'estimateAndPuff(string)()' $network $forge_params
+    ;;
+  "validate")
+    echo "Running testnetPuffPuff"
+    forge script script/200_Validate.t.sol:ValidateScript --sig 'validate(string,string)()' $network $network2 $forge_params
     ;;
   *)
     echo "Error: Unsupported method."
