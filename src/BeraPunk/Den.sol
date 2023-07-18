@@ -17,21 +17,23 @@ import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 
-import {IDen} from "src/BeraPunk/IDen.sol";
-import {IBeraPunk} from "src/BeraPunk/IBeraPunk.sol";
+import {IHoneyJarPortal} from "src/interfaces/IHoneyJarPortal.sol";
+import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
+import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
 import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
 import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
+import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {Constants} from "src/Constants.sol";
 
-/// @title HibernationDen (slightly modified for berapunks)
+/// @title HibernationDen
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
-/// @notice the contract still referneces honeyJar but it intended for berapunk
 contract HibernationDen is
-    IDen,
+    IHibernationDen,
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
     ERC1155TokenReceiver,
     GameRegistryConsumer,
+    CrossChainTHJ,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;
@@ -78,6 +80,7 @@ contract HibernationDen is
      * Events
      */
     event Initialized(MintConfig mintConfig);
+    event PortalSet(address portal);
     event SlumberPartyStarted(uint8 bundleId);
     event SlumberPartyAdded(uint8 bundleId);
     event FermentedJarsFound(uint8 bundleId, uint256[] honeyJarIds);
@@ -119,8 +122,9 @@ contract HibernationDen is
      * Dependencies
      */
     IGatekeeper public immutable gatekeeper;
-    IBeraPunk public immutable beraPunk; // Has the same interface as IHoneyJar
+    IHoneyJar public immutable beraPunk; // BeraPunk tokens implement the same Inferface as THJ.sol
     VRFCoordinatorV2Interface internal immutable vrfCoordinator;
+    IHoneyJarPortal public honeyJarPortal;
 
     /**
      * Internal Storage
@@ -144,26 +148,32 @@ contract HibernationDen is
     constructor(
         address _vrfCoordinator,
         address _gameRegistry,
-        IBeraPunk _beraPunk,
-        IERC20 _paymentToken,
-        IGatekeeper _gatekeeper,
-        address _beraPunkAdmin,
-        VRFConfig memory vrfConfig_,
-        MintConfig memory mintConfig_
-    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) {
+        address _beraPunkAddress,
+        address _paymentToken,
+        address _gatekeeper,
+        address _beraPunkAdmin
+    ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
-        beraPunk = _beraPunk;
-        paymentToken = _paymentToken;
-        gatekeeper = _gatekeeper;
+        beraPunk = IHoneyJar(_beraPunkAddress);
+        paymentToken = IERC20(_paymentToken);
+        gatekeeper = IGatekeeper(_gatekeeper);
         beraPunkAdmin = payable(_beraPunkAdmin);
-
-        vrfConfig = vrfConfig_;
-        mintConfig = mintConfig_;
     }
 
-    /// @notice method to replace mechanisms of CrossChainTHJ
-    function getChainId() public view returns (uint256) {
-        return block.chainid;
+    /// @notice additional parameters that are required to get the game running
+    /// @param vrfConfig_ Chainlink  configuration
+    /// @param mintConfig_ needed for the specific game
+    function initialize(VRFConfig calldata vrfConfig_, MintConfig calldata mintConfig_)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        if (initialized) revert AlreadyInitialized();
+
+        initialized = true;
+        vrfConfig = vrfConfig_;
+        mintConfig = mintConfig_;
+
+        emit Initialized(mintConfig);
     }
 
     /// @notice Who is partying without me?
@@ -191,9 +201,46 @@ contract HibernationDen is
         }
 
         // Only start gates if the configured chainId is the current chain.
+        if (slumberParty.mintChainId == getChainId()) {
+            gatekeeper.startGatesForBundle(bundleId_);
+        } else if (address(honeyJarPortal) != address(0)) {
+            // If the portal is set, the xChain message will be sent
+            honeyJarPortal.sendStartGame{value: msg.value}(
+                payable(msg.sender), slumberParty.mintChainId, bundleId_, sleeperCount, slumberParty.checkpoints
+            );
+        }
+        emit SlumberPartyStarted(bundleId_);
+    }
+
+    /// @notice Does the same as function above, except doesn't transfer the NFTs.
+    /// @notice is used on the destination chain in an xChain setup.
+    /// @dev can only be called by the HoneyJar Portal
+    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
+        external
+        override
+        onlyRole(Constants.PORTAL)
+    {
+        if (checkpoints.length > numSleepers_) revert InvalidInput("startGame::checkpoints");
+        uint256[] memory allStages = _getStages();
+        uint256 publicMintOffset = allStages[allStages.length - 1];
+
+        SlumberParty storage party = slumberParties[bundleId_];
+        if (party.sleepoors.length != 0) revert InvalidBundle(bundleId_);
+
+        party.bundleId = bundleId_;
+        party.checkpoints = checkpoints;
+        party.assetChainId = srcChainId;
+        party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
+        party.publicMintTime = block.timestamp + publicMintOffset;
+
+        SleepingNFT memory emptyNft;
+        for (uint256 i = 0; i < numSleepers_; ++i) {
+            party.sleepoors.push(emptyNft);
+        }
         gatekeeper.startGatesForBundle(bundleId_);
 
         emit SlumberPartyStarted(bundleId_);
+        return;
     }
 
     /// @notice admin function to add more sleepers to the party once a bundle is started
@@ -418,6 +465,45 @@ contract HibernationDen is
         emit FermentedJarsFound(bundleId, fermentedJars);
     }
 
+    /// @notice method that _anyone_ can call to send fermented jars across to the asset chain
+    /// @dev no permissions since its an idempotent state xfer.
+    /// @dev estimated gas round 279628 - 376242
+    function sendFermentedJars(uint8 bundleId_) external payable {
+        SlumberParty storage party = slumberParties[bundleId_];
+        if (party.fermentedJars.length == 0) revert FermentedJarNotFound(bundleId_);
+        if (party.assetChainId == getChainId()) revert InvalidInput("chainId");
+        if (address(honeyJarPortal) == address(0)) revert InvalidInput("PortalNotSet");
+        uint256[] memory jarIds = new uint256[](party.fermentedJars.length);
+
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            jarIds[i] = party.fermentedJars[i].id;
+        }
+
+        honeyJarPortal.sendFermentedJars{value: msg.value}(
+            payable(msg.sender), party.assetChainId, party.bundleId, jarIds
+        );
+    }
+
+    /// @notice called by portal when the fermented jars are found on another chain
+    /// @dev should only be called by PORTAL since this changes who is the winner
+    function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds)
+        external
+        override
+        onlyRole(Constants.PORTAL)
+    {
+        if (fermentedJarIds.length == 0) revert InvalidInput("setCrossChainFermentedJars");
+        SlumberParty storage party = slumberParties[bundleId];
+        party.fermentedJarsFound = true;
+        uint256 alreadySaved = party.fermentedJars.length;
+        // Only additive updates
+        // Don't resave existing jars, because it has internal `isUsed` state.
+        for (uint256 i = alreadySaved; i < fermentedJarIds.length; ++i) {
+            party.fermentedJars.push(FermentedJar(fermentedJarIds[i], false));
+        }
+
+        emit FermentedJarsFound(bundleId, fermentedJarIds);
+    }
+
     /// @notice transfers sleeping NFT to msg.sender if they hold the special honeyJar
     /// @dev The index in which the jarId is stored within party.fermentedJars will be the index of the NFT that will be claimed for party.sleepoors
     function wakeSleeper(uint8 bundleId_, uint256 jarId) external nonReentrant {
@@ -473,7 +559,6 @@ contract HibernationDen is
      *     shared: paymentToken
      */
 
-    /// @dev requires that beekeeper and jani addresses are set.
     /// @param amountERC20 is zero if we're only distributing the ETH
     function _distribute(uint256 amountERC20) internal {
         if (amountERC20 != 0) {
@@ -552,6 +637,14 @@ contract HibernationDen is
 
     //=============== SETTERS ================//
 
+    /// @notice sets HoneyJarPortal which is responsible for xChain communication.
+    /// @dev intentionally allow 0x0 to disable automatic xChain comms
+    function setPortal(address portal_) external onlyRole(Constants.GAME_ADMIN) {
+        honeyJarPortal = IHoneyJarPortal(portal_);
+
+        emit PortalSet(portal_);
+    }
+
     /**
      * Game setters
      *  These should not be called while a game is in progress to prevent hostage holding.
@@ -609,4 +702,7 @@ contract HibernationDen is
         vrfConfig = vrfConfig_;
         emit VRFConfigChanged(vrfConfig_);
     }
+
+    // Needed for LayerZero Refunds
+    receive() external payable {}
 }
