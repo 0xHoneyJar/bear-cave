@@ -25,3 +25,6 @@
 [submodule "lib/pigeon"]
 	path = lib/pigeon
 	url = https://github.com/exp-table/pigeon
+[submodule "lib/ERC721A"]
+	path = lib/ERC721A
+	url = https://github.com/chiru-labs/ERC721A
