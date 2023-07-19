@@ -7,7 +7,7 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Constants} from "src/Constants.sol";
 
-contract SetGates is THJScriptBase("gen3") {
+contract SetGates is THJScriptBase("berapunk") {
     using stdJson for string;
 
     function setUp() public {}
@@ -24,16 +24,16 @@ contract SetGates is THJScriptBase("gen3") {
         vm.startBroadcast();
 
         // TODO: could be moved into config
-        //     function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
-        // gk.addGate(bundleId, 0xbb5c72e4fd398ac4b6647eb5746c12b695820935f228ecdd47375266a991f6d6, 214, 0); // IG
-        // gk.addGate(bundleId, 0xf21cea41566e09e1abfb15622804f47066e3c148eeeb23a471670aad21456764, 1000, 0); // BG
-        // gk.addGate(bundleId, 0x093dce164993a0878f91817bd0363c68adaf8eb6ea72fa275ad644d050fa3a09, 1378, 0); // HG
+        // function addGate(uint256 bundleId, bytes32 root_, uint32 maxClaimable_, uint8 stageIndex_)
+        gk.addGate(bundleId, 0xab342ec24fbee210e0cc55908aea0c9ca5c91d4bc811dbf03ac994f6a84d60d1, 1068, 0); //
+        gk.addGate(bundleId, 0x9e9fef934e11275b72de2f9ddef3a3ce939f73c61e01fe2cda11f6067d43df02, 0, 0);
+        gk.addGate(bundleId, 0x4ce205a82e9ce0f7ee04897e4cb0a5884e4968259bf403435be4dd6f72dc37c9, 0, 0);
         // gk.addGate(bundleId, bytes32(0), 0, 0);
         // gk.addGate(bundleId, bytes32(0), 0, 0);
-        gk.addGate(bundleId, 0xd22a43979c4308f70aa99543f681021e18f28ff4410b078bbc1cc9097752eff4, 60, 0);
-        gr.grantRole(Constants.GAME_INSTANCE, deployer);
-        gk.startGatesForBundle(bundleId);
-        gr.renounceRole(Constants.GAME_INSTANCE, deployer);
+        // gk.addGate(bundleId, 0xd22a43979c4308f70aa99543f681021e18f28ff4410b078bbc1cc9097752eff4, 60, 0);
+        // gr.grantRole(Constants.GAME_INSTANCE, deployer);
+        // gk.startGatesForBundle(bundleId);
+        // gr.renounceRole(Constants.GAME_INSTANCE, deployer);
 
         console.log("--- Gates Added");
 

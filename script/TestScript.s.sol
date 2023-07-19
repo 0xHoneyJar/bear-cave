@@ -4,11 +4,13 @@ pragma solidity 0.8.19;
 import {ILayerZeroEndpoint} from "@layerzero/interfaces/ILayerZeroEndpoint.sol";
 
 import {HibernationDen} from "src/HibernationDen.sol";
+import {Gatekeeper} from "src/Gatekeeper.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 import {HoneyJar} from "src/HoneyJar.sol";
+import "murky/Merkle.sol";
 
 import "./THJScriptBase.sol";
 
@@ -20,12 +22,70 @@ contract TestScript is THJScriptBase("gen3") {
         string memory json = _getConfig(env);
 
         // startGame(json);
-        checkDenJars(json);
+        // checkDenJars(json);
+        // generateMerkleProof(json);
+        // bridgeNFT(json);
+        adminMint(json);
+    }
+
+    function generateMerkleProof(string memory json) internal {
+        address deployer = json.readAddress(".addresses.deployer");
+        uint256 amount = 60;
+
+        Merkle merkleLib = new Merkle();
+        bytes32[] memory data = new bytes32[](2);
+        data[0] = keccak256(abi.encodePacked(deployer, amount));
+        data[1] = keccak256(abi.encodePacked(address(0), uint256(69)));
+
+        bytes32 root = merkleLib.getRoot(data);
+
+        bytes32[] memory proof = merkleLib.getProof(data, 0);
+    }
+
+    function adminMint(string memory json) internal {
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+        Gatekeeper gk = Gatekeeper(json.readAddress(".deployments.gatekeeper"));
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+        address deployer = json.readAddress(".addresses.deployer");
+
+        uint32 amount = 60;
+        uint32 gateId = 8;
+        bytes32[] memory proof = new bytes32[](1);
+        proof[0] = 0xbd465dc7b544c480dc6400ad26a95a4741d09c2d581aac44832e2bd3556da105;
+        // proof[0] = 0xf0c22c3656f08caf7c38f838935ee5dde3ca8f23aec44aae3a89e19f5ef616d4;
+
+        bytes32 root = 0xd22a43979c4308f70aa99543f681021e18f28ff4410b078bbc1cc9097752eff4;
+        // bytes32 root = 0x67f8899d40ee70e819b95ce3881331e9faacc350e697c230d7a6b7be121b1ad7;
+
+        vm.startBroadcast();
+        // registry.grantRole(Constants.GAME_INSTANCE, deployer);
+
+        // gk.addGate(0, root, amount, 0);
+        // gk.startGatesForBundle(0);
+        den.claim(0, 10, amount, proof);
+
+        vm.stopBroadcast();
+    }
+
+    function bridgeNFT(string memory json) internal {
+        HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
+        address deployer = json.readAddress(".addresses.deployer");
+        bytes memory deployerBytes = json.readBytes(".addresses.deployer");
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 938;
+        tokenIds[1] = 1057;
+        bytes memory adapterParams = hex"0001000000000000000000000000000000000000000000000000000000000007a120";
+
+        vm.startBroadcast();
+        portal.sendBatchFrom{value: 0.01 ether}(
+            deployer, portal.lzChainId(1), deployerBytes, tokenIds, payable(deployer), address(0), adapterParams
+        );
+        vm.stopBroadcast();
     }
 
     function sendFermented(string memory json) internal {
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
-        ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addressess.lzEndpoint"));
+        ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addresses.lzEndpoint"));
         HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
 
         uint8 bundleId = uint8(json.readUint(".bundleId")); // BundleId has to be less than 255
@@ -101,7 +161,7 @@ contract TestScript is THJScriptBase("gen3") {
         vm.stopBroadcast();
     }
 
-    function checkDenJars(string memory json) internal {
+    function checkDenJars(string memory json) internal view {
         uint8 bundleId = uint8(json.readUint(".bundleId"));
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
 

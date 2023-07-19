@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 import "./THJScriptBase.sol";
 
 import {HoneyJar} from "src/HoneyJar.sol";
+import {BeraPunk} from "src/BeraPunk/BeraPunk.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
-import {HibernationDen} from "src/HibernationDen.sol";
+import {Den} from "src/BeraPunk/Den.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
@@ -15,7 +16,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase("gen3") {
+contract DeployScript is THJScriptBase("berapunk") {
     using stdJson for string;
 
     function setUp() public {}
@@ -31,8 +32,6 @@ contract DeployScript is THJScriptBase("gen3") {
         // Read Config
         string memory json = _getConfig(env);
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
-        address jani = json.readAddress(".addresses.jani");
-        address beekeeper = json.readAddress(".addresses.beekeeper");
 
         // Initializing StageTimes
         uint256[] memory stageTimes = new uint256[](1);
@@ -43,8 +42,6 @@ contract DeployScript is THJScriptBase("gen3") {
         // Deploy gameRegistry and give gameAdmin permisisons
         GameRegistry gameRegistry = new GameRegistry();
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
-        gameRegistry.setJani(jani);
-        gameRegistry.setBeekeeper(beekeeper);
         gameRegistry.setStageTimes(stageTimes);
 
         // Deploy gatekeeper
@@ -53,23 +50,23 @@ contract DeployScript is THJScriptBase("gen3") {
         vm.stopBroadcast();
     }
 
-    function deployHoneyJar(string calldata env) public {
+    function deployToken(string calldata env) public {
         string memory json = _getConfig(env);
 
         address gameRegistry = json.readAddress(".deployments.registry");
         address deployer = json.readAddress(".addresses.deployer");
 
-        uint256 honeyJarStartIndex = json.readUint(".honeyJar.startIndex");
-        uint256 honeyJarAmount = json.readUint(".honeyJar.maxMintableForChain");
-        string memory baseURI = json.readString(".honeyJar.baseURI");
+        uint256 startIndex = json.readUint(".honeyJar.startIndex");
+        uint256 tokenAmount = json.readUint(".honeyJar.maxMintableForChain");
+        // string memory baseURI = json.readString(".honeyJar.baseURI");
 
         vm.startBroadcast();
 
-        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
-        HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
-        honeyJar.setBaseURI(baseURI);
+        BeraPunk honeyJar = new BeraPunk(deployer, gameRegistry, startIndex, tokenAmount);
+        // honeyJar.setBaseURI(baseURI);
+        // TODO: SET BASE URI
 
-        console.log("- HoneyJarAddress: ", address(honeyJar));
+        console.log("- Token: ", address(honeyJar));
         vm.stopBroadcast();
     }
 
@@ -78,30 +75,25 @@ contract DeployScript is THJScriptBase("gen3") {
 
         address gameRegistry = json.readAddress(".deployments.registry");
         address gatekeeper = json.readAddress(".deployments.gatekeeper");
-        address honeyJar = json.readAddress(".deployments.honeyjar");
+        address tokenAddress = json.readAddress(".deployments.token");
 
         address paymentToken = json.readAddress(".addresses.paymentToken");
         address vrfCoordinator = json.readAddress(".vrf.coordinator");
         uint64 subId = uint64(json.readUint(".vrf.subId"));
-        address jani = json.readAddress(".addresses.jani");
-        address beekeeper = json.readAddress(".addresses.beekeeper");
-
-        uint256 revShare = json.readUint(".revShare");
+        address paymaster = json.readAddress(".addresses.paymaster");
 
         vm.startBroadcast();
 
-        HibernationDen den = new HibernationDen(
+        Den den = new Den(
             vrfCoordinator,
             gameRegistry,
-            honeyJar,
+            tokenAddress,
             paymentToken,
             gatekeeper,
-            jani,
-            beekeeper,
-            revShare
+            paymaster
         );
 
-        console.log("-HibernationDenAddress: ", address(den));
+        console.log("-Den: ", address(den));
         // VRFCoordinatorV2Interface(vrfCoordinator).addConsumer(subId, address(den));
         console.log("---REMEMBER TO ADD DEN AS A VRF CONSUMER---");
 

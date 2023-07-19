@@ -6,7 +6,7 @@ import "./THJScriptBase.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
-contract StartGame is THJScriptBase("gen3") {
+contract StartGame is THJScriptBase("berapunk") {
     using stdJson for string;
 
     // Notes: call on both chains
@@ -19,7 +19,7 @@ contract StartGame is THJScriptBase("gen3") {
         vm.startBroadcast();
 
         registry.startGame(den);
-        HibernationDen(den).setPortal(portal);
+        // HibernationDen(den).setPortal(portal);
 
         vm.stopBroadcast();
     }

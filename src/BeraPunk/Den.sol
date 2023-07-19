@@ -25,9 +25,9 @@ import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {Constants} from "src/Constants.sol";
 
-/// @title HibernationDen
+/// @title Den (Mostly taken from HibernationDen.sol)
 /// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
-contract HibernationDen is
+contract Den is
     IHibernationDen,
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
@@ -116,7 +116,7 @@ contract HibernationDen is
     /**
      * bearPouch
      */
-    address payable private immutable beraPunkAdmin;
+    address payable private immutable paymaster;
 
     /**
      * Dependencies
@@ -130,6 +130,9 @@ contract HibernationDen is
      * Internal Storage
      */
     bool public initialized;
+
+    /// @notice the amount a gameAdmin can mint
+    uint256 private adminMintAmount;
 
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
@@ -151,19 +154,19 @@ contract HibernationDen is
         address _beraPunkAddress,
         address _paymentToken,
         address _gatekeeper,
-        address _beraPunkAdmin
+        address _paymaster
     ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         beraPunk = IHoneyJar(_beraPunkAddress);
         paymentToken = IERC20(_paymentToken);
         gatekeeper = IGatekeeper(_gatekeeper);
-        beraPunkAdmin = payable(_beraPunkAdmin);
+        paymaster = payable(_paymaster);
     }
 
     /// @notice additional parameters that are required to get the game running
     /// @param vrfConfig_ Chainlink  configuration
     /// @param mintConfig_ needed for the specific game
-    function initialize(VRFConfig calldata vrfConfig_, MintConfig calldata mintConfig_)
+    function initialize(VRFConfig calldata vrfConfig_, MintConfig calldata mintConfig_, uint256 adminMintAmount_)
         external
         onlyRole(Constants.GAME_ADMIN)
     {
@@ -172,6 +175,8 @@ contract HibernationDen is
         initialized = true;
         vrfConfig = vrfConfig_;
         mintConfig = mintConfig_;
+
+        adminMintAmount = adminMintAmount_;
 
         emit Initialized(mintConfig);
     }
@@ -562,11 +567,11 @@ contract HibernationDen is
     /// @param amountERC20 is zero if we're only distributing the ETH
     function _distribute(uint256 amountERC20) internal {
         if (amountERC20 != 0) {
-            paymentToken.safeTransferFrom(msg.sender, beraPunkAdmin, amountERC20);
+            paymentToken.safeTransferFrom(msg.sender, paymaster, amountERC20);
         }
 
         if (msg.value != 0) {
-            SafeTransferLib.safeTransferETH(beraPunkAdmin, msg.value);
+            SafeTransferLib.safeTransferETH(paymaster, msg.value);
         }
     }
 
@@ -635,7 +640,22 @@ contract HibernationDen is
         }
     }
 
-    //=============== SETTERS ================//
+    //=============== Admin Methods ================//
+
+    /// @notice admin function to mint a specified amount of THJ.
+    /// @dev the value is set on initialization.
+    function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
+        if (adminMintAmount == 0) revert MekingTooManyHoneyJars(bundleId_);
+
+        if (amount_ > adminMintAmount) {
+            amount_ = adminMintAmount;
+        }
+        adminMintAmount -= amount_;
+
+        _canMintHoneyJar(bundleId_, amount_);
+
+        _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+    }
 
     /// @notice sets HoneyJarPortal which is responsible for xChain communication.
     /// @dev intentionally allow 0x0 to disable automatic xChain comms

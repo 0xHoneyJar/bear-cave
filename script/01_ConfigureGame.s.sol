@@ -9,12 +9,12 @@ import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
 import {GameRegistry} from "src/GameRegistry.sol";
-import {HibernationDen} from "src/HibernationDen.sol";
+import {Den} from "src/BeraPunk/Den.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 
 // Sets up HibernationDen as a game
-contract ConfigureGame is THJScriptBase("gen3") {
+contract ConfigureGame is THJScriptBase("berapunk") {
     using stdJson for string;
     using SafeCastLib for uint256;
 
@@ -40,22 +40,22 @@ contract ConfigureGame is THJScriptBase("gen3") {
         uint64 vrfSubId = json.readUint(".vrf.subId").safeCastTo64();
         // Pull gas limit from here: https://docs.chain.link/vrf/v2/subscription/supported-networks
         // Validate maxConfirmations with each chain you deploy to. 3 may not be enough!
-        HibernationDen.VRFConfig memory vrfConfig = HibernationDen.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000); // Max CallbackLimit
+        Den.VRFConfig memory vrfConfig = Den.VRFConfig(vrfKeyhash, vrfSubId, 3, 2500000); // Max CallbackLimit
 
-        HibernationDen.MintConfig memory mintConfig =
-            abi.decode(json.parseRaw(".mintConfig"), (HibernationDen.MintConfig));
+        Den.MintConfig memory mintConfig = abi.decode(json.parseRaw(".mintConfig"), (Den.MintConfig));
 
-        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.den")));
+        Den den = Den(payable(json.readAddress(".deployments.den")));
         HoneyJarPortal portal = HoneyJarPortal(payable(json.readAddress(".deployments.portal")));
         GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+        uint256 adminMintAmount = json.readUint(".adminMintAmount");
 
         vm.startBroadcast();
 
-        hibernationDen.initialize(vrfConfig, mintConfig);
-        registry.grantRole(Constants.PORTAL, address(portal));
-        registry.grantRole(Constants.BURNER, address(portal));
-        registry.grantRole(Constants.MINTER, address(portal));
-        registry.registerGame(address(hibernationDen));
+        den.initialize(vrfConfig, mintConfig, adminMintAmount);
+        // registry.grantRole(Constants.PORTAL, address(portal));
+        // registry.grantRole(Constants.BURNER, address(portal));
+        // registry.grantRole(Constants.MINTER, address(portal));
+        registry.registerGame(address(den));
 
         vm.stopBroadcast();
     }

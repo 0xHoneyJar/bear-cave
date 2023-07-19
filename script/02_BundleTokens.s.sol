@@ -7,14 +7,11 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {HibernationDen} from "src/HibernationDen.sol";
+import {Den} from "src/BeraPunk/Den.sol";
 // Calls honeyBox.addBundle
 
-contract BundleTokens is THJScriptBase("gen3") {
+contract BundleTokens is THJScriptBase("berapunk") {
     using stdJson for string;
-
-    uint256 private SFT_ID = 4;
-    uint256 private NFT_ID = 4;
 
     ERC721 private nft;
     ERC1155 private sft;
@@ -25,7 +22,7 @@ contract BundleTokens is THJScriptBase("gen3") {
     // Notes: Only ETH -- Remember to update bundleId once done.
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
-        HibernationDen hibernationDen = HibernationDen(payable(json.readAddress(".deployments.den")));
+        Den hibernationDen = Den(payable(json.readAddress(".deployments.den")));
 
         uint256 mintChainId = json.readUint(".mintChainId");
         uint256[] memory checkpoints = json.readUintArray(".checkpoints");

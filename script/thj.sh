@@ -144,8 +144,8 @@ case "$method" in
     forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHelpers(string)()' $network $forge_params
     ;;
   "deploy2")
-    echo "Deploying HoneyJar"
-    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployHoneyJar(string)()' $network $forge_params
+    echo "Deploying Token"
+    forge script script/00_Deploy.s.sol:DeployScript --sig 'deployToken(string)()' $network $forge_params
     ;;
   "deploy3")
     echo "Deploying HibernationDen"
