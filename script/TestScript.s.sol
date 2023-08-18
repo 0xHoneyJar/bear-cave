@@ -15,7 +15,7 @@ import "murky/Merkle.sol";
 import "./THJScriptBase.sol";
 
 /// @notice this script is only meant to test do not use for production
-contract TestScript is THJScriptBase("gen3") {
+contract TestScript is THJScriptBase("berapunk") {
     using stdJson for string;
 
     function run(string calldata env) public override {
@@ -25,7 +25,8 @@ contract TestScript is THJScriptBase("gen3") {
         // checkDenJars(json);
         // generateMerkleProof(json);
         // bridgeNFT(json);
-        adminMint(json);
+        // adminMint(json);
+        setStages(json);
     }
 
     function generateMerkleProof(string memory json) internal {
@@ -40,6 +41,17 @@ contract TestScript is THJScriptBase("gen3") {
         bytes32 root = merkleLib.getRoot(data);
 
         bytes32[] memory proof = merkleLib.getProof(data, 0);
+    }
+
+    function setStages(string memory json) internal {
+        GameRegistry gr = GameRegistry(json.readAddress(".deployments.registry"));
+        uint256[] memory stageTimes = new uint256[](2);
+        stageTimes[0] = 0;
+        stageTimes[1] = 25 hours;
+
+        vm.startBroadcast();
+        gr.setStageTimes(stageTimes);
+        vm.stopBroadcast();
     }
 
     function adminMint(string memory json) internal {
