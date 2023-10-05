@@ -92,7 +92,7 @@ fi
 
 # Load environment variables from .env file if flag is provided
 if [ "$load_env" = true ]; then
-  echo "Loading environment variables from file: .env ..."
+  echo "Loading environment variables from file: .env ..."g
   source .env
   env_file=".env.${network}"
   if [ ! -f "$env_file" ]; then
