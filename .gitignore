@@ -2,6 +2,7 @@
 cache/
 out/
 bin/
+docs/
 
 # Ignores development broadcast logs
 !/broadcast
