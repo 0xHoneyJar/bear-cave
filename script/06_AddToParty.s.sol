@@ -20,6 +20,9 @@ contract AddToParty is THJScriptBase("gen3") {
         assert(party.sleepoors.length > 0);
 
         // Add zero values for L2
+
+        // If the transfer value is set to (true), the den will attempt to transfer the NFT into the contract
+        /// function addToParty(uint8 bundleId_, SleepingNFT calldata sleeper, bool transfer)
         HibernationDen.SleepingNFT memory sleeper = IHibernationDen.SleepingNFT(address(0), 0, false);
 
         vm.startBroadcast();
