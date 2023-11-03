@@ -143,7 +143,8 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Bear pouch
         IBearPouch.DistributionConfig[] memory distributions = new IBearPouch.DistributionConfig[](2);
         distributions[0] = IBearPouch.DistributionConfig({recipient: address(beekeeper), share: honeyJarShare});
-        distributions[1] = IBearPouch.DistributionConfig({recipient: address(jani), share: FixedPointMathLib.WAD - honeyJarShare});
+        distributions[1] =
+            IBearPouch.DistributionConfig({recipient: address(jani), share: FixedPointMathLib.WAD - honeyJarShare});
 
         bearPouch = new BearPouch(address(gameRegistry), address(paymentToken), distributions);
 

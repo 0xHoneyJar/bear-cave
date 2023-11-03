@@ -17,7 +17,6 @@ import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
-
 contract DeployScript is THJScriptBase("gen3") {
     using stdJson for string;
 
