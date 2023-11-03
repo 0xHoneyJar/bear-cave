@@ -28,14 +28,26 @@ contract BearPouch is IBearPouch, GameRegistryConsumer {
     {
         paymentToken = IERC20(paymentToken_);
 
+        _updateDistributions(_distributions);
+    }
+
+    function _updateDistributions(DistributionConfig[] memory _distributions) internal {
+        delete distributions; // Delete any existing distributions
+
         uint256 shareSum = 0;
         for (uint256 i = 0; i < _distributions.length; i++) {
             shareSum += _distributions[i].share;
+            distributions.push(_distributions[i]); // Copy each element to storage slot
         }
 
         if (shareSum != 1e18) revert InvalidDistributionConfig(shareSum);
+    }
 
-        distributions = _distributions;
+    function updateDistributions(DistributionConfig[] calldata _distributions)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        _updateDistributions(_distributions);
     }
 
     function distribute(uint256 amountERC20) external payable onlyRole(Constants.GAME_INSTANCE) {

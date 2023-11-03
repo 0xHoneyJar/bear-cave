@@ -82,6 +82,7 @@ contract HibernationDen is
      */
     event Initialized(MintConfig mintConfig);
     event PortalSet(address portal);
+    event AdminMintAmount(uint256 amount);
     event SlumberPartyStarted(uint8 bundleId);
     event SlumberPartyAdded(uint8 bundleId);
     event FermentedJarsFound(uint8 bundleId, uint256[] honeyJarIds);
@@ -97,6 +98,7 @@ contract HibernationDen is
      */
     IERC20 public immutable paymentToken; // OHM
     MintConfig public mintConfig;
+    uint256 public adminMintAmount;
 
     /**
      * Chainlink VRF Config
@@ -368,6 +370,7 @@ contract HibernationDen is
     /// @dev internal helper function to collect payment and mint honeyJar
     /// @return tokenID of minted honeyJar
     function _distributeERC20AndMintHoneyJar(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+        paymentToken.safeTransferFrom(msg.sender, address(this), mintConfig.honeyJarPrice_ERC20 * amount_);
         bearPouch.distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
 
         // Mint da honey
@@ -616,7 +619,29 @@ contract HibernationDen is
         }
     }
 
+    /// @notice admin function to mint a specified amount of THJ.
+    /// @dev the value is set on initialization.
+    function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
+        if (adminMintAmount == 0) revert MekingTooManyHoneyJars(bundleId_);
+
+        if (amount_ > adminMintAmount) {
+            amount_ = adminMintAmount;
+        }
+        adminMintAmount -= amount_;
+
+        _canMintHoneyJar(bundleId_, amount_);
+
+        _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+    }
+
     //=============== SETTERS ================//
+
+    /// @notice game_admin method to set the amount of jars that can be minted by the admin.
+    function setAdminMint(uint256 adminMintAmount_) external onlyRole(Constants.GAME_ADMIN) {
+        adminMintAmount = adminMintAmount_;
+
+        emit AdminMintAmount(adminMintAmount_);
+    }
 
     /// @notice sets HoneyJarPortal which is responsible for xChain communication.
     /// @dev intentionally allow 0x0 to disable automatic xChain comms

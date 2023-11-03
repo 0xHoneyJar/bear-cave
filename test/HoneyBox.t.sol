@@ -19,6 +19,7 @@ import {GameRegistry} from "src/GameRegistry.sol";
 import {Gatekeeper} from "src/Gatekeeper.sol";
 import {Constants} from "src/Constants.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
+import {BearPouch, IBearPouch} from "src/BearPouch.sol";
 
 contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     using FixedPointMathLib for uint256;
@@ -60,6 +61,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     HibernationDen private honeyBox;
     HibernationDen.VRFConfig private vrfConfig;
     HibernationDen.MintConfig private mintConfig;
+    BearPouch private bearPouch;
     HoneyJar private honeyJar;
     Gatekeeper private gatekeeper;
 
@@ -138,15 +140,21 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyJar = new HoneyJar(address(this), address(gameRegistry), START_TOKEN_ID, 69);
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
+        // Bear pouch
+        IBearPouch.DistributionConfig[] memory distributions = new IBearPouch.DistributionConfig[](2);
+        distributions[0] = IBearPouch.DistributionConfig({recipient: address(beekeeper), share: honeyJarShare});
+        distributions[1] = IBearPouch.DistributionConfig({recipient: address(jani), share: FixedPointMathLib.WAD - honeyJarShare});
+
+        bearPouch = new BearPouch(address(gameRegistry), address(paymentToken), distributions);
+
+        // Deploy the honeyBox
         honeyBox = new HibernationDen(
             address(vrfCoordinator),
             address(gameRegistry),
-            address(honeyJar),
-            address(paymentToken),
-            address(gatekeeper),
-            address(jani),
-            address(beekeeper),
-            honeyJarShare
+            honeyJar,
+            paymentToken,
+            gatekeeper,
+            bearPouch
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -313,12 +321,10 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         HibernationDen l2HibernationDen = new HibernationDen(
             address(vrfCoordinator),
             address(gameRegistry),
-            address(honeyJar),
-            address(paymentToken),
-            address(gatekeeper),
-            address(jani),
-            address(beekeeper),
-            honeyJarShare
+            honeyJar,
+            paymentToken,
+            gatekeeper,
+            bearPouch
         );
 
         vrfCoordinator.addConsumer(subId, address(l2HibernationDen));
