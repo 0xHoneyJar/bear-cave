@@ -9,6 +9,7 @@ import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2I
 /// @dev Used on chains where there in no ChainLink VRF
 /// @dev For chains with VRF, use the VRFCoordinator directly
 /// @dev 1 provider for 1 recipient
+/// @dev Future Optmizations: define as abstract contract that is implmented per provider
 contract VRFProvider is VRFCoordinatorV2Interface {
     error NotImplemented();
 
@@ -16,6 +17,7 @@ contract VRFProvider is VRFCoordinatorV2Interface {
 
     constructor(VRFConsumerBaseV2 _recipient) {
         recipient = _recipient;
+        // TODO: Include relevant Provider configuration within constructor
     }
 
     /// @inheritdoc VRFCoordinatorV2Interface
@@ -26,13 +28,19 @@ contract VRFProvider is VRFCoordinatorV2Interface {
         uint32 callbackGasLimit,
         uint32 numWords
     ) external returns (uint256 requestId) {
-        // TODO
+        // TODO: implment requesting VRF based on provider spec.
+    }
+
+    /// @notice should be permissioned to only work with the VRF provider
+    /// TODO: params
+    function getRandomWords() external {
+        // TODO: external method that is called by the VRF provider with random numbers.
     }
 
     /// @dev rawFulfillRandomWords valdiates that the reciving contract is being called by a valid VRF Coordinator
     /// @dev since this contract is acting like a VRFCoordinator this will work
     function _sendRandomWords(uint256 requestId, uint256[] memory randomWords) internal {
-        // TODO: message random words into a chainLink format
+        // TODO: massage random words into a chainLink format
         recipient.rawFulfillRandomWords(requestId, randomWords);
     }
 
@@ -81,8 +89,8 @@ contract VRFProvider is VRFCoordinatorV2Interface {
     function pendingRequestExists(uint64 subId) external view returns (bool) {
         revert NotImplemented();
     }
-    /// @notice Not Implemented
 
+    /// @notice Not Implemented
     function acceptSubscriptionOwnerTransfer(uint64 subId) external {
         revert NotImplemented();
     }

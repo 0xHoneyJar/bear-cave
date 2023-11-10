@@ -21,7 +21,7 @@ contract BearPouch is IBearPouch, GameRegistryConsumer {
 
     IERC20 public paymentToken;
 
-    DistributionConfig[] private distributions;
+    DistributionConfig[] public distributions;
 
     constructor(address gameRegistry_, address paymentToken_, DistributionConfig[] memory _distributions)
         GameRegistryConsumer(gameRegistry_)
@@ -40,7 +40,7 @@ contract BearPouch is IBearPouch, GameRegistryConsumer {
             distributions.push(_distributions[i]); // Copy each element to storage slot
         }
 
-        if (shareSum != 1e18) revert InvalidDistributionConfig(shareSum);
+        if (shareSum != FixedPointMathLib.WAD) revert InvalidDistributionConfig(shareSum);
     }
 
     function updateDistributions(DistributionConfig[] calldata _distributions)
