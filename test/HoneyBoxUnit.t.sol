@@ -569,7 +569,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155);
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, 2);
     }
 
     function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
@@ -582,6 +582,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155);
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, 2);
     }
 }

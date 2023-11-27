@@ -236,7 +236,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         checkpoints[2] = 12;
         checkpoints[3] = maxHoneyJar;
 
-        bundleId = hibernationDenL1.addBundle(L2_CHAIN_ID, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+        bundleId = hibernationDenL1.addBundle(L2_CHAIN_ID, checkpoints, tokenAddresses, tokenIDs, isERC1155s, 2);
 
         erc721.approve(address(hibernationDenL1), NFT_ID);
         erc721.approve(address(hibernationDenL1), NFT_ID + 1);
