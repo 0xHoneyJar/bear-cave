@@ -233,8 +233,8 @@ contract HibernationDen is
     function startGame(
         uint256 srcChainId,
         uint8 bundleId_,
-        uint256 numSleepers_,
         uint256 maxMintPerUser_,
+        uint256 numSleepers_,
         uint256[] calldata checkpoints
     ) external override onlyRole(Constants.PORTAL) {
         if (checkpoints.length > numSleepers_) revert InvalidInput("startGame::checkpoints");
