@@ -149,7 +149,7 @@ contract HibernationDen is
     mapping(uint8 => uint256[]) public honeyJarShelf;
 
     /// @notice tracks maximum number of mints per address
-    mapping(address => uint256) public minterMintCount;
+    mapping(address => uint256) public minterPublicMintCount;
 
     constructor(
         address _vrfCoordinator,
@@ -321,7 +321,7 @@ contract HibernationDen is
     }
 
     /// @dev internal helper function to perform conditional checks for minting state
-    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isEarly) internal view {
+    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isPublic) internal view {
         if (!initialized) revert NotInitialized();
         SlumberParty storage party = slumberParties[bundleId_];
 
@@ -335,8 +335,8 @@ contract HibernationDen is
         }
         if (amount_ == 0) revert ZeroMint();
         // Only applies to public minting
-        if (!isEarly && minterMintCount[minter_] + amount_ > party.maxMintsPerUser) {
-            revert MaxMintsPerUserReached(minter_, party.maxMintsPerUser);
+        if (isPublic && minterPublicMintCount[minter_] + amount_ > party.maxMintsPerUser) {
+            revert MaxMintsPerUserReached(minter_, amount_);
         }
     }
 
@@ -351,7 +351,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
-        _canMintHoneyJar(msg.sender, bundleId, mintAmount, true);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, false);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
@@ -369,7 +369,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external payable returns (uint256) {
-        _canMintHoneyJar(msg.sender, bundleId, mintAmount, true);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, false);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
@@ -379,14 +379,18 @@ contract HibernationDen is
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
+        minterPublicMintCount[msg.sender] += amount_;
+
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
+        minterPublicMintCount[msg.sender] += amount_;
+
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
 
@@ -417,7 +421,6 @@ contract HibernationDen is
     function _mintHoneyJarForBear(address to, uint8 bundleId_, uint256 amount_) internal returns (uint256) {
         uint256 tokenId = honeyJar.nextTokenId();
         honeyJar.batchMint(to, amount_);
-        minterMintCount[to] += amount_;
 
         // Have a unique tokenId for a given bundleId
         for (uint256 i = 0; i < amount_; ++i) {
@@ -633,7 +636,7 @@ contract HibernationDen is
             numClaim = mintConfig.maxClaimableHoneyJar - claimedAmount;
         }
         // Check if the HoneyJars can be minted
-        _canMintHoneyJar(msg.sender, bundleId_, numClaim, true); // Validating here because numClaims can change
+        _canMintHoneyJar(msg.sender, bundleId_, numClaim, false); // Validating here because numClaims can change
 
         // Update the amount minted.
         claimed[bundleId_] += numClaim;

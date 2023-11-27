@@ -35,7 +35,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint32 private maxHoneyJar = 15;
     uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
-    uint256 private maxMintsPerUser = 100;
+    uint256 private maxMintsPerUser = 5;
 
     // Gatekeeper
     bytes32[] private gateData;
@@ -55,6 +55,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     address private alfaHunter; //0
     address private bera; // 1
     address private clown; // 2
+    address private doge; // 3
 
     // Deployables
     GameRegistry private gameRegistry;
@@ -99,6 +100,8 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.deal(bera, 100 ether);
         clown = makeAddr("clown");
         vm.deal(clown, 100 ether);
+        doge = makeAddr("doge");
+        vm.deal(doge, 100 ether);
 
         // @solidity-ignore no-console
         console.log("beekeeper: ", beekeeper);
@@ -107,6 +110,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         console.log("alfaHunter: ", alfaHunter);
         console.log("bera: ", bera);
         console.log("clown: ", clown);
+        console.log("doge: ", doge);
         console.log("deployer: ", address(this));
 
         // Mint winning NFTs to the gameAdmin
@@ -120,6 +124,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         paymentToken.mint(alfaHunter, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(bera, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(clown, MINT_PRICE_ERC20 * 100);
+        paymentToken.mint(doge, MINT_PRICE_ERC20 * 100);
         paymentToken.mint(address(this), MINT_PRICE_ERC20 * 5);
 
         // Chainlink setup
@@ -165,10 +170,11 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         /**
          *   Generate roots
          */
-        gateData = new bytes32[](3);
+        gateData = new bytes32[](4);
         gateData[0] = createNode(alfaHunter, 2);
         gateData[1] = createNode(bera, 3);
         gateData[2] = createNode(clown, 3);
+        gateData[3] = createNode(doge, uint32(maxMintsPerUser + 1));
         gateRoot = merkleLib.getRoot(gateData);
         gatekeeper.addGate(bundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
 
@@ -255,6 +261,13 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 3);
         honeyBox.mekHoneyJarWithERC20(bundleId, 3);
+    }
+
+    function test_claimOverMaxMint() public {
+        vm.startPrank(doge);
+        honeyBox.claim(bundleId, 0, uint32(maxMintsPerUser + 1), getProof(3));
+        assertEq(honeyJar.balanceOf(doge), maxMintsPerUser + 1);
+        vm.stopPrank();
     }
 
     function testFailEarlyWakeAttempt() public {
