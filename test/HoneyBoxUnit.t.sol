@@ -34,6 +34,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
     uint32 private maxHoneyJar = 4;
     uint256 private honeyJarShare = 2233 * 1e14; // In WAD (.2233)
+    uint256 private maxMintsPerUser = 500;
 
     uint8 private bundleId;
     MockERC1155 private erc1155;
@@ -238,8 +239,15 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
     }
 
-    function testFailMekHoney_maxMintReached() {
-        
+    function testFailMekHoney_maxMintReachedDuringPublicMint() public {
+        _puffPuffPassOut(bundleId);
+
+        // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
+        vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
+        bytes memory request =
+            abi.encodeWithSelector(HibernationDen.mekHoneyJarWithETH.selector, bundleId, maxMintsPerUser);
+        bytes memory response = address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH * maxMintsPerUser);
+        uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
     }
 
     function testMekHoneyJarWithERC20() public {
@@ -573,7 +581,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, 500);
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, maxMintsPerUser);
     }
 
     function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
@@ -586,6 +594,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, 500);
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, maxMintsPerUser);
     }
 }
