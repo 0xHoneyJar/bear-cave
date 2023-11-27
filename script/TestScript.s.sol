@@ -79,7 +79,11 @@ contract TestScript is THJScriptBase("gen3") {
         vm.startBroadcast();
         registry.grantRole(Constants.PORTAL, deployer);
         den.startGame(
-            assetChainId, startGamePayload.bundleId, startGamePayload.numSleepers, startGamePayload.checkpoints
+            assetChainId,
+            startGamePayload.bundleId,
+            startGamePayload.maxMintsPerUser,
+            startGamePayload.numSleepers,
+            startGamePayload.checkpoints
         );
         registry.renounceRole(Constants.PORTAL, deployer);
         vm.stopBroadcast();

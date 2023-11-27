@@ -344,7 +344,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         newCheckpoints[0] = maxHoneyJar;
 
         vm.startPrank(portal);
-        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length, newCheckpoints);
+        l2HibernationDen.startGame(l1ChainId, newBundleId, maxMintsPerUser, tokenAddresses.length, newCheckpoints);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint

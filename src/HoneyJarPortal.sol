@@ -197,6 +197,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
+        uint256 maxMintPerUser_,
         uint256 numSleepers_,
         uint256[] calldata checkpoints_
     ) external payable override onlyRole(Constants.GAME_INSTANCE) {
@@ -212,7 +213,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
             1000 * numSleepers_ // Padding for each NFT being stored
         );
 
-        bytes memory payload = _encodeStartGame(bundleId_, numSleepers_, checkpoints_);
+        bytes memory payload = _encodeStartGame(bundleId_, maxMintPerUser_, numSleepers_, checkpoints_);
         _lzSend(lzDestId, payload, refundAddress_, address(0x0), adapterParams, msg.value);
 
         emit StartCrossChainGame(destChainId_, bundleId_, numSleepers_);
@@ -276,7 +277,9 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         uint256 realSrcChainId = realChainId[srcChainId];
         if (realSrcChainId == 0) revert LzMappingMissing(srcChainId);
         StartGamePayload memory payload = _decodeStartGame(_payload);
-        hibernationDen.startGame(realSrcChainId, payload.bundleId, payload.numSleepers, payload.checkpoints);
+        hibernationDen.startGame(
+            realSrcChainId, payload.bundleId, payload.maxMintsPerUser, payload.numSleepers, payload.checkpoints
+        );
 
         emit StartGameProcessed(realSrcChainId, payload);
     }
@@ -311,6 +314,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
 
     struct StartGamePayload {
         uint8 bundleId;
+        uint256 maxMintsPerUser;
         uint256 numSleepers;
         uint256[] checkpoints;
     }
@@ -329,12 +333,15 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
         return abi.encode(MessageTypes.SEND_NFT, SendNFTPayload(to, tokenIds));
     }
 
-    function _encodeStartGame(uint8 bundleId_, uint256 numSleepers_, uint256[] memory checkpoints_)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(MessageTypes.START_GAME, StartGamePayload(bundleId_, numSleepers_, checkpoints_));
+    function _encodeStartGame(
+        uint8 bundleId_,
+        uint256 maxMintPerUser_,
+        uint256 numSleepers_,
+        uint256[] memory checkpoints_
+    ) internal pure returns (bytes memory) {
+        return abi.encode(
+            MessageTypes.START_GAME, StartGamePayload(bundleId_, maxMintPerUser_, numSleepers_, checkpoints_)
+        );
     }
 
     function _encodeFermentedJars(uint8 bundleId_, uint256[] memory fermentedJarIds_)

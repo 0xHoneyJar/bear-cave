@@ -6,6 +6,7 @@ interface IHoneyJarPortal {
         address payable refundAddress_,
         uint256 destChainId_,
         uint8 bundleId_,
+        uint256 maxMintPerUser_,
         uint256 numSleepers_,
         uint256[] calldata checkpoints_
     ) external payable;

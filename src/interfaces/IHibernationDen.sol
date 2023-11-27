@@ -46,8 +46,13 @@ interface IHibernationDen {
         uint256 maxMintsPerUser;
     }
 
-    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
-        external;
+    function startGame(
+        uint256 srcChainId,
+        uint8 bundleId_,
+        uint256 maxMintPerUser_,
+        uint256 numSleepers_,
+        uint256[] calldata checkpoints
+    ) external;
     function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds) external;
 
     function getSlumberParty(uint8 bundleId) external returns (SlumberParty memory);
