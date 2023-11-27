@@ -36,7 +36,7 @@ contract BundleTokens is THJScriptBase("gen3") {
         vm.startBroadcast();
         // Identify tokenID to hibernate
 
-        uint8 bundleId = hibernationDen.addBundle(mintChainId, checkpoints, addresses, tokenIds, isERC1155s);
+        uint8 bundleId = hibernationDen.addBundle(mintChainId, checkpoints, addresses, tokenIds, isERC1155s, 2);
         console.log("UPDATE CONFIG WITH BundleID: ", bundleId);
 
         vm.stopBroadcast();

@@ -184,7 +184,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         checkpoints[2] = 12;
         checkpoints[3] = maxHoneyJar;
 
-        bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s, 2);
+        bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s, 100);
 
         erc721.approve(address(honeyBox), NFT_ID);
         erc721.approve(address(honeyBox), NFT_ID + 1);
@@ -334,7 +334,8 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.registerGame(address(l2HibernationDen));
         gameRegistry.startGame(address(l2HibernationDen));
 
-        uint8 newBundleId = l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s, 2);
+        uint8 newBundleId =
+            l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s, 100);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 

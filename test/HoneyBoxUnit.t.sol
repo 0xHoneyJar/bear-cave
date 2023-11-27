@@ -238,7 +238,11 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
     }
 
-    function testmekHoneyJarWithERC20() public {
+    function testFailMekHoney_maxMintReached() {
+        
+    }
+
+    function testMekHoneyJarWithERC20() public {
         _puffPuffPassOut(bundleId);
 
         assertEq(honeyJar.balanceOf(address(this)), 0, "how do you already have honey?");
@@ -569,7 +573,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, 2);
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, 500);
     }
 
     function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
@@ -582,6 +586,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, 2);
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, 500);
     }
 }

@@ -313,7 +313,7 @@ contract HibernationDen is
     }
 
     /// @dev internal helper function to perform conditional checks for minting state
-    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_) internal view {
+    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isEarly) internal view {
         if (!initialized) revert NotInitialized();
         SlumberParty storage party = slumberParties[bundleId_];
 
@@ -326,11 +326,10 @@ contract HibernationDen is
             revert MekingTooManyHoneyJars(bundleId_);
         }
         if (amount_ == 0) revert ZeroMint();
-        // Only applies to public minting ()
-        if (
-            slumberParties[bundleId_].publicMintTime <= block.timestamp
-                && minterMintCount[minter_] + amount_ > party.maxMintsPerUser
-        ) revert MaxMintsPerUserReached(minter_, party.maxMintsPerUser);
+        // Only applies to public minting
+        if (!isEarly && minterMintCount[minter_] + amount_ > party.maxMintsPerUser) {
+            revert MaxMintsPerUserReached(minter_, party.maxMintsPerUser);
+        }
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof
@@ -344,7 +343,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
-        _canMintHoneyJar(msg.sender, bundleId, mintAmount);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, true);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
@@ -362,7 +361,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external payable returns (uint256) {
-        _canMintHoneyJar(msg.sender, bundleId, mintAmount);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, true);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
@@ -371,14 +370,15 @@ contract HibernationDen is
 
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
-        _canMintHoneyJar(msg.sender, bundleId_, amount_);
+
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        _canMintHoneyJar(msg.sender, bundleId_, amount_);
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
 
@@ -625,7 +625,7 @@ contract HibernationDen is
             numClaim = mintConfig.maxClaimableHoneyJar - claimedAmount;
         }
         // Check if the HoneyJars can be minted
-        _canMintHoneyJar(msg.sender, bundleId_, numClaim); // Validating here because numClaims can change
+        _canMintHoneyJar(msg.sender, bundleId_, numClaim, true); // Validating here because numClaims can change
 
         // Update the amount minted.
         claimed[bundleId_] += numClaim;
