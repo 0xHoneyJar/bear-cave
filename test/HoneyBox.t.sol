@@ -35,7 +35,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint32 private maxHoneyJar = 15;
     uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
-    uint256 private maxMintsPerUser = 5;
+    uint256 private maxMintsPerUser = 10;
 
     // Gatekeeper
     bytes32[] private gateData;
@@ -174,7 +174,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gateData[0] = createNode(alfaHunter, 2);
         gateData[1] = createNode(bera, 3);
         gateData[2] = createNode(clown, 3);
-        gateData[3] = createNode(doge, uint32(maxMintsPerUser + 1));
+        gateData[3] = createNode(doge, 3);
         gateRoot = merkleLib.getRoot(gateData);
         gatekeeper.addGate(bundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
 
@@ -263,10 +263,16 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyBox.mekHoneyJarWithERC20(bundleId, 3);
     }
 
-    function test_claimOverMaxMint() public {
+    function testMintOverMaxMintReverts() public {
+        vm.warp(block.timestamp + 72 hours);
+
         vm.startPrank(doge);
-        honeyBox.claim(bundleId, 0, uint32(maxMintsPerUser + 1), getProof(3));
-        assertEq(honeyJar.balanceOf(doge), maxMintsPerUser + 1);
+        paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 3);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 3);
+        assertEq(honeyJar.balanceOf(doge), 3);
+
+        vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 8}(bundleId, 8);
         vm.stopPrank();
     }
 

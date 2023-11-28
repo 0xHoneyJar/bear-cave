@@ -71,7 +71,7 @@ contract HibernationDen is
     error InvalidInput(string method);
     error Claim_InvalidProof();
     error MekingTooManyHoneyJars(uint8 bundleId);
-    error MaxMintsPerUserReached(address user, uint256 maxMintsPerUser);
+    error MaxMintsPerUserReached();
     error ZeroMint();
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
@@ -134,6 +134,9 @@ contract HibernationDen is
      */
     bool public initialized;
 
+    /// @notice the amount a gameAdmin can mint
+    uint256 private adminMintAmount = 200;
+
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
     SlumberParty[] public slumberPartyList;
@@ -148,8 +151,8 @@ contract HibernationDen is
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
 
-    /// @notice tracks maximum number of mints per address
-    mapping(address => uint256) public minterPublicMintCount;
+    /// @notice tracks maximum number of mints per address and limits to global mint amount
+    mapping(address => uint256) public mintCount;
 
     constructor(
         address _vrfCoordinator,
@@ -321,7 +324,7 @@ contract HibernationDen is
     }
 
     /// @dev internal helper function to perform conditional checks for minting state
-    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isPublic) internal view {
+    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isAdmin) internal view {
         if (!initialized) revert NotInitialized();
         SlumberParty storage party = slumberParties[bundleId_];
 
@@ -334,9 +337,8 @@ contract HibernationDen is
             revert MekingTooManyHoneyJars(bundleId_);
         }
         if (amount_ == 0) revert ZeroMint();
-        // Only applies to public minting
-        if (isPublic && minterPublicMintCount[minter_] + amount_ > party.maxMintsPerUser) {
-            revert MaxMintsPerUserReached(minter_, amount_);
+        if (!isAdmin && mintCount[minter_] + amount_ > party.maxMintsPerUser) {
+            revert MaxMintsPerUserReached();
         }
     }
 
@@ -379,8 +381,7 @@ contract HibernationDen is
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
-        minterPublicMintCount[msg.sender] += amount_;
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
 
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
@@ -388,8 +389,7 @@ contract HibernationDen is
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
 
-        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
-        minterPublicMintCount[msg.sender] += amount_;
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
@@ -428,6 +428,8 @@ contract HibernationDen is
             honeyJarToParty[tokenId] = bundleId_;
             ++tokenId;
         }
+
+        mintCount[msg.sender] += amount_;
 
         // Find the special honeyJar when a checkpoint is passed.
         uint256 numMinted = honeyJarShelf[bundleId_].length;
@@ -668,6 +670,23 @@ contract HibernationDen is
         for (uint256 i = 0; i < inputLength; ++i) {
             claim(bundleId_, gateIds[i], amounts[i], proofs[i]);
         }
+    }
+
+    //=============== Admin Methods ================//
+
+    /// @notice admin function to mint a specified amount of THJ.
+    /// @dev the value is set on initialization.
+    function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
+        if (adminMintAmount == 0) revert MekingTooManyHoneyJars(bundleId_);
+
+        if (amount_ > adminMintAmount) {
+            amount_ = adminMintAmount;
+        }
+        adminMintAmount -= amount_;
+
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
+
+        _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
     }
 
     //=============== SETTERS ================//

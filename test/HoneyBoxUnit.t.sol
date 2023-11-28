@@ -239,15 +239,31 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
         honeyBox.mekHoneyJarWithERC20(bundleId, 1);
     }
 
-    function testFailMekHoney_maxMintReachedDuringPublicMint() public {
+    function testMekHoneyOverMaxMintReverts() public {
         _puffPuffPassOut(bundleId);
+
+        // increase mint limits to have maxHoneyJar be more than maxMintsPerUser
+        gameRegistry.stopGame(address(honeyBox));
+        uint256[] memory newCheckpoints = new uint256[](1);
+        newCheckpoints[0] = maxMintsPerUser * 5;
+        honeyBox.setCheckpoints(bundleId, 0, newCheckpoints);
+        gameRegistry.startGame(address(honeyBox));
 
         // Will make a call to honeyBox.mekHoneyJarWithETH(bundleId).
         vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
         bytes memory request =
-            abi.encodeWithSelector(HibernationDen.mekHoneyJarWithETH.selector, bundleId, maxMintsPerUser);
-        bytes memory response = address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH * maxMintsPerUser);
-        uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
+            abi.encodeWithSelector(HibernationDen.mekHoneyJarWithETH.selector, bundleId, maxMintsPerUser + 1);
+        bytes memory response = address(honeyBox).functionCallWithValue(request, MINT_PRICE_ETH * maxMintsPerUser + 1);
+        // uint256 honeyId = abi.decode(abi.encodePacked(new bytes(32 - response.length), response), (uint256)); // Converting bytes -- uint256
+
+        // assertEq(honeyJar.balanceOf(address(this)), 2, "uhh you don't have honey");
+        // assertEq(honeyJar.ownerOf(honeyId), address(this), "You have the wrong honey");
+    }
+
+    function testAdminMint() public {
+        _puffPuffPassOut(bundleId);
+
+        honeyBox.adminMint(bundleId, 4);
     }
 
     function testMekHoneyJarWithERC20() public {
