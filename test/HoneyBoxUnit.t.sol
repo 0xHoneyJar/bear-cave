@@ -263,7 +263,15 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testAdminMint() public {
         _puffPuffPassOut(bundleId);
 
-        honeyBox.adminMint(bundleId, 4);
+        honeyBox.adminMint(bundleId, maxHoneyJar);
+    }
+
+    function testNotAdminMintReverts() public {
+        _puffPuffPassOut(bundleId);
+
+        vm.expectRevert();
+        vm.prank(anotherUser);
+        honeyBox.adminMint(bundleId, maxHoneyJar);
     }
 
     function testMekHoneyJarWithERC20() public {
