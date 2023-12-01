@@ -219,12 +219,7 @@ contract HibernationDen is
         } else if (address(honeyJarPortal) != address(0)) {
             // If the portal is set, the xChain message will be sent
             honeyJarPortal.sendStartGame{value: msg.value}(
-                payable(msg.sender),
-                slumberParty.mintChainId,
-                bundleId_,
-                slumberParty.maxMintsPerUser,
-                sleeperCount,
-                slumberParty.checkpoints
+                payable(msg.sender), slumberParty.mintChainId, bundleId_, sleeperCount, slumberParty.checkpoints
             );
         }
         emit SlumberPartyStarted(bundleId_);
@@ -233,13 +228,11 @@ contract HibernationDen is
     /// @notice Does the same as function above, except doesn't transfer the NFTs.
     /// @notice is used on the destination chain in an xChain setup.
     /// @dev can only be called by the HoneyJar Portal
-    function startGame(
-        uint256 srcChainId,
-        uint8 bundleId_,
-        uint256 maxMintPerUser_,
-        uint256 numSleepers_,
-        uint256[] calldata checkpoints
-    ) external override onlyRole(Constants.PORTAL) {
+    function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
+        external
+        override
+        onlyRole(Constants.PORTAL)
+    {
         if (checkpoints.length > numSleepers_) revert InvalidInput("startGame::checkpoints");
         uint256[] memory allStages = _getStages();
         uint256 publicMintOffset = allStages[allStages.length - 1];
@@ -252,7 +245,7 @@ contract HibernationDen is
         party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
-        party.maxMintsPerUser = maxMintPerUser_;
+        party.maxMintsPerUser = 2;
 
         SleepingNFT memory emptyNft;
         for (uint256 i = 0; i < numSleepers_; ++i) {
@@ -290,8 +283,7 @@ contract HibernationDen is
         uint256[] calldata checkpoints_,
         address[] calldata tokenAddresses_,
         uint256[] calldata tokenIds_,
-        bool[] calldata isERC1155_,
-        uint256 maxMintsPerUser_
+        bool[] calldata isERC1155_
     ) external onlyRole(Constants.GAME_ADMIN) returns (uint8) {
         uint256 inputLength = tokenAddresses_.length;
         if (inputLength == 0 || inputLength != tokenIds_.length || inputLength != isERC1155_.length) {
@@ -310,7 +302,7 @@ contract HibernationDen is
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = mintChainId_; // minting can occur on another chain
         slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
-        slumberParty.maxMintsPerUser = maxMintsPerUser_;
+        slumberParty.maxMintsPerUser = 2;
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {

@@ -64,7 +64,7 @@ contract TestnetPuffPuff is THJScriptBase("gen3") {
         HibernationDen.SlumberParty memory party = den.getSlumberParty(bundleId);
         bytes memory startGamePayload = abi.encode(
             HoneyJarPortal.MessageTypes.START_GAME,
-            HoneyJarPortal.StartGamePayload(bundleId, party.maxMintsPerUser, party.sleepoors.length, party.checkpoints)
+            HoneyJarPortal.StartGamePayload(bundleId, party.sleepoors.length, party.checkpoints)
         );
 
         uint16 lzChainId = portal.lzChainId(mintChainId);

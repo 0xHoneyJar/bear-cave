@@ -545,7 +545,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testFailStartGame_bundleAlreadyExists() public {
         // Give this address portal role in order to call method
         gameRegistry.grantRole("PORTAL", address(this));
-        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, maxMintsPerUser, 8, new uint256[](1));
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), bundleId, 8, new uint256[](1));
     }
 
     function testStartGameXChain() public {
@@ -559,9 +559,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         // Bundle needs to exist before game is started.
         gatekeeper.addGate(newBundleId, bytes32(0), 6969, 0);
-        honeyBox.startGame(
-            SafeCastLib.safeCastTo16(block.chainid), newBundleId, maxMintsPerUser, numSleepers, checkpoints
-        );
+        honeyBox.startGame(SafeCastLib.safeCastTo16(block.chainid), newBundleId, numSleepers, checkpoints);
         vm.warp(block.timestamp + 72 hours);
 
         honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxHoneyJar}(newBundleId, maxHoneyJar);
@@ -570,7 +568,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(newBundleId);
         assertEq(party.fermentedJarsFound, true, "expected fermentedJarsFound");
-        // assertEq(party.sleepoors.length, numSleepers);
+        assertEq(party.sleepoors.length, numSleepers);
 
         // This call should fail because its not a real NFT
         // honeyBox.wakeSleeper(config.bundleId, party.fermentedJars[0].id);
@@ -607,7 +605,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155, maxMintsPerUser);
+        return honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 
     function _addBundleForChain(uint256 chainId_, uint256 tokenId_) internal returns (uint8) {
@@ -620,6 +618,6 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         uint256[] memory checkpoints = new uint256[](1);
         checkpoints[0] = maxHoneyJar;
-        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155, maxMintsPerUser);
+        return honeyBox.addBundle(chainId_, checkpoints, tokenAddresses, tokenIds, isERC1155);
     }
 }

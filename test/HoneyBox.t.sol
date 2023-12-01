@@ -191,7 +191,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         checkpoints[2] = 12;
         checkpoints[3] = maxHoneyJar;
 
-        bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s, maxMintsPerUser);
+        bundleId = honeyBox.addBundle(block.chainid, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
 
         erc721.approve(address(honeyBox), NFT_ID);
         erc721.approve(address(honeyBox), NFT_ID + 1);
@@ -355,7 +355,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.startGame(address(l2HibernationDen));
 
         uint8 newBundleId =
-            l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s, maxMintsPerUser);
+            l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
@@ -363,7 +363,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         newCheckpoints[0] = maxHoneyJar;
 
         vm.startPrank(portal);
-        l2HibernationDen.startGame(l1ChainId, newBundleId, maxMintsPerUser, tokenAddresses.length, newCheckpoints);
+        l2HibernationDen.startGame(l1ChainId, newBundleId, tokenAddresses.length, newCheckpoints);
         vm.stopPrank();
 
         // Assuming the claiming flow works the same from below. Go to GeneralMint
