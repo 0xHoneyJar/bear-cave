@@ -137,6 +137,9 @@ contract HibernationDen is
     /// @notice the amount a gameAdmin can mint
     uint256 private adminMintAmount = 200;
 
+    /// @notice max number of honeyJars that can be minted per user
+    uint256 public constant MAX_MINTS_PER_USER = 20;
+
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
     SlumberParty[] public slumberPartyList;
@@ -245,7 +248,7 @@ contract HibernationDen is
         party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
-        party.maxMintsPerUser = 2;
+        party.maxMintsPerUser = MAX_MINTS_PER_USER;
 
         SleepingNFT memory emptyNft;
         for (uint256 i = 0; i < numSleepers_; ++i) {
@@ -302,7 +305,7 @@ contract HibernationDen is
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = mintChainId_; // minting can occur on another chain
         slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
-        slumberParty.maxMintsPerUser = 2;
+        slumberParty.maxMintsPerUser = MAX_MINTS_PER_USER;
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {

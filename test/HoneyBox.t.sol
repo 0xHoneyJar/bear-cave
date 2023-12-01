@@ -267,12 +267,13 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vm.warp(block.timestamp + 72 hours);
 
         vm.startPrank(doge);
-        paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 3);
-        honeyBox.mekHoneyJarWithERC20(bundleId, 3);
-        assertEq(honeyJar.balanceOf(doge), 3);
+        paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 10);
+        honeyBox.mekHoneyJarWithERC20(bundleId, 10);
+        assertEq(honeyJar.balanceOf(doge), 10);
 
+        uint256 maxMint = honeyBox.MAX_MINTS_PER_USER();
         vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * 8}(bundleId, 8);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxMint}(bundleId, maxMint);
         vm.stopPrank();
     }
 
@@ -354,8 +355,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         gameRegistry.registerGame(address(l2HibernationDen));
         gameRegistry.startGame(address(l2HibernationDen));
 
-        uint8 newBundleId =
-            l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
+        uint8 newBundleId = l1HibernationDen.addBundle(l2ChainId, checkpoints, tokenAddresses, tokenIDs, isERC1155s);
         gatekeeper.addGate(newBundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
         vm.stopPrank();
 
