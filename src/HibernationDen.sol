@@ -135,7 +135,10 @@ contract HibernationDen is
     bool public initialized;
 
     /// @notice the amount a gameAdmin can mint
-    uint256 private adminMintAmount = 200;
+    uint256 public constant ADMIN_MINT_MAX = 200;
+
+    /// @notice the amount gameAdmin has minted
+    uint256 public adminMinted;
 
     /// @notice max number of honeyJars that can be minted per user
     uint256 public constant MAX_MINTS_PER_USER = 20;
@@ -672,12 +675,9 @@ contract HibernationDen is
     /// @notice admin function to mint a specified amount of THJ.
     /// @dev the value is set on initialization.
     function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
-        if (adminMintAmount == 0) revert MekingTooManyHoneyJars(bundleId_);
+        if (adminMinted + amount_ > ADMIN_MINT_MAX) revert InvalidInput("adminMint");
 
-        if (amount_ > adminMintAmount) {
-            amount_ = adminMintAmount;
-        }
-        adminMintAmount -= amount_;
+        adminMinted += amount_;
 
         _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
 
