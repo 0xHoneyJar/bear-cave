@@ -141,7 +141,7 @@ contract HibernationDen is
     uint256 public adminMinted;
 
     /// @notice max number of honeyJars that can be minted per user
-    uint256 public constant MAX_MINTS_PER_USER = 20;
+    uint256 public constant MAX_MINTS_PER_USER = 10;
 
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
