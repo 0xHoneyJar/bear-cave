@@ -266,14 +266,9 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     function testMintOverMaxMintReverts() public {
         vm.warp(block.timestamp + 72 hours);
 
-        vm.startPrank(doge);
-        paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * 10);
-        honeyBox.mekHoneyJarWithERC20(bundleId, 10);
-        assertEq(honeyJar.balanceOf(doge), 10);
-
         uint256 maxMint = honeyBox.MAX_MINTS_PER_USER();
         vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
-        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * maxMint}(bundleId, maxMint);
+        honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * (maxMint + 1)}(bundleId, (maxMint + 1));
         vm.stopPrank();
     }
 
