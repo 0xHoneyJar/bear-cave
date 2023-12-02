@@ -135,13 +135,13 @@ contract HibernationDen is
     bool public initialized;
 
     /// @notice the amount a gameAdmin can mint
-    uint256 public constant ADMIN_MINT_MAX = 200;
+    uint256 public immutable adminMintMax;
 
     /// @notice the amount gameAdmin has minted
     uint256 public adminMinted;
 
     /// @notice max number of honeyJars that can be minted per user
-    uint256 public constant MAX_MINTS_PER_USER = 10;
+    uint256 public immutable maxMintsPerUser;
 
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
@@ -168,7 +168,9 @@ contract HibernationDen is
         address _gatekeeper,
         address _jani,
         address _beekeeper,
-        uint256 _honeyJarShare
+        uint256 _honeyJarShare,
+        uint256 _adminMintMax,
+        uint256 _maxMintsPerUser
     ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
@@ -177,6 +179,8 @@ contract HibernationDen is
         jani = payable(_jani);
         beekeeper = payable(_beekeeper);
         honeyJarShare = _honeyJarShare;
+        adminMintMax = _adminMintMax;
+        maxMintsPerUser = _maxMintsPerUser;
     }
 
     /// @notice additional parameters that are required to get the game running
@@ -251,7 +255,7 @@ contract HibernationDen is
         party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
-        party.maxMintsPerUser = MAX_MINTS_PER_USER;
+        party.maxMintsPerUser = maxMintsPerUser;
 
         SleepingNFT memory emptyNft;
         for (uint256 i = 0; i < numSleepers_; ++i) {
@@ -308,7 +312,7 @@ contract HibernationDen is
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = mintChainId_; // minting can occur on another chain
         slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
-        slumberParty.maxMintsPerUser = MAX_MINTS_PER_USER;
+        slumberParty.maxMintsPerUser = maxMintsPerUser;
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
@@ -675,7 +679,7 @@ contract HibernationDen is
     /// @notice admin function to mint a specified amount of THJ.
     /// @dev the value is set on initialization.
     function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
-        if (adminMinted + amount_ > ADMIN_MINT_MAX) revert InvalidInput("adminMint");
+        if (adminMinted + amount_ > adminMintMax) revert InvalidInput("adminMint");
 
         adminMinted += amount_;
 

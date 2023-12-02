@@ -45,6 +45,8 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint32 private maxHoneyJar = 15;
     uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
+    uint256 private maxMintsPerUser = 10;
+    uint256 private adminMintMax = 200;
 
     // Gatekeeper
     bytes32[] private gateData;
@@ -192,7 +194,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeper),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -296,7 +300,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeperL2),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         mintConfigL2 = mintConfig; // same ol mintConfig

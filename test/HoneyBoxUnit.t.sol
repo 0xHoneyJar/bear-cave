@@ -34,6 +34,8 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
     uint32 private maxHoneyJar = 4;
     uint256 private honeyJarShare = 2233 * 1e14; // In WAD (.2233)
+    uint256 private maxMintsPerUser = 10;
+    uint256 private adminMintMax = 200;
 
     uint8 private bundleId;
     MockERC1155 private erc1155;
@@ -103,7 +105,9 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
             address(gatekeeper),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            maxMintsPerUser,
+            adminMintMax
         );
 
         vrfCoordinator.addConsumer(subId, address(honeyBox));
@@ -241,7 +245,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
     function testMekHoneyOverMaxMintReverts() public {
         _puffPuffPassOut(bundleId);
 
-        uint256 maxMint = honeyBox.MAX_MINTS_PER_USER();
+        uint256 maxMint = honeyBox.maxMintsPerUser();
 
         // increase mint limits to have maxHoneyJar be more than maxMintsPerUser
         gameRegistry.stopGame(address(honeyBox));
@@ -288,7 +292,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
     function testMekManyHoneyJarWithERC20() public {
         _puffPuffPassOut(bundleId);
-        uint256 mintAmount = honeyBox.MAX_MINTS_PER_USER();
+        uint256 mintAmount = honeyBox.maxMintsPerUser();
         paymentToken.mint(address(this), MINT_PRICE_ERC20 * mintAmount);
         paymentToken.approve(address(honeyBox), MINT_PRICE_ERC20 * mintAmount);
 

@@ -87,6 +87,8 @@ contract DeployScript is THJScriptBase("gen3") {
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
         uint256 revShare = json.readUint(".revShare");
+        uint256 adminMintMax = json.readUint(".adminMintMax");
+        uint256 maxMintsPerUser = json.readUint(".maxMintsPerUser");
 
         vm.startBroadcast();
 
@@ -98,7 +100,9 @@ contract DeployScript is THJScriptBase("gen3") {
             gatekeeper,
             jani,
             beekeeper,
-            revShare
+            revShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         console.log("-HibernationDenAddress: ", address(den));

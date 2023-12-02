@@ -36,6 +36,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
     uint256 private maxMintsPerUser = 10;
+    uint256 private adminMintMax = 200;
 
     // Gatekeeper
     bytes32[] private gateData;
@@ -152,7 +153,9 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeper),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -266,7 +269,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     function testMintOverMaxMintReverts() public {
         vm.warp(block.timestamp + 72 hours);
 
-        uint256 maxMint = honeyBox.MAX_MINTS_PER_USER();
+        uint256 maxMint = honeyBox.maxMintsPerUser();
         vm.expectRevert(HibernationDen.MaxMintsPerUserReached.selector);
         honeyBox.mekHoneyJarWithETH{value: MINT_PRICE_ETH * (maxMint + 1)}(bundleId, (maxMint + 1));
         vm.stopPrank();
@@ -334,7 +337,9 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeper),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         vrfCoordinator.addConsumer(subId, address(l2HibernationDen));
