@@ -1,38 +1,38 @@
 {
-    "chainId": 421613,
-    "assetChainId": 5, 
-    "deployments": {
-        "registry": "0x65f92852b7429990302AEb869C9746E2E19e8742",
-        "gatekeeper": "0x9028f33A40e4F5CFe1808B61154D426c1d5FC587",
-        "honeyjar": "0x4889163f9579234a6489F4e8a70C7E5e95c01428",
-        "den": "0x1518AB2EF92978f3fF9840e72F85F9c3F7722910",
-        "portal": "0x90f1BF69E1E12Dd67Ca6958E5cFEE3758DCa3ca4"
-    },
-    "addresses": {
-        "gameAdmin": "0xA4b1d4d0CcB3e73e5a4448FA07AC1c9526BE19Dd",
-        "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-        "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-        "paymentToken": "0x9db2ea779cd3f9f8aeb5e58eb1223a585a4d7d68",
-        "lzEndpoint": "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
-        "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
-    },
-    "mintConfig": {
-        "maxHoneyJar_claimable": 2592,
-        "price_ERC20": 16000000000,
-        "price_ETH": 110000000000000000
-    },
-    "honeyJar": {
-        "startIndex": 1,
-        "maxMintableForChain": 69
-    },
-    "revShare": 223300000000000000,
-    "adminMaxMint": 100,
-    "maxMintsPerUser": 100,
-    "vrf": {
-        "coordinator": "0x6D80646bEAdd07cE68cab36c27c626790bBcf17f",
-        "keyHash": "0x83d1b6e3388bed3d76426974512bb0d270e9542a765cd667242ea26c0cc0b730",
-        "subId": 20
-    },
-    "bundleId": 0,
-    "bundleTokens": []
+  "chainId": 421613,
+  "assetChainId": 5,
+  "deployments": {
+    "registry": "0x65f92852b7429990302AEb869C9746E2E19e8742",
+    "gatekeeper": "0x9028f33A40e4F5CFe1808B61154D426c1d5FC587",
+    "honeyjar": "0x4889163f9579234a6489F4e8a70C7E5e95c01428",
+    "den": "0x1518AB2EF92978f3fF9840e72F85F9c3F7722910",
+    "portal": "0x90f1BF69E1E12Dd67Ca6958E5cFEE3758DCa3ca4"
+  },
+  "addresses": {
+    "gameAdmin": "0xA4b1d4d0CcB3e73e5a4448FA07AC1c9526BE19Dd",
+    "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
+    "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
+    "paymentToken": "0x9db2ea779cd3f9f8aeb5e58eb1223a585a4d7d68",
+    "lzEndpoint": "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
+    "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
+  },
+  "mintConfig": {
+    "maxHoneyJar_claimable": 0,
+    "price_ERC20": 0,
+    "price_ETH": 0
+  },
+  "honeyJar": {
+    "startIndex": 1,
+    "maxMintableForChain": 233
+  },
+  "revShare": 0,
+  "adminMaxMint": 233,
+  "maxMintsPerUser": 2,
+  "vrf": {
+    "coordinator": "0x6D80646bEAdd07cE68cab36c27c626790bBcf17f",
+    "keyHash": "0x83d1b6e3388bed3d76426974512bb0d270e9542a765cd667242ea26c0cc0b730",
+    "subId": 20
+  },
+  "bundleId": 0,
+  "bundleTokens": []
 }

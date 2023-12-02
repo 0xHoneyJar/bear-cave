@@ -26,11 +26,11 @@
   "honeyJar": {
     "startIndex": 0,
     "maxMintableForChain": 1,
-    "baseURI": "https://0xHoneyJar.xyz/api/metadata_gen2?id="
+    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
   },
   "revShare": 223300000000000000,
-  "adminMaxMint": 100,
-  "maxMintsPerUser": 100,
+  "adminMaxMint": 233,
+  "maxMintsPerUser": 2,
   "vrf": {
     "coordinator": "0x271682DEB8C4E0901D1a1550aD2e64D568E69909",
     "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
