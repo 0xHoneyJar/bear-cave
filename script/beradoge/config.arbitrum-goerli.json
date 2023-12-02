@@ -23,7 +23,7 @@
   },
   "honeyJar": {
     "startIndex": 1,
-    "maxMintableForChain": 233
+    "maxMintableForChain": 500
   },
   "revShare": 0,
   "adminMaxMint": 233,

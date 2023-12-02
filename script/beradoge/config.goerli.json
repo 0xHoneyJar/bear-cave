@@ -16,19 +16,19 @@
     "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
   },
   "mintConfig": {
-    "maxHoneyJar_claimable": 2592,
-    "price_ERC20": 16000000000,
-    "price_ETH": 110000000000000000
+    "maxHoneyJar_claimable": 0,
+    "price_ERC20": 0,
+    "price_ETH": 0
   },
   "mintChainId": 421613,
-  "checkpoints": [2, 10, 20],
+  "checkpoints": [500],
   "honeyJar": {
     "startIndex": 0,
     "maxMintableForChain": 0
   },
-  "revShare": 223300000000000000,
-  "adminMaxMint": 233,
-  "maxMintsPerUser": 2,
+  "revShare": 0,
+  "adminMaxMint": 0,
+  "maxMintsPerUser": 0,
   "vrf": {
     "coordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
     "keyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
