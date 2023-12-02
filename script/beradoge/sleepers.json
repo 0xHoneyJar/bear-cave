@@ -1,0 +1,1910 @@
+{
+    "data": {
+        "owned_assets": [
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjU4MzI4Mzg1MQ==",
+                    "name": "Remilio 871",
+                    "image_url": "https://i.seadn.io/gcs/files/654748ee49a8343c64fdac5ca4a6f566.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd3d9ddd0cf0a5f0bfb8f7fceae075df687eaebab",
+                        "standard": "erc721"
+                    },
+                    "token_id": "871",
+                    "traits": [
+                        {
+                            "trait_type": "Eyebrow",
+                            "value": "Notched"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Dees Vaccine Checkpoint"
+                        },
+                        {
+                            "trait_type": "Glasses",
+                            "value": "Balenciaga Mono Rectangle"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Pink"
+                        },
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Smug"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Green"
+                        },
+                        {
+                            "trait_type": "Friend",
+                            "value": "Azu"
+                        },
+                        {
+                            "trait_type": "Swag Score",
+                            "value": "82"
+                        },
+                        {
+                            "trait_type": "Rank",
+                            "value": "B"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "Just Do It"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Ulenka Brown"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 1838800000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:08:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": false,
+                    "collection_name": "Redacted Remilio Babies",
+                    "collection_slug": "remilio-babies",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:40:37.142290"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyMTAyMzQyNDg=",
+                    "name": "ShardBear PreReveal",
+                    "image_url": "https://i.seadn.io/gcs/files/aff03a7c761dc4fd579578b235c6257d.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0x4832b4423c35311f9dc0c2d03b29e68b176d40cc",
+                        "standard": "erc1155"
+                    },
+                    "token_id": "1",
+                    "traits": [
+                        {
+                            "trait_type": "Vault Edition",
+                            "value": "Eleventh"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "ShardVault 11: BongBear #85",
+                    "collection_slug": "insrt-shard-vault-11",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 5,
+                "created_date": "2023-06-16T22:34:05.058342"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExMDY1NTIyNTI=",
+                    "name": "HoneyComb",
+                    "image_url": "https://i.seadn.io/gcs/files/f903171253f9df3c304226e9edb75896.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xcb0477d1af5b8b05795d89d59f4667b59eae9244",
+                        "standard": "erc721"
+                    },
+                    "token_id": "12896",
+                    "traits": [],
+                    "last_sale": {
+                        "price": {
+                            "amount": 47000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:23:47"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Comb",
+                    "collection_slug": "honey-comb-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:34:05.013394"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEwOTY1NzQ3OTU=",
+                    "name": "HoneyComb",
+                    "image_url": "https://i.seadn.io/gcs/files/f903171253f9df3c304226e9edb75896.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xcb0477d1af5b8b05795d89d59f4667b59eae9244",
+                        "standard": "erc721"
+                    },
+                    "token_id": "6975",
+                    "traits": [],
+                    "last_sale": {
+                        "price": {
+                            "amount": 49500000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:23:47"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Comb",
+                    "collection_slug": "honey-comb-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:34:04.998059"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjMzMzg4NTI5Nw==",
+                    "name": "Milady 7887",
+                    "image_url": "https://i.seadn.io/gcs/files/0099cd8948603eed2902d0b9b180d134.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x5af0d9827e0c53e4799bb226655a1de152a425a5",
+                        "standard": "erc721"
+                    },
+                    "token_id": "7887",
+                    "traits": [
+                        {
+                            "trait_type": "Number",
+                            "value": "7887"
+                        },
+                        {
+                            "trait_type": "Core",
+                            "value": "gyaru"
+                        },
+                        {
+                            "trait_type": "Eye Color",
+                            "value": "blue"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "bushland"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "bowl purple"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "jesus tank"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "teary"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "tan"
+                        },
+                        {
+                            "trait_type": "Face Decoration",
+                            "value": "star heart tattoo"
+                        },
+                        {
+                            "trait_type": "Drip Score",
+                            "value": "29"
+                        },
+                        {
+                            "trait_type": "Necklace",
+                            "value": "cherry necklace"
+                        },
+                        {
+                            "trait_type": "Drip Grade",
+                            "value": "c-drip"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 5600000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:07:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Milady Maker",
+                    "collection_slug": "milady",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.106974"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExMDEzMjk0MzM=",
+                    "name": "Beramonium #4109",
+                    "image_url": "https://i.seadn.io/gcs/files/d52fc6036357fa20cf5b3bb0e6da742b.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb44adddbf9b19bcdd12f978df8b36723488b9b8b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "4109",
+                    "traits": [
+                        {
+                            "trait_type": "Chest",
+                            "value": "Wooden Chest"
+                        },
+                        {
+                            "trait_type": "Weapon",
+                            "value": "Black Iron Set"
+                        },
+                        {
+                            "trait_type": "Body",
+                            "value": "Honey Yellow"
+                        },
+                        {
+                            "trait_type": "Boots",
+                            "value": "Wild Hunt Boots"
+                        },
+                        {
+                            "trait_type": "Helmet",
+                            "value": "Helmet Of Coraline Lion"
+                        },
+                        {
+                            "trait_type": "Aura",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Pants",
+                            "value": "Incomplete Steel Pants"
+                        },
+                        {
+                            "trait_type": "Gauntlets",
+                            "value": "Dragonrider Gauntlest"
+                        },
+                        {
+                            "trait_type": "Expression",
+                            "value": "Puppet"
+                        },
+                        {
+                            "trait_type": "Class",
+                            "value": "Warrior"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Hope"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Beramonium Chronicles: Genesis",
+                    "collection_slug": "beramonium-chronicles-genesis",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.105483"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExMDEzMjk0NDA=",
+                    "name": "Beramonium #4110",
+                    "image_url": "https://i.seadn.io/gcs/files/e45c32f8174b95e89a11b91e8a753d10.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb44adddbf9b19bcdd12f978df8b36723488b9b8b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "4110",
+                    "traits": [
+                        {
+                            "trait_type": "Background",
+                            "value": "GoodDay"
+                        },
+                        {
+                            "trait_type": "Body",
+                            "value": "Honey Yellow"
+                        },
+                        {
+                            "trait_type": "Chest",
+                            "value": "Stalker Chest"
+                        },
+                        {
+                            "trait_type": "Class",
+                            "value": "Hunter"
+                        },
+                        {
+                            "trait_type": "Helmet",
+                            "value": "Viper Poison Helm"
+                        },
+                        {
+                            "trait_type": "Aura",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Boots",
+                            "value": "Boots Of Agony"
+                        },
+                        {
+                            "trait_type": "Weapon",
+                            "value": "Villager's Blade"
+                        },
+                        {
+                            "trait_type": "Gauntlets",
+                            "value": "Stalker Gloves"
+                        },
+                        {
+                            "trait_type": "Pants",
+                            "value": "Stalker Pants"
+                        },
+                        {
+                            "trait_type": "Expression",
+                            "value": "Bullish"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Beramonium Chronicles: Genesis",
+                    "collection_slug": "beramonium-chronicles-genesis",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.102876"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExMDEzMjk0MzQ=",
+                    "name": "Beramonium #4108",
+                    "image_url": "https://i.seadn.io/gcs/files/6c6b73aad0b81dad5d9469cf723bf221.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb44adddbf9b19bcdd12f978df8b36723488b9b8b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "4108",
+                    "traits": [
+                        {
+                            "trait_type": "Gauntlets",
+                            "value": "Silent Gloves"
+                        },
+                        {
+                            "trait_type": "Expression",
+                            "value": "Strike"
+                        },
+                        {
+                            "trait_type": "Boots",
+                            "value": "Stalker Boots"
+                        },
+                        {
+                            "trait_type": "Class",
+                            "value": "Hunter"
+                        },
+                        {
+                            "trait_type": "Aura",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Helmet",
+                            "value": "Black Leather Helm"
+                        },
+                        {
+                            "trait_type": "Chest",
+                            "value": "Viper Poison Chest"
+                        },
+                        {
+                            "trait_type": "Weapon",
+                            "value": "Blood Whisperer"
+                        },
+                        {
+                            "trait_type": "Pants",
+                            "value": "Stalker Pants"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Hope"
+                        },
+                        {
+                            "trait_type": "Body",
+                            "value": "WhiteWood"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Beramonium Chronicles: Genesis",
+                    "collection_slug": "beramonium-chronicles-genesis",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.102152"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExMDEzMjk0MjE=",
+                    "name": "Beramonium #4111",
+                    "image_url": "https://i.seadn.io/gcs/files/1b184a26cf82eca4cf3c9e7131e51635.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb44adddbf9b19bcdd12f978df8b36723488b9b8b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "4111",
+                    "traits": [
+                        {
+                            "trait_type": "Chest",
+                            "value": "Bronze And Iron Chest"
+                        },
+                        {
+                            "trait_type": "Weapon",
+                            "value": "Commando2"
+                        },
+                        {
+                            "trait_type": "Boots",
+                            "value": "Abyss Boots"
+                        },
+                        {
+                            "trait_type": "Pants",
+                            "value": "Pants Of The Wood"
+                        },
+                        {
+                            "trait_type": "Gauntlets",
+                            "value": "Knee Arrow Forearms"
+                        },
+                        {
+                            "trait_type": "Aura",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Helmet",
+                            "value": "Wooden Helmet"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Iridium"
+                        },
+                        {
+                            "trait_type": "Class",
+                            "value": "Warrior"
+                        },
+                        {
+                            "trait_type": "Expression",
+                            "value": "Bullet"
+                        },
+                        {
+                            "trait_type": "Body",
+                            "value": "Celeste"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Beramonium Chronicles: Genesis",
+                    "collection_slug": "beramonium-chronicles-genesis",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.097908"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjQxNzM5OTE2Mw==",
+                    "name": "Tenacious D - Jack | Band Bears #168",
+                    "image_url": "https://i.seadn.io/gae/8RDmOSqC7waSaOm5PJxjTbfCX08TEiVCcNMxmKi68-hw7pSmuLScVuxFA95UKzAXHDz2hsDhHnadXRisIdjDjNhyi6U9YBqK9zZjLw?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb4e570232d3e55d2ee850047639dc74da83c7067",
+                        "standard": "erc721"
+                    },
+                    "token_id": "168",
+                    "traits": [
+                        {
+                            "trait_type": "Group",
+                            "value": "Tenacious D"
+                        },
+                        {
+                            "trait_type": "Name",
+                            "value": "Jack"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 600000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2022-07-08T03:55:55"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "The Band Bears",
+                    "collection_slug": "the-band-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.096479"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjYwMzY4MDQ0Nw==",
+                    "name": "Bit Bear #2096",
+                    "image_url": "https://i.seadn.io/gcs/files/4aab679a123b1f548980e8a01127bbe9.gif?w=500&auto=format",
+                    "contract": {
+                        "address": "0x32bb5a147b5371fd901aa4a72b7f82c58a87e36d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "2096",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Bit Bears by Berachain",
+                    "collection_slug": "berachain-bit-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.090408"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEwOTM3NzY0Mjg=",
+                    "name": "HoneyComb",
+                    "image_url": "https://i.seadn.io/gcs/files/f903171253f9df3c304226e9edb75896.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xcb0477d1af5b8b05795d89d59f4667b59eae9244",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1916",
+                    "traits": [],
+                    "last_sale": {
+                        "price": {
+                            "amount": 60000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-17T08:00:23"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Comb",
+                    "collection_slug": "honey-comb-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.087354"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjk5ODA4ODYzOA==",
+                    "name": "Remilio 7637",
+                    "image_url": "https://i.seadn.io/gcs/files/92457c03fc4fc4feb34f23b154084284.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd3d9ddd0cf0a5f0bfb8f7fceae075df687eaebab",
+                        "standard": "erc721"
+                    },
+                    "token_id": "7637",
+                    "traits": [
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Dummy"
+                        },
+                        {
+                            "trait_type": "Eyebrow",
+                            "value": "Notched"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Padded Cell"
+                        },
+                        {
+                            "trait_type": "Friend",
+                            "value": "Ralph"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "Bleached"
+                        },
+                        {
+                            "trait_type": "Swag Score",
+                            "value": "49"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Cartoon Hazel"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Tan"
+                        },
+                        {
+                            "trait_type": "Rank",
+                            "value": "C"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Charlie Blonde"
+                        },
+                        {
+                            "trait_type": "Face",
+                            "value": "Snake Bites"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 1828800000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:08:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Redacted Remilio Babies",
+                    "collection_slug": "remilio-babies",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.080642"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyMTk1NTY0MjU=",
+                    "name": "HoneyJar",
+                    "image_url": "https://i.seadn.io/gcs/files/30f543f0a90c303e8bba3ae275c4a539.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xa20cf9b0874c3e46b344deaeea9c2e0c3e1db37d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1758",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Jar",
+                    "collection_slug": "honeyjar",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.080362"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEwOTYzNTQ0NjA=",
+                    "name": "HoneyComb",
+                    "image_url": "https://i.seadn.io/gcs/files/f903171253f9df3c304226e9edb75896.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xcb0477d1af5b8b05795d89d59f4667b59eae9244",
+                        "standard": "erc721"
+                    },
+                    "token_id": "5758",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Comb",
+                    "collection_slug": "honey-comb-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.072351"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjYwMzg2ODM0NQ==",
+                    "name": "Bit Bear #1532",
+                    "image_url": "https://i.seadn.io/gcs/files/264397c5894c6325ba477ff35af8ccf2.gif?w=500&auto=format",
+                    "contract": {
+                        "address": "0x32bb5a147b5371fd901aa4a72b7f82c58a87e36d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1532",
+                    "traits": [],
+                    "last_sale": {
+                        "price": {
+                            "amount": 1300000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2022-12-02T08:26:59"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Bit Bears by Berachain",
+                    "collection_slug": "berachain-bit-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.072016"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjQ2MTM2NzQy",
+                    "name": "Milady 2212",
+                    "image_url": "https://i.seadn.io/gcs/files/204dec8f752e9e148b0f21402da2f7d2.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x5af0d9827e0c53e4799bb226655a1de152a425a5",
+                        "standard": "erc721"
+                    },
+                    "token_id": "2212",
+                    "traits": [
+                        {
+                            "trait_type": "Shirt",
+                            "value": "peter pan collar shirt"
+                        },
+                        {
+                            "trait_type": "Hat",
+                            "value": "bear ears"
+                        },
+                        {
+                            "trait_type": "Core",
+                            "value": "lolita-harajuku"
+                        },
+                        {
+                            "trait_type": "Drip Score",
+                            "value": "21"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "bowl green"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "pale"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "yashima"
+                        },
+                        {
+                            "trait_type": "Earring",
+                            "value": "safety pin piercing"
+                        },
+                        {
+                            "trait_type": "Eye Color",
+                            "value": "green"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "sleepy"
+                        },
+                        {
+                            "trait_type": "Number",
+                            "value": "2212"
+                        },
+                        {
+                            "trait_type": "Drip Grade",
+                            "value": "normal"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 5690000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:07:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Milady Maker",
+                    "collection_slug": "milady",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.071083"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjMzMzg4OTMyMw==",
+                    "name": "Milady 8533",
+                    "image_url": "https://i.seadn.io/gcs/files/d18604ba8ae8b53281682709352b8142.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x5af0d9827e0c53e4799bb226655a1de152a425a5",
+                        "standard": "erc721"
+                    },
+                    "token_id": "8533",
+                    "traits": [
+                        {
+                            "trait_type": "Shirt",
+                            "value": "peter pan collar shirt"
+                        },
+                        {
+                            "trait_type": "Number",
+                            "value": "8533"
+                        },
+                        {
+                            "trait_type": "Eye Color",
+                            "value": "blue"
+                        },
+                        {
+                            "trait_type": "Hat",
+                            "value": "cross cap pink"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "tuft brown"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "streets"
+                        },
+                        {
+                            "trait_type": "Earring",
+                            "value": "loop chain earring"
+                        },
+                        {
+                            "trait_type": "Drip Score",
+                            "value": "30"
+                        },
+                        {
+                            "trait_type": "Core",
+                            "value": "lolita-gyaru"
+                        },
+                        {
+                            "trait_type": "Drip Grade",
+                            "value": "b-drip"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "pink"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "sleepy"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 3520000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "WETH",
+                                "contract": {
+                                    "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-02T23:44:59"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Milady Maker",
+                    "collection_slug": "milady",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.065681"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjYwNDUxMjIwNw==",
+                    "name": "Bit Bear #1591",
+                    "image_url": "https://i.seadn.io/gcs/files/62c8109515d54846e0c708f3eb6b5b40.gif?w=500&auto=format",
+                    "contract": {
+                        "address": "0x32bb5a147b5371fd901aa4a72b7f82c58a87e36d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1591",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Bit Bears by Berachain",
+                    "collection_slug": "berachain-bit-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.064388"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjYzOTg4ODcwNA==",
+                    "name": "Pixelady #683",
+                    "image_url": "https://i.seadn.io/gcs/files/c8b6ffd1858675431acd22a28a429a93.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x8fc0d90f2c45a5e7f94904075c952e0943cfccfd",
+                        "standard": "erc721"
+                    },
+                    "token_id": "683",
+                    "traits": [
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Weesmile"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Short Black"
+                        },
+                        {
+                            "trait_type": "Outfit",
+                            "value": "Tuxedo"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Clay"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Misato"
+                        },
+                        {
+                            "trait_type": "Accessory",
+                            "value": "Anime Plush"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Heart Green"
+                        },
+                        {
+                            "trait_type": "Eyebrows",
+                            "value": "Straight"
+                        },
+                        {
+                            "trait_type": "Decoration",
+                            "value": "Crescent Tattoo"
+                        },
+                        {
+                            "trait_type": "Eyewear",
+                            "value": "Mottega Sunglasses"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 125000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:00:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Pixelady Maker",
+                    "collection_slug": "pixeladymaker",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.064153"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjk5ODA2MTI5Ng==",
+                    "name": "Remilio 6680",
+                    "image_url": "https://i.seadn.io/gcs/files/6b6b2f2901f9a9bb3e2ab8bae044b244.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd3d9ddd0cf0a5f0bfb8f7fceae075df687eaebab",
+                        "standard": "erc721"
+                    },
+                    "token_id": "6680",
+                    "traits": [
+                        {
+                            "trait_type": "Eyebrow",
+                            "value": "Normal"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Madoka Blue"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "Gucci Donald Duck"
+                        },
+                        {
+                            "trait_type": "Swag Score",
+                            "value": "49"
+                        },
+                        {
+                            "trait_type": "Face",
+                            "value": "Oval Blush"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Chinatown"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Tan"
+                        },
+                        {
+                            "trait_type": "Rank",
+                            "value": "C"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Pink"
+                        },
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Mini"
+                        },
+                        {
+                            "trait_type": "Friend",
+                            "value": "Jennie"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 1828800000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:08:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Redacted Remilio Babies",
+                    "collection_slug": "remilio-babies",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.062216"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjc0NTAzNjYzMw==",
+                    "name": "Ghiblady #2480",
+                    "image_url": "https://i.seadn.io/gae/Hw9uWQ_JQs49VbY_BrXX9j2m47iHL2zEH_x17GHxZ5KvpVI_EQwlvcwxrGRReNUHH9fwSHhKp3frrSIQ0jp9BWjIITmagVKQCLOamQ?w=500&auto=format",
+                    "contract": {
+                        "address": "0x186e74ad45bf81fb3712e9657560f8f6361cbbef",
+                        "standard": "erc721"
+                    },
+                    "token_id": "2480",
+                    "traits": [
+                        {
+                            "trait_type": "Pixelady Outfit",
+                            "value": "The Classic"
+                        },
+                        {
+                            "trait_type": "Pixelady Race",
+                            "value": "Pink"
+                        },
+                        {
+                            "trait_type": "Pixelady Eyes",
+                            "value": "Spiral"
+                        },
+                        {
+                            "trait_type": "Pixelady Accessory",
+                            "value": "Flower"
+                        },
+                        {
+                            "trait_type": "Pixelady Eyebrows",
+                            "value": "Arched"
+                        },
+                        {
+                            "trait_type": "Pixelady Mouth",
+                            "value": "Glad"
+                        },
+                        {
+                            "trait_type": "Ancestral Collection",
+                            "value": "Pixelady"
+                        },
+                        {
+                            "trait_type": "Pixelady Hair",
+                            "value": "Remilia Green"
+                        },
+                        {
+                            "trait_type": "Ancestral ID",
+                            "value": "166"
+                        },
+                        {
+                            "trait_type": "Pixelady Headwear",
+                            "value": "Blue Remilia Cap"
+                        },
+                        {
+                            "trait_type": "Pixelady Background",
+                            "value": "Sunset"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 26900000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:00:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Ghiblady Maker",
+                    "collection_slug": "ghibladymaker",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.061936"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyMTk1NTY0Mjg=",
+                    "name": "HoneyJar",
+                    "image_url": "https://i.seadn.io/gcs/files/30f543f0a90c303e8bba3ae275c4a539.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xa20cf9b0874c3e46b344deaeea9c2e0c3e1db37d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1759",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Jar",
+                    "collection_slug": "honeyjar",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.057890"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjMzMzg5MDczOQ==",
+                    "name": "Milady 9296",
+                    "image_url": "https://i.seadn.io/gcs/files/dddc7d5bddffff2b44448467a25f5544.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x5af0d9827e0c53e4799bb226655a1de152a425a5",
+                        "standard": "erc721"
+                    },
+                    "token_id": "9296",
+                    "traits": [
+                        {
+                            "trait_type": "Hair",
+                            "value": "og blonde"
+                        },
+                        {
+                            "trait_type": "Hat",
+                            "value": "sailor hat"
+                        },
+                        {
+                            "trait_type": "Drip Score",
+                            "value": "24"
+                        },
+                        {
+                            "trait_type": "Earring",
+                            "value": "dual rings gold"
+                        },
+                        {
+                            "trait_type": "Core",
+                            "value": "lolita-gyaru"
+                        },
+                        {
+                            "trait_type": "Drip Grade",
+                            "value": "normal"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "sunset"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "pink"
+                        },
+                        {
+                            "trait_type": "Eye Color",
+                            "value": "aqua"
+                        },
+                        {
+                            "trait_type": "Number",
+                            "value": "9296"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "sparkle"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "blue ribbon tank"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 5640000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:07:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Milady Maker",
+                    "collection_slug": "milady",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.057771"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjU4NTgxNzY5Mw==",
+                    "name": "Remilio 1728",
+                    "image_url": "https://i.seadn.io/gcs/files/845d81f6e8ddb56ed2d8ee4c3f9d3f57.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd3d9ddd0cf0a5f0bfb8f7fceae075df687eaebab",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1728",
+                    "traits": [
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Binky"
+                        },
+                        {
+                            "trait_type": "Glasses",
+                            "value": "Blue Light Blockers"
+                        },
+                        {
+                            "trait_type": "Eyebrow",
+                            "value": "Notched"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "ATF Agent"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Black"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Widow Purple"
+                        },
+                        {
+                            "trait_type": "Swag Score",
+                            "value": "110"
+                        },
+                        {
+                            "trait_type": "Friend",
+                            "value": "Silver Sonic"
+                        },
+                        {
+                            "trait_type": "Rank",
+                            "value": "A"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Hyperborea"
+                        },
+                        {
+                            "trait_type": "Weapon",
+                            "value": "BABY-G Watch"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Tears"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 1876900000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-05-10T18:09:23"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Redacted Remilio Babies",
+                    "collection_slug": "remilio-babies",
+                    "collection_is_badged": true
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.056642"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjM5Nzk4NDQ5NQ==",
+                    "name": "Shaggy | Band Bears #703",
+                    "image_url": "https://i.seadn.io/gae/X6O5afguzb2pmmCQ3Loy-k2OOCPtD9TbVjclkcHXOqayTmOG1ap1ajiV2BJYege2dhTAu7aHK8wE02akmxPM4ju13ssf4Sps-qlsjSk?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb4e570232d3e55d2ee850047639dc74da83c7067",
+                        "standard": "erc721"
+                    },
+                    "token_id": "703",
+                    "traits": [
+                        {
+                            "trait_type": "Name",
+                            "value": "Shaggy"
+                        },
+                        {
+                            "trait_type": "Group",
+                            "value": "Soloist"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 600000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2022-07-08T03:55:55"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "The Band Bears",
+                    "collection_slug": "the-band-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.053820"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjYwNDUxMTgzMA==",
+                    "name": "Bit Bear #1953",
+                    "image_url": "https://i.seadn.io/gcs/files/6dc650d5781dbc74bacff0456cd351c3.gif?w=500&auto=format",
+                    "contract": {
+                        "address": "0x32bb5a147b5371fd901aa4a72b7f82c58a87e36d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1953",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Bit Bears by Berachain",
+                    "collection_slug": "berachain-bit-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.052314"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEwOTUzMDQ4OTQ=",
+                    "name": "SchizoPoster #1866",
+                    "image_url": "https://i.seadn.io/gcs/files/57ca691f6439bb5985381a12034cc98b.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xbfe47d6d4090940d1c7a0066b63d23875e3e2ac5",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1866",
+                    "traits": [
+                        {
+                            "trait_type": "Archetype",
+                            "value": "ROCKBROS"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 247600000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:00:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "SchizoPosters",
+                    "collection_slug": "schizoposters",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.050753"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyMTk1NTY0NDQ=",
+                    "name": "HoneyJar",
+                    "image_url": "https://i.seadn.io/gcs/files/30f543f0a90c303e8bba3ae275c4a539.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xa20cf9b0874c3e46b344deaeea9c2e0c3e1db37d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1778",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Jar",
+                    "collection_slug": "honeyjar",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.047641"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjExODc2NTYyMzA=",
+                    "name": "Milad #9882",
+                    "image_url": "https://i.seadn.io/gcs/files/cd163744579dceaf93b60033b89f4172.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0x61628d84d0871a38f102d5f16f4e69ee91d6cdd9",
+                        "standard": "erc721"
+                    },
+                    "token_id": "9882",
+                    "traits": [
+                        {
+                            "trait_type": "Background",
+                            "value": "Mountain"
+                        },
+                        {
+                            "trait_type": "Eyebrows",
+                            "value": "Styled"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Pink"
+                        },
+                        {
+                            "trait_type": "Tattoo 4",
+                            "value": "Rune"
+                        },
+                        {
+                            "trait_type": "Tattoo",
+                            "value": "Dynamite"
+                        },
+                        {
+                            "trait_type": "Tattoo 2",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Ears",
+                            "value": "Loop Chain Earing"
+                        },
+                        {
+                            "trait_type": "Hair",
+                            "value": "Mullet Blond"
+                        },
+                        {
+                            "trait_type": "Mouth",
+                            "value": "Frown"
+                        },
+                        {
+                            "trait_type": "Hat",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Crying-gold"
+                        },
+                        {
+                            "trait_type": "Face Decoration",
+                            "value": "Bridge Piercings"
+                        },
+                        {
+                            "trait_type": "Glasses",
+                            "value": "Sunglasses"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "Tool Tanktop"
+                        },
+                        {
+                            "trait_type": "Neck",
+                            "value": "None"
+                        },
+                        {
+                            "trait_type": "Drip Score",
+                            "value": "12"
+                        },
+                        {
+                            "trait_type": "Tattoo 3",
+                            "value": "Heart"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 9000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:00:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Milad Maker",
+                    "collection_slug": "miladmaker",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.046434"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjM5NzM3NjUxNA==",
+                    "name": "Dr. Dre | Band Bears #220",
+                    "image_url": "https://i.seadn.io/gae/k_8UrMTV-URr0LKtMDwFSpL3z3lnIHucfshZFZ24Xu3F3iXDlF1t2zpNNnrI9Wrrf0LWXDwd6O8cgU86pHoNQD6h_IQCTMR-T7X6?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb4e570232d3e55d2ee850047639dc74da83c7067",
+                        "standard": "erc721"
+                    },
+                    "token_id": "220",
+                    "traits": [
+                        {
+                            "trait_type": "Group",
+                            "value": "Soloist"
+                        },
+                        {
+                            "trait_type": "Name",
+                            "value": "Dr. Dre"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "The Band Bears",
+                    "collection_slug": "the-band-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.046276"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyMTk1NTY0NDI=",
+                    "name": "HoneyJar",
+                    "image_url": "https://i.seadn.io/gcs/files/30f543f0a90c303e8bba3ae275c4a539.jpg?w=500&auto=format",
+                    "contract": {
+                        "address": "0xa20cf9b0874c3e46b344deaeea9c2e0c3e1db37d",
+                        "standard": "erc721"
+                    },
+                    "token_id": "1774",
+                    "traits": [],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "Honey Jar",
+                    "collection_slug": "honeyjar",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.039359"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjM4OTc2MDQ2Mw==",
+                    "name": "milady mfers #0476",
+                    "image_url": "https://i.seadn.io/gae/7Utq5pDz85W2uoA9DOJ_nLd2RE5x24PFUVWqzKuD7xZHO5BuF3dGgX3QRsnUrXDs8PCNv7C5sxPs8Kq1NBnraHM6VZQBY6SmknBr?w=500&auto=format",
+                    "contract": {
+                        "address": "0x07e8d4a25d36d7259879337a923170453944614f",
+                        "standard": "erc721"
+                    },
+                    "token_id": "476",
+                    "traits": [
+                        {
+                            "trait_type": "Hair",
+                            "value": "Short Green"
+                        },
+                        {
+                            "trait_type": "Glasses",
+                            "value": "Round Glasses"
+                        },
+                        {
+                            "trait_type": "Mouth",
+                            "value": "W"
+                        },
+                        {
+                            "trait_type": "Eyes",
+                            "value": "Brown Sparkle"
+                        },
+                        {
+                            "trait_type": "Blush",
+                            "value": "No"
+                        },
+                        {
+                            "trait_type": "Eyebrows",
+                            "value": "Normal"
+                        },
+                        {
+                            "trait_type": "Earring",
+                            "value": "Heart Pearls Earring"
+                        },
+                        {
+                            "trait_type": "Race",
+                            "value": "Tan"
+                        },
+                        {
+                            "trait_type": "Shirt",
+                            "value": "Mape Hoodie"
+                        },
+                        {
+                            "trait_type": "Face Decoration",
+                            "value": "Gucci Cone Tattoo"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Casino"
+                        },
+                        {
+                            "trait_type": "Hat",
+                            "value": "Cross Cap White"
+                        }
+                    ],
+                    "last_sale": {
+                        "price": {
+                            "amount": 14000000000000000,
+                            "currency": {
+                                "decimals": 18,
+                                "symbol": "ETH",
+                                "contract": {
+                                    "address": "0x0000000000000000000000000000000000000000",
+                                    "standard": "erc20"
+                                }
+                            }
+                        },
+                        "occurred_at": "2023-06-16T22:00:35"
+                    },
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "milady mfers",
+                    "collection_slug": "milady-mfers",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:27:28.029944"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyNjQ5NzQ2ODI=",
+                    "name": "THC #373",
+                    "image_url": "https://i.seadn.io/gcs/files/f077c432612bd0f9fe16b2b40d4be00f.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd65f95a40b6de26f6c390fcb8e3377d382fe678b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "373",
+                    "traits": [
+                        {
+                            "trait_type": "Bear",
+                            "value": "Panda Bear"
+                        },
+                        {
+                            "trait_type": "T-Shirt",
+                            "value": "Beramonium Tee"
+                        },
+                        {
+                            "trait_type": "Hats",
+                            "value": "Bing Bong Cap"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Cave"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "THC NFT",
+                    "collection_slug": "thc-nft-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:22:25.787760"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyNjQ5Nzk0NzQ=",
+                    "name": "THC #381",
+                    "image_url": "https://i.seadn.io/gcs/files/0243978cae43d01dc3f842107878333f.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd65f95a40b6de26f6c390fcb8e3377d382fe678b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "381",
+                    "traits": [
+                        {
+                            "trait_type": "Hats",
+                            "value": "Romie Hitai ate"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Toronto Nightclub"
+                        },
+                        {
+                            "trait_type": "Bear",
+                            "value": "Polar Bear"
+                        },
+                        {
+                            "trait_type": "T-Shirt",
+                            "value": "Redacted Tee"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "THC NFT",
+                    "collection_slug": "thc-nft-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:22:25.783312"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyNjQ5NjM4Njc=",
+                    "name": "THC #349",
+                    "image_url": "https://i.seadn.io/gcs/files/c170b22e115a7443940c3e8cb1aa57fc.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd65f95a40b6de26f6c390fcb8e3377d382fe678b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "349",
+                    "traits": [
+                        {
+                            "trait_type": "Hats",
+                            "value": "Watermelon"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Rome"
+                        },
+                        {
+                            "trait_type": "Bear",
+                            "value": "Black Bear"
+                        },
+                        {
+                            "trait_type": "T-Shirt",
+                            "value": "Polaris Tee"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "THC NFT",
+                    "collection_slug": "thc-nft-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:22:25.778180"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjEyNjQ5NjM4NDU=",
+                    "name": "THC #348",
+                    "image_url": "https://i.seadn.io/gcs/files/c9c3a59f956f67f1b95c10844ddcb509.png?w=500&auto=format",
+                    "contract": {
+                        "address": "0xd65f95a40b6de26f6c390fcb8e3377d382fe678b",
+                        "standard": "erc721"
+                    },
+                    "token_id": "348",
+                    "traits": [
+                        {
+                            "trait_type": "Bear",
+                            "value": "Brown Bear"
+                        },
+                        {
+                            "trait_type": "T-Shirt",
+                            "value": "Crocswap Tee"
+                        },
+                        {
+                            "trait_type": "Hats",
+                            "value": "Beret"
+                        },
+                        {
+                            "trait_type": "Background",
+                            "value": "Moon"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "THC NFT",
+                    "collection_slug": "thc-nft-2",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:22:25.765457"
+            },
+            {
+                "asset": {
+                    "id": "QXNzZXRUeXBlOjQwNDMyNjE5Mg==",
+                    "name": "Bryan Adams | Band Bears #425",
+                    "image_url": "https://i.seadn.io/gae/y3JTE29QUCJSrFaJWgtXyKMXKwaqvhSr_MQdB8OKanrTtXv2UnajKwVaEOajpUxwZUtaNrP4aU8IpBr3hVqkRn-ntnSS898iFjVYzvw?w=500&auto=format",
+                    "contract": {
+                        "address": "0xb4e570232d3e55d2ee850047639dc74da83c7067",
+                        "standard": "erc721"
+                    },
+                    "token_id": "425",
+                    "traits": [
+                        {
+                            "trait_type": "Group",
+                            "value": "Soloist"
+                        },
+                        {
+                            "trait_type": "Name",
+                            "value": "Bryan Adams"
+                        }
+                    ],
+                    "marked_suspicious": false,
+                    "is_tradable": true,
+                    "collection_name": "The Band Bears",
+                    "collection_slug": "the-band-bears",
+                    "collection_is_badged": false
+                },
+                "owned_quantity": 1,
+                "created_date": "2023-06-16T22:22:25.764705"
+            }
+        ]
+    }
+}
