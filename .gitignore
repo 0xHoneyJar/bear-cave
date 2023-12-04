@@ -1,8 +1,9 @@
 # Compiler files
-cache/
+cache*/
 out/
 bin/
 docs/
+artifacts/
 
 # Ignores development broadcast logs
 !/broadcast
