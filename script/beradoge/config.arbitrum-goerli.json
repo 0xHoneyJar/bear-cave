@@ -2,19 +2,19 @@
   "chainId": 421613,
   "assetChainId": 5,
   "deployments": {
-    "registry": "0x65f92852b7429990302AEb869C9746E2E19e8742",
-    "gatekeeper": "0x9028f33A40e4F5CFe1808B61154D426c1d5FC587",
-    "honeyjar": "0x4889163f9579234a6489F4e8a70C7E5e95c01428",
-    "den": "0x1518AB2EF92978f3fF9840e72F85F9c3F7722910",
-    "portal": "0x90f1BF69E1E12Dd67Ca6958E5cFEE3758DCa3ca4"
+    "registry": "0x53a6078d8f513daF5274B20a91472aacb270bc59",
+    "gatekeeper": "0xff806aa18D13F6d65dd9FF71f04735e9BA68D218",
+    "honeyjar": "0x88896DAc4D480931f4B059521c0c186576eF2e0C",
+    "den": "0x4CB2bb0461101aE011A805a189b892aeb2133577",
+    "portal": "0xF32cd08e6189720468b7948eBa31F990eA7218E7"
   },
   "addresses": {
-    "gameAdmin": "0xA4b1d4d0CcB3e73e5a4448FA07AC1c9526BE19Dd",
-    "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-    "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-    "paymentToken": "0x9db2ea779cd3f9f8aeb5e58eb1223a585a4d7d68",
+    "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "jani": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "beekeeper": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "paymentToken": "0x0",
     "lzEndpoint": "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
-    "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
+    "deployer": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34"
   },
   "mintConfig": {
     "maxHoneyJar_claimable": 0,
@@ -23,10 +23,11 @@
   },
   "honeyJar": {
     "startIndex": 1,
-    "maxMintableForChain": 500
+    "maxMintableForChain": 500,
+    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
   },
   "revShare": 0,
-  "adminMaxMint": 233,
+  "adminMintMax": 233,
   "maxMintsPerUser": 2,
   "vrf": {
     "coordinator": "0x6D80646bEAdd07cE68cab36c27c626790bBcf17f",

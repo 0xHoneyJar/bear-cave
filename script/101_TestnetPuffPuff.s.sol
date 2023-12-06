@@ -13,7 +13,7 @@ import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
 // Mints the required tokens to GameAdmin and starts the game
-contract TestnetPuffPuff is THJScriptBase("gen3") {
+contract TestnetPuffPuff is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}

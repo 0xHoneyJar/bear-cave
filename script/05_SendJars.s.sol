@@ -7,7 +7,7 @@ import {GameRegistry} from "src/GameRegistry.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
 // Sets up HibernationDen as a game
-contract SendFermentedJars is THJScriptBase("gen3") {
+contract SendFermentedJars is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function run(string calldata env) public override {

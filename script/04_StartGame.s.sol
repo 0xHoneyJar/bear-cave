@@ -6,7 +6,7 @@ import "./THJScriptBase.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
-contract StartGame is THJScriptBase("gen3") {
+contract StartGame is THJScriptBase("beradoge") {
     using stdJson for string;
 
     // Notes: call on both chains

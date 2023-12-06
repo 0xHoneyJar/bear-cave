@@ -15,7 +15,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase("gen3") {
+contract DeployScript is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}
@@ -33,6 +33,8 @@ contract DeployScript is THJScriptBase("gen3") {
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
+
+        console.log(gameAdmin);
 
         // Initializing StageTimes
         uint256[] memory stageTimes = new uint256[](1);

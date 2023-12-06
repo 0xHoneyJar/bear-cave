@@ -14,7 +14,7 @@ import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 
 // Sets up HibernationDen as a game
-contract ConfigureGame is THJScriptBase("gen3") {
+contract ConfigureGame is THJScriptBase("beradoge") {
     using stdJson for string;
     using SafeCastLib for uint256;
 

@@ -7,7 +7,7 @@ import {HibernationDen} from "src/HibernationDen.sol";
 import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
 
 // Sets up HibernationDen as a game
-contract AddToParty is THJScriptBase("gen3") {
+contract AddToParty is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function run(string calldata env) public override {

@@ -7,7 +7,7 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Constants} from "src/Constants.sol";
 
-contract SetGates is THJScriptBase("gen3") {
+contract SetGates is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}

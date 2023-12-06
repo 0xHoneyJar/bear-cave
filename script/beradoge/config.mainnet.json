@@ -29,7 +29,7 @@
     "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
   },
   "revShare": 0,
-  "adminMaxMint": 0,
+  "adminMintMax": 0,
   "maxMintsPerUser": 0,
   "vrf": {
     "coordinator": "0x271682DEB8C4E0901D1a1550aD2e64D568E69909",

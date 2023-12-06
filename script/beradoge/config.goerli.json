@@ -1,19 +1,19 @@
 {
   "chainId": 5,
   "deployments": {
-    "registry": "0xc54692f4EBc5858c21F7bBea1BD1e2BcFe1090EE",
-    "gatekeeper": "0xb62196d9e90486ce766724326c26e6259837cF98",
-    "honeyjar": "0xEEb6EcE181136195322918518F792c2C0d54BF80",
-    "den": "0x41FF6642B11A8C00CD7CCC3dBF520B91A6D6495a",
+    "registry": "0x7F0992866B298c813C20D54e754c340E654A2945",
+    "gatekeeper": "0x81196B624D06eD6afD14f147Df774227b3703944",
+    "honeyjar": "0x5fEbdB3580EfC861A660c3431eBb6E1688cca50A",
+    "den": "0xaB169e85f52cD2C48e33F46A6c27E1c1B1478693",
     "portal": "0x700d64fF07e672072850a9F581Ea9c43645B4502"
   },
   "addresses": {
-    "gameAdmin": "0xA4b1d4d0CcB3e73e5a4448FA07AC1c9526BE19Dd",
-    "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-    "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
-    "paymentToken": "0xcbD331954e0f7184AE8fCbFb93D87ddc3cB171B4",
+    "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "jani": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "beekeeper": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "paymentToken": "0x0",
     "lzEndpoint": "0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23",
-    "deployer": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7"
+    "deployer": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34"
   },
   "mintConfig": {
     "maxHoneyJar_claimable": 0,
@@ -24,10 +24,11 @@
   "checkpoints": [500],
   "honeyJar": {
     "startIndex": 0,
-    "maxMintableForChain": 0
+    "maxMintableForChain": 1,
+    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
   },
   "revShare": 0,
-  "adminMaxMint": 0,
+  "adminMintMax": 0,
   "maxMintsPerUser": 0,
   "vrf": {
     "coordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
@@ -38,53 +39,13 @@
   "bundleTokens": [
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 20,
+      "id": 1,
       "isERC1155": false
     },
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 21,
+      "id": 2,
       "isERC1155": false
-    },
-    {
-      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 22,
-      "isERC1155": false
-    },
-    {
-      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 23,
-      "isERC1155": false
-    },
-    {
-      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 24,
-      "isERC1155": false
-    },
-    {
-      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 25,
-      "isERC1155": false
-    },
-    {
-      "address": "0xfa5b51b54f2731596984d0d841dcd30021024e8a",
-      "id": 20,
-      "isERC1155": true
-    },
-    {
-      "address": "0xfa5b51b54f2731596984d0d841dcd30021024e8a",
-      "id": 21,
-      "isERC1155": true
-    },
-    {
-      "address": "0xfa5b51b54f2731596984d0d841dcd30021024e8a",
-      "id": 22,
-      "isERC1155": true
-    },
-    {
-      "address": "0xfa5b51b54f2731596984d0d841dcd30021024e8a",
-      "id": 23,
-      "isERC1155": true
     }
   ]
 }
