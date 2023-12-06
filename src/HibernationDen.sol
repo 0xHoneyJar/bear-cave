@@ -157,7 +157,7 @@ contract HibernationDen is
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
 
-    /// @notice tracks maximum number of mints per address and limits to global mint amount
+    /// @notice tracks mints per address
     mapping(address => uint256) public mintCount;
 
     constructor(
@@ -654,7 +654,7 @@ contract HibernationDen is
         emit HoneyJarClaimed(bundleId_, gateId, msg.sender, numClaim);
     }
 
-    /// @dev Helper function to process all free cams. More client-sided computation.
+    /// @dev Helper function to process all free claims. More client-sided computation.
     /// @param bundleId_ the bundle to claim tokens for.
     /// @param gateIds the list of gates to claim. The txn will revert if an ID for an inactive gate is included.
     /// @param amounts the list of amounts being claimed for the respective gates.
@@ -677,7 +677,7 @@ contract HibernationDen is
     //=============== Admin Methods ================//
 
     /// @notice admin function to mint a specified amount of THJ.
-    /// @dev the value is set on initialization.
+    /// @dev the max mint amount is set on initialization
     function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
         if (adminMinted + amount_ > adminMintMax) revert InvalidInput("adminMint");
 
