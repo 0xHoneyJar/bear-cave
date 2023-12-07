@@ -86,13 +86,13 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
         uint256 newId = _nextTokenId;
         ++_nextTokenId;
 
-        _safeMint(to, newId);
+        _mint(to, newId);
         return newId;
     }
 
     /// @notice Used for xChain calls
     function mintTokenId(address to, uint256 tokenId_) external override onlyRole(Constants.MINTER) {
-        _safeMint(to, tokenId_);
+        _mint(to, tokenId_);
     }
 
     /// @notice mint multiple.

@@ -402,7 +402,7 @@ contract HibernationDen is
         _distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
 
         // Mint da honey
-        return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+        return _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     /// @dev internal helper function to collect payment and mint honeyJar
@@ -413,16 +413,18 @@ contract HibernationDen is
 
         _distribute(0);
 
-        return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+        return _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     /// @notice internal method to mint for a particular user
     /// @dev if the amount_ is > than multiple checkpoints, accounting WILL mess up.
-    /// @param to user to mint to
     /// @param bundleId_ the bea being minted for
-    function _mintHoneyJarForBear(address to, uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+    /// @param amount_ the amount of honeyJars to mint
+    function _mintHoneyJarForBear(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+        mintCount[msg.sender] += amount_;
+
         uint256 tokenId = honeyJar.nextTokenId();
-        honeyJar.batchMint(to, amount_);
+        honeyJar.batchMint(msg.sender, amount_);
 
         // Have a unique tokenId for a given bundleId
         for (uint256 i = 0; i < amount_; ++i) {
@@ -430,8 +432,6 @@ contract HibernationDen is
             honeyJarToParty[tokenId] = bundleId_;
             ++tokenId;
         }
-
-        mintCount[msg.sender] += amount_;
 
         // Find the special honeyJar when a checkpoint is passed.
         uint256 numMinted = honeyJarShelf[bundleId_].length;
@@ -649,7 +649,7 @@ contract HibernationDen is
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
 
         // If for some reason this fails, GG no honeyJar for you
-        _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
+        _mintHoneyJarForBear(bundleId_, numClaim);
 
         emit HoneyJarClaimed(bundleId_, gateId, msg.sender, numClaim);
     }
@@ -685,7 +685,7 @@ contract HibernationDen is
 
         _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
 
-        _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+        _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     //=============== SETTERS ================//
