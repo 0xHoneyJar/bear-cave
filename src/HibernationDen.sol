@@ -421,6 +421,8 @@ contract HibernationDen is
     /// @param bundleId_ the bea being minted for
     /// @param amount_ the amount of honeyJars to mint
     function _mintHoneyJarForBear(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+        mintCount[msg.sender] += amount_;
+
         uint256 tokenId = honeyJar.nextTokenId();
         honeyJar.batchMint(msg.sender, amount_);
 
@@ -430,8 +432,6 @@ contract HibernationDen is
             honeyJarToParty[tokenId] = bundleId_;
             ++tokenId;
         }
-
-        mintCount[msg.sender] += amount_;
 
         // Find the special honeyJar when a checkpoint is passed.
         uint256 numMinted = honeyJarShelf[bundleId_].length;
