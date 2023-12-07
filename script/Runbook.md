@@ -98,6 +98,8 @@ On both Chains:
 
 ### Step 6: PuffPuffPassOut
 
+Admin mint before starting the game
+
 The following actions are done from the `GAME_ADMIN` multisig that owns the assets listed in the bundle
 
 Call `hibernationDen.puffPuffPassOut(bundleId)` -- BundleId should be 0
