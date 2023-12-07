@@ -38,7 +38,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
 
     /// @notice The tokenID space needs to be segmented for each chain
     constructor(address owner_, address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
-        ERC721("HoneyJar", "HONEYJAR")
+        ERC721("Beradoge", "BERADOGE")
         GameRegistryConsumer(gameRegistry_)
         Create2Ownable(owner_)
     {

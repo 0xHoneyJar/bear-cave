@@ -2,11 +2,11 @@
   "chainId": 421613,
   "assetChainId": 5,
   "deployments": {
-    "registry": "0x53a6078d8f513daF5274B20a91472aacb270bc59",
-    "gatekeeper": "0xff806aa18D13F6d65dd9FF71f04735e9BA68D218",
-    "honeyjar": "0x88896DAc4D480931f4B059521c0c186576eF2e0C",
-    "den": "0x4CB2bb0461101aE011A805a189b892aeb2133577",
-    "portal": "0xF32cd08e6189720468b7948eBa31F990eA7218E7"
+    "registry": "0xd1f17812b2BAe51766BD152aDcea54cBe0B3a315",
+    "gatekeeper": "0x15D4A8a94cba4Cda4067A8e02b086a2c311835cd",
+    "honeyjar": "0x6D2b0f29A3B61e2086CEEd956B9e82f92C7d2908",
+    "den": "0x52d39C6b3A8Ba5F36Def8D02D6c72b2C7C43a85f",
+    "portal": "0x117E29f02dbC7CF724feF8793eD21e815ABF2310"
   },
   "addresses": {
     "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",

@@ -1,11 +1,11 @@
 {
   "chainId": 5,
   "deployments": {
-    "registry": "0x7F0992866B298c813C20D54e754c340E654A2945",
-    "gatekeeper": "0x81196B624D06eD6afD14f147Df774227b3703944",
-    "honeyjar": "0x5fEbdB3580EfC861A660c3431eBb6E1688cca50A",
-    "den": "0xaB169e85f52cD2C48e33F46A6c27E1c1B1478693",
-    "portal": "0x700d64fF07e672072850a9F581Ea9c43645B4502"
+    "registry": "0x1E8c9ab71cf79545f6C0Cf4B2731570b98d19f67",
+    "gatekeeper": "0x98d0e5A5f7f53650055c16f18540bA3697A90BaF",
+    "honeyjar": "0x50EEA571c6fe40D59D03DDaa231C79F5bB8e354E",
+    "den": "0x5A1a0381bB72CeFC54aaA71AC48d05B863024110",
+    "portal": "0x360327Dd6b54f785525E8bEe604F4568cCc58ffb"
   },
   "addresses": {
     "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
@@ -39,12 +39,12 @@
   "bundleTokens": [
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 1,
+      "id": 400,
       "isERC1155": false
     },
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 2,
+      "id": 401,
       "isERC1155": false
     }
   ]
