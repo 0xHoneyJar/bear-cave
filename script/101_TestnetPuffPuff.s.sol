@@ -35,8 +35,8 @@ contract TestnetPuffPuff is THJScriptBase("beradoge") {
         vm.startBroadcast();
 
         //Mint some payment tokens
-        erc20.mint(deployer, 10 * 1e9);
-        erc20.mint(gameAdmin, 10 * 1e9);
+        // erc20.mint(deployer, 10 * 1e9);
+        // erc20.mint(gameAdmin, 10 * 1e9);
 
         // Approve all
         for (uint256 i = 0; i < addresses.length; i++) {
@@ -72,7 +72,7 @@ contract TestnetPuffPuff is THJScriptBase("beradoge") {
         console.log("ETH REQUIRED: ", nativeFee);
 
         vm.startBroadcast();
-        // portal.setAdapterParams(HoneyJarPortal.MessageTypes.START_GAME, 1, 520000); -- dont need this
+        portal.setAdapterParams(HoneyJarPortal.MessageTypes.START_GAME, 1, 520000); // -- dont need this
         den.puffPuffPassOut{value: nativeFee * 2}(bundleId);
         // Execute on L2 if it fails
         // lz.retryPayload(10121, abi.encodePacked(0x1399706d571ae4E915f32099995eE0ad9107AD96), payload);

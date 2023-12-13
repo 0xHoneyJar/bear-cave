@@ -2,11 +2,11 @@
   "chainId": 421613,
   "assetChainId": 5,
   "deployments": {
-    "registry": "0xd1f17812b2BAe51766BD152aDcea54cBe0B3a315",
-    "gatekeeper": "0x15D4A8a94cba4Cda4067A8e02b086a2c311835cd",
-    "honeyjar": "0x6D2b0f29A3B61e2086CEEd956B9e82f92C7d2908",
-    "den": "0x52d39C6b3A8Ba5F36Def8D02D6c72b2C7C43a85f",
-    "portal": "0x117E29f02dbC7CF724feF8793eD21e815ABF2310"
+    "registry": "0xa947259977317F211c1b8b025F18dA0fDcCb48A9",
+    "gatekeeper": "0xA5a9BbBc8f82e97af1194F167ad7510DfD28F1ab",
+    "honeyjar": "0x628d691E913fBAA477b3aCC6430950cbeEbC6c79",
+    "den": "0xa0f991d7965fcf6dB31bA7b7abBa5638B61fFbAB",
+    "portal": "0x3c6C26E26693f89362306DA2beBD15aFBF541d49"
   },
   "addresses": {
     "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
@@ -17,13 +17,13 @@
     "deployer": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34"
   },
   "mintConfig": {
-    "maxHoneyJar_claimable": 0,
+    "maxHoneyJar_claimable": 733,
     "price_ERC20": 0,
     "price_ETH": 0
   },
   "honeyJar": {
     "startIndex": 1,
-    "maxMintableForChain": 500,
+    "maxMintableForChain": 733,
     "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
   },
   "revShare": 0,

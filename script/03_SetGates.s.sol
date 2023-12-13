@@ -30,7 +30,7 @@ contract SetGates is THJScriptBase("beradoge") {
         // gk.addGate(bundleId, 0x093dce164993a0878f91817bd0363c68adaf8eb6ea72fa275ad644d050fa3a09, 1378, 0); // HG
         // gk.addGate(bundleId, bytes32(0), 0, 0);
         // gk.addGate(bundleId, bytes32(0), 0, 0);
-        gk.addGate(bundleId, 0xd22a43979c4308f70aa99543f681021e18f28ff4410b078bbc1cc9097752eff4, 60, 0);
+        gk.addGate(bundleId, 0xc82fe67e4de1af625df06e44adcb9c72dfd2f24dcad8b15ec48ddc5010b488ea, 500 - 233, 0);
         gr.grantRole(Constants.GAME_INSTANCE, deployer);
         gk.startGatesForBundle(bundleId);
         gr.renounceRole(Constants.GAME_INSTANCE, deployer);
