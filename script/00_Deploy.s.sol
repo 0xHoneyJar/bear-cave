@@ -37,8 +37,9 @@ contract DeployScript is THJScriptBase("beradoge") {
         console.log(gameAdmin);
 
         // Initializing StageTimes
-        uint256[] memory stageTimes = new uint256[](1);
+        uint256[] memory stageTimes = new uint256[](2);
         stageTimes[0] = 0 hours;
+        stageTimes[1] = 1 hours;
 
         vm.startBroadcast();
 
