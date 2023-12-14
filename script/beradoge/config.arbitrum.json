@@ -1,0 +1,39 @@
+{
+  "chainId": 421614,
+  "assetChainId": 1,
+  "deployments": {
+    "registry": "",
+    "gatekeeper": "",
+    "honeyjar": "",
+    "den": "",
+    "portal": ""
+  },
+  "addresses": {
+    "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "jani": "0xAb41B47C9891bdeBB24c8f7A52ad54e719fbeDbB",
+    "beekeeper": "0xe9656aFeFF1a9b9B4849A04b830ECE7F10B53749",
+    "paymentToken": "0x0",
+    "lzEndpoint": "0x3c2269811836af69497E5F486A85D7316753cf62",
+    "deployer": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34"
+  },
+  "mintConfig": {
+    "maxHoneyJar_claimable": 733,
+    "price_ERC20": 0,
+    "price_ETH": 0
+  },
+  "honeyJar": {
+    "startIndex": 0,
+    "maxMintableForChain": 733,
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
+  },
+  "revShare": 0,
+  "adminMintMax": 233,
+  "maxMintsPerUser": 2,
+  "vrf": {
+    "coordinator": "0x41034678D6C633D8a95c75e1138A360a28bA15d1",
+    "keyHash": "0x68d24f9a037a649944964c2a1ebd0b2918f4a243d2a99701cc22b548cf2daff0",
+    "subId": 55
+  },
+  "bundleId": 0,
+  "bundleTokens": []
+}

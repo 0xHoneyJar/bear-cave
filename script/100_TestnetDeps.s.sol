@@ -8,7 +8,7 @@ import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
 // Deploys ERC721, ERC20, ERC1155 to Game_Admin
-contract TestnetDeps is THJScriptBase("gen3") {
+contract TestnetDeps is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function run(string calldata env) public override {

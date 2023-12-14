@@ -13,7 +13,7 @@ import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 
 // Mints the required tokens to GameAdmin and starts the game
-contract TestnetPuffPuff is THJScriptBase("gen3") {
+contract TestnetPuffPuff is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}
@@ -35,17 +35,17 @@ contract TestnetPuffPuff is THJScriptBase("gen3") {
         vm.startBroadcast();
 
         //Mint some payment tokens
-        erc20.mint(deployer, 10 * 1e9);
-        erc20.mint(gameAdmin, 10 * 1e9);
+        // erc20.mint(deployer, 10 * 1e9);
+        // erc20.mint(gameAdmin, 10 * 1e9);
 
         // Approve all
         for (uint256 i = 0; i < addresses.length; i++) {
             if (isERC1155s[i]) {
-                MockERC1155(addresses[i]).mint(deployer, tokenIds[i], 1, "");
+                // MockERC1155(addresses[i]).mint(deployer, tokenIds[i], 1, "");
                 MockERC1155(addresses[i]).setApprovalForAll(address(den), true);
                 continue;
             }
-            MockERC721(addresses[i]).mint(deployer, tokenIds[i]);
+            // MockERC721(addresses[i]).mint(deployer, tokenIds[i]);
             MockERC721(addresses[i]).approve(address(den), tokenIds[i]);
         }
         vm.stopBroadcast();
@@ -72,7 +72,7 @@ contract TestnetPuffPuff is THJScriptBase("gen3") {
         console.log("ETH REQUIRED: ", nativeFee);
 
         vm.startBroadcast();
-        // portal.setAdapterParams(HoneyJarPortal.MessageTypes.START_GAME, 1, 520000); -- dont need this
+        portal.setAdapterParams(HoneyJarPortal.MessageTypes.START_GAME, 1, 520000); // -- dont need this
         den.puffPuffPassOut{value: nativeFee * 2}(bundleId);
         // Execute on L2 if it fails
         // lz.retryPayload(10121, abi.encodePacked(0x1399706d571ae4E915f32099995eE0ad9107AD96), payload);

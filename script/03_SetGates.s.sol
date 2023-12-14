@@ -7,7 +7,7 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {Constants} from "src/Constants.sol";
 
-contract SetGates is THJScriptBase("gen3") {
+contract SetGates is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}
@@ -30,7 +30,7 @@ contract SetGates is THJScriptBase("gen3") {
         // gk.addGate(bundleId, 0x093dce164993a0878f91817bd0363c68adaf8eb6ea72fa275ad644d050fa3a09, 1378, 0); // HG
         // gk.addGate(bundleId, bytes32(0), 0, 0);
         // gk.addGate(bundleId, bytes32(0), 0, 0);
-        gk.addGate(bundleId, 0xd22a43979c4308f70aa99543f681021e18f28ff4410b078bbc1cc9097752eff4, 60, 0);
+        gk.addGate(bundleId, 0x92fcb5b13db1afcec452b53c1a7844f69187002fd0f4634ee11f8571e4cbeab2, 500, 0); // Shitlist + HC - AdminMint
         gr.grantRole(Constants.GAME_INSTANCE, deployer);
         gk.startGatesForBundle(bundleId);
         gr.renounceRole(Constants.GAME_INSTANCE, deployer);

@@ -191,8 +191,16 @@ case "$method" in
     echo "Running testnetPuffPuff"
     forge script script/101_TestnetPuffPuff.s.sol:TestnetPuffPuff --sig 'estimateAndPuff(string)()' $network $forge_params
     ;;
+  "testnetAdminMint")
+    echo "Running testnetAdminMint"
+    forge script script/102_TestnetAdminMint.s.sol:TestnetAdminMint --sig 'run(string)()' $network $forge_params
+    ;;
+  "testnetRetryPayload")
+    echo "Running testnetRetryPayload"
+    forge script script/103_TestnetRetryPayload.s.sol:TestnetRetryPayload --sig 'run(string)()' $network $forge_params
+    ;;
   "validate")
-    echo "Running testnetPuffPuff"
+    echo "Running validate"
     forge script script/200_Validate.t.sol:ValidateScript --sig 'validate(string,string)()' $network $network2 $forge_params
     ;;
   *)

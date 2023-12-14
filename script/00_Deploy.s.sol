@@ -15,7 +15,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase("gen3") {
+contract DeployScript is THJScriptBase("beradoge") {
     using stdJson for string;
 
     function setUp() public {}
@@ -34,9 +34,12 @@ contract DeployScript is THJScriptBase("gen3") {
         address jani = json.readAddress(".addresses.jani");
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
+        console.log(gameAdmin);
+
         // Initializing StageTimes
-        uint256[] memory stageTimes = new uint256[](1);
+        uint256[] memory stageTimes = new uint256[](2);
         stageTimes[0] = 0 hours;
+        stageTimes[1] = 1 hours;
 
         vm.startBroadcast();
 
@@ -87,6 +90,8 @@ contract DeployScript is THJScriptBase("gen3") {
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
         uint256 revShare = json.readUint(".revShare");
+        uint256 adminMintMax = json.readUint(".adminMintMax");
+        uint256 maxMintsPerUser = json.readUint(".maxMintsPerUser");
 
         vm.startBroadcast();
 
@@ -98,7 +103,9 @@ contract DeployScript is THJScriptBase("gen3") {
             gatekeeper,
             jani,
             beekeeper,
-            revShare
+            revShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         console.log("-HibernationDenAddress: ", address(den));

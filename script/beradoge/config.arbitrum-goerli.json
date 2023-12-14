@@ -1,0 +1,39 @@
+{
+  "chainId": 421613,
+  "assetChainId": 5,
+  "deployments": {
+    "registry": "0xDA5aa1c541E28639e272A726CBD53B61e2736420",
+    "gatekeeper": "0x18ef6a90D90f2DEDf81e9d7569b8e92Aa5000210",
+    "honeyjar": "0x4f7b7C5eB9f74D986D2b42Faa5caCd3b096E4684",
+    "den": "0x4B3650907b0EE219Fd64e121742F37240a82Ce43",
+    "portal": "0xbD406eE306239E4824A849c478023eC289843cee"
+  },
+  "addresses": {
+    "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "jani": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "beekeeper": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
+    "paymentToken": "0x0",
+    "lzEndpoint": "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab",
+    "deployer": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34"
+  },
+  "mintConfig": {
+    "maxHoneyJar_claimable": 733,
+    "price_ERC20": 0,
+    "price_ETH": 0
+  },
+  "honeyJar": {
+    "startIndex": 0,
+    "maxMintableForChain": 733,
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
+  },
+  "revShare": 0,
+  "adminMintMax": 233,
+  "maxMintsPerUser": 2,
+  "vrf": {
+    "coordinator": "0x6D80646bEAdd07cE68cab36c27c626790bBcf17f",
+    "keyHash": "0x83d1b6e3388bed3d76426974512bb0d270e9542a765cd667242ea26c0cc0b730",
+    "subId": 20
+  },
+  "bundleId": 0,
+  "bundleTokens": []
+}

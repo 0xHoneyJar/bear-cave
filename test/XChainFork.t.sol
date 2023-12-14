@@ -45,6 +45,8 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     uint32 private maxHoneyJar = 15;
     uint256 private honeyJarShare = 2233 * 1e14; // In WD (.2233)
     uint32 private maxClaimableHoneyJar = 6;
+    uint256 private maxMintsPerUser = 10;
+    uint256 private adminMintMax = 200;
 
     // Gatekeeper
     bytes32[] private gateData;
@@ -192,7 +194,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeper),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -205,8 +209,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vrfCoordinator.addConsumer(subId, address(hibernationDenL1));
         hibernationDenL1.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
 
-        portalL1 =
-        new HoneyJarPortal(50000, L1_LZ_ENDPOINT, address(honeyJar),address(hibernationDenL1), address(gameRegistry));
+        portalL1 = new HoneyJarPortal(
+            50000, L1_LZ_ENDPOINT, address(honeyJar), address(hibernationDenL1), address(gameRegistry)
+        );
         portalL1.setMinDstGas(portalL1.lzChainId(L2_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
         gameRegistry.grantRole(Constants.PORTAL, address(portalL1));
         gameRegistry.grantRole(Constants.BURNER, address(portalL1));
@@ -295,7 +300,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
             address(gatekeeperL2),
             address(jani),
             address(beekeeper),
-            honeyJarShare
+            honeyJarShare,
+            adminMintMax,
+            maxMintsPerUser
         );
 
         mintConfigL2 = mintConfig; // same ol mintConfig
@@ -303,8 +310,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         hibernationDenL2.initialize(HibernationDen.VRFConfig("", subIdL2, 3, 10000000), mintConfigL2);
         vm.deal(address(hibernationDenL2), 6 ether); // It will make the xChain calls.
 
-        portalL2 =
-        new HoneyJarPortal(50000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
+        portalL2 = new HoneyJarPortal(
+            50000, L2_LZ_ENDPOINT, address(honeyJarL2), address(hibernationDenL2), address(gameRegistryL2)
+        );
         hibernationDenL2.setPortal(address(portalL2));
         portalL2.setMinDstGas(portalL2.lzChainId(L1_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
 

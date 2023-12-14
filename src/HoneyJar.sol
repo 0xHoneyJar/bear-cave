@@ -38,7 +38,7 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
 
     /// @notice The tokenID space needs to be segmented for each chain
     constructor(address owner_, address gameRegistry_, uint256 startTokenId_, uint256 mintAmount_)
-        ERC721("HoneyJar", "HONEYJAR")
+        ERC721("Beradoge", "BERADOGE")
         GameRegistryConsumer(gameRegistry_)
         Create2Ownable(owner_)
     {
@@ -86,13 +86,13 @@ contract HoneyJar is IHoneyJar, ERC721, GameRegistryConsumer, Create2Ownable {
         uint256 newId = _nextTokenId;
         ++_nextTokenId;
 
-        _safeMint(to, newId);
+        _mint(to, newId);
         return newId;
     }
 
     /// @notice Used for xChain calls
     function mintTokenId(address to, uint256 tokenId_) external override onlyRole(Constants.MINTER) {
-        _safeMint(to, tokenId_);
+        _mint(to, tokenId_);
     }
 
     /// @notice mint multiple.

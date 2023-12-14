@@ -10,7 +10,7 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 // Calls honeyBox.addBundle
 
-contract BundleTokens is THJScriptBase("gen3") {
+contract BundleTokens is THJScriptBase("beradoge") {
     using stdJson for string;
 
     uint256 private SFT_ID = 4;

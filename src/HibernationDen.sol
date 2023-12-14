@@ -71,6 +71,7 @@ contract HibernationDen is
     error InvalidInput(string method);
     error Claim_InvalidProof();
     error MekingTooManyHoneyJars(uint8 bundleId);
+    error MaxMintsPerUserReached();
     error ZeroMint();
     error WrongAmount_ETH(uint256 expected, uint256 actual);
     error NotJarOwner();
@@ -133,6 +134,15 @@ contract HibernationDen is
      */
     bool public initialized;
 
+    /// @notice the amount a gameAdmin can mint
+    uint256 public immutable adminMintMax;
+
+    /// @notice the amount gameAdmin has minted
+    uint256 public adminMinted;
+
+    /// @notice max number of honeyJars that can be minted per user
+    uint256 public immutable maxMintsPerUser;
+
     /// @notice id of the next party
     /// @dev Required for storage pointers in next mapping
     SlumberParty[] public slumberPartyList;
@@ -147,6 +157,9 @@ contract HibernationDen is
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
 
+    /// @notice tracks mints per address
+    mapping(address => uint256) public mintCount;
+
     constructor(
         address _vrfCoordinator,
         address _gameRegistry,
@@ -155,7 +168,9 @@ contract HibernationDen is
         address _gatekeeper,
         address _jani,
         address _beekeeper,
-        uint256 _honeyJarShare
+        uint256 _honeyJarShare,
+        uint256 _adminMintMax,
+        uint256 _maxMintsPerUser
     ) VRFConsumerBaseV2(_vrfCoordinator) GameRegistryConsumer(_gameRegistry) CrossChainTHJ() {
         vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         honeyJar = IHoneyJar(_honeyJarAddress);
@@ -164,6 +179,8 @@ contract HibernationDen is
         jani = payable(_jani);
         beekeeper = payable(_beekeeper);
         honeyJarShare = _honeyJarShare;
+        adminMintMax = _adminMintMax;
+        maxMintsPerUser = _maxMintsPerUser;
     }
 
     /// @notice additional parameters that are required to get the game running
@@ -238,6 +255,7 @@ contract HibernationDen is
         party.assetChainId = srcChainId;
         party.mintChainId = getChainId(); // On the destination chain you MUST be able to mint.
         party.publicMintTime = block.timestamp + publicMintOffset;
+        party.maxMintsPerUser = maxMintsPerUser;
 
         SleepingNFT memory emptyNft;
         for (uint256 i = 0; i < numSleepers_; ++i) {
@@ -294,6 +312,7 @@ contract HibernationDen is
         slumberParty.assetChainId = getChainId(); // Assets will be on this chain.
         slumberParty.mintChainId = mintChainId_; // minting can occur on another chain
         slumberParty.checkpoints = checkpoints_; //  checkpointIndex is defaulted to zero.
+        slumberParty.maxMintsPerUser = maxMintsPerUser;
 
         // Synthesize sleeper configs from input
         for (uint256 i = 0; i < inputLength; ++i) {
@@ -307,7 +326,7 @@ contract HibernationDen is
     }
 
     /// @dev internal helper function to perform conditional checks for minting state
-    function _canMintHoneyJar(uint8 bundleId_, uint256 amount_) internal view {
+    function _canMintHoneyJar(address minter_, uint8 bundleId_, uint256 amount_, bool isAdmin) internal view {
         if (!initialized) revert NotInitialized();
         SlumberParty storage party = slumberParties[bundleId_];
 
@@ -320,6 +339,9 @@ contract HibernationDen is
             revert MekingTooManyHoneyJars(bundleId_);
         }
         if (amount_ == 0) revert ZeroMint();
+        if (!isAdmin && mintCount[minter_] + amount_ > party.maxMintsPerUser) {
+            revert MaxMintsPerUserReached();
+        }
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof
@@ -333,7 +355,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external returns (uint256) {
-        _canMintHoneyJar(bundleId, mintAmount);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, false);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
         if (!validProof) revert Claim_InvalidProof();
@@ -351,7 +373,7 @@ contract HibernationDen is
         bytes32[] calldata proof,
         uint256 mintAmount
     ) external payable returns (uint256) {
-        _canMintHoneyJar(bundleId, mintAmount);
+        _canMintHoneyJar(msg.sender, bundleId, mintAmount, false);
         // validateProof checks that gates are open
         bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
         if (!validProof) revert Claim_InvalidProof();
@@ -359,14 +381,17 @@ contract HibernationDen is
     }
 
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
-        _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
+
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
+
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
-        _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
+
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, false);
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
@@ -377,7 +402,7 @@ contract HibernationDen is
         _distribute(mintConfig.honeyJarPrice_ERC20 * amount_);
 
         // Mint da honey
-        return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+        return _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     /// @dev internal helper function to collect payment and mint honeyJar
@@ -388,16 +413,18 @@ contract HibernationDen is
 
         _distribute(0);
 
-        return _mintHoneyJarForBear(msg.sender, bundleId_, amount_);
+        return _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     /// @notice internal method to mint for a particular user
     /// @dev if the amount_ is > than multiple checkpoints, accounting WILL mess up.
-    /// @param to user to mint to
     /// @param bundleId_ the bea being minted for
-    function _mintHoneyJarForBear(address to, uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+    /// @param amount_ the amount of honeyJars to mint
+    function _mintHoneyJarForBear(uint8 bundleId_, uint256 amount_) internal returns (uint256) {
+        mintCount[msg.sender] += amount_;
+
         uint256 tokenId = honeyJar.nextTokenId();
-        honeyJar.batchMint(to, amount_);
+        honeyJar.batchMint(msg.sender, amount_);
 
         // Have a unique tokenId for a given bundleId
         for (uint256 i = 0; i < amount_; ++i) {
@@ -613,7 +640,7 @@ contract HibernationDen is
             numClaim = mintConfig.maxClaimableHoneyJar - claimedAmount;
         }
         // Check if the HoneyJars can be minted
-        _canMintHoneyJar(bundleId_, numClaim); // Validating here because numClaims can change
+        _canMintHoneyJar(msg.sender, bundleId_, numClaim, false); // Validating here because numClaims can change
 
         // Update the amount minted.
         claimed[bundleId_] += numClaim;
@@ -622,12 +649,12 @@ contract HibernationDen is
         gatekeeper.addClaimed(bundleId_, gateId, numClaim, proof);
 
         // If for some reason this fails, GG no honeyJar for you
-        _mintHoneyJarForBear(msg.sender, bundleId_, numClaim);
+        _mintHoneyJarForBear(bundleId_, numClaim);
 
         emit HoneyJarClaimed(bundleId_, gateId, msg.sender, numClaim);
     }
 
-    /// @dev Helper function to process all free cams. More client-sided computation.
+    /// @dev Helper function to process all free claims. More client-sided computation.
     /// @param bundleId_ the bundle to claim tokens for.
     /// @param gateIds the list of gates to claim. The txn will revert if an ID for an inactive gate is included.
     /// @param amounts the list of amounts being claimed for the respective gates.
@@ -645,6 +672,20 @@ contract HibernationDen is
         for (uint256 i = 0; i < inputLength; ++i) {
             claim(bundleId_, gateIds[i], amounts[i], proofs[i]);
         }
+    }
+
+    //=============== Admin Methods ================//
+
+    /// @notice admin function to mint a specified amount of THJ.
+    /// @dev the max mint amount is set on initialization
+    function adminMint(uint8 bundleId_, uint256 amount_) external onlyRole(Constants.GAME_ADMIN) {
+        if (adminMinted + amount_ > adminMintMax) revert InvalidInput("adminMint");
+
+        adminMinted += amount_;
+
+        _canMintHoneyJar(msg.sender, bundleId_, amount_, true);
+
+        _mintHoneyJarForBear(bundleId_, amount_);
     }
 
     //=============== SETTERS ================//

@@ -23,8 +23,8 @@ contract GameRegistry is AccessControl {
 
         // Initial 4 stages
         stageTimes.push(0 hours);
-        stageTimes.push(2 hours);
-        stageTimes.push(4 hours);
+        stageTimes.push(1 hours);
+        // stageTimes.push(4 hours);
     }
 
     /// @notice stores enabled state for the games.

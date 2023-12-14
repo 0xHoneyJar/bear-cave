@@ -42,6 +42,8 @@ interface IHibernationDen {
         uint256[] checkpoints;
         /// @dev index tracker for which checkpoint we're part of.
         uint256 checkpointIndex;
+        /// @dev maximum number of mints per user during public mint
+        uint256 maxMintsPerUser;
     }
 
     function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
