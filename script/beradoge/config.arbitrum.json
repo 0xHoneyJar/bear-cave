@@ -22,9 +22,9 @@
     "price_ETH": 0
   },
   "honeyJar": {
-    "startIndex": 1,
+    "startIndex": 0,
     "maxMintableForChain": 733,
-    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
   },
   "revShare": 0,
   "adminMintMax": 233,

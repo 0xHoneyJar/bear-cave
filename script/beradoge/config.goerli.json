@@ -1,11 +1,11 @@
 {
   "chainId": 5,
   "deployments": {
-    "registry": "0x9E2825547D380Fee9fd3cd6Aa52DaED01D5c6008",
-    "gatekeeper": "0x4bA8E68D53427e7D88E5cD19Ad00eFb6fee55b64",
-    "honeyjar": "0x8579DC9ca731fDEf2e2Af48cb6dE9dbdBB6e277E",
-    "den": "0x61007d7137815DfE5e972D896e44470Cb76Fba55",
-    "portal": "0xe6754243EA72F7CBBc49cf91E612FC138b1debE8"
+    "registry": "0x44fE75d2A49e2D0e41bD7498E6C26769249a0C11",
+    "gatekeeper": "0x127203C40717c5cc1f6A32471e20A9F84eA7aFCB",
+    "honeyjar": "0x42eE81C12a0990F057d16ba4320f65Bb2136507e",
+    "den": "0xeF33218a0215EC6A7BEa371290736685dc84aE6c",
+    "portal": "0xf0d8176013DF8d999036eE02ddF053D9f02b6403"
   },
   "addresses": {
     "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
@@ -21,11 +21,11 @@
     "price_ETH": 0
   },
   "mintChainId": 421613,
-  "checkpoints": [500],
+  "checkpoints": [733],
   "honeyJar": {
     "startIndex": 0,
     "maxMintableForChain": 1,
-    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
   },
   "revShare": 0,
   "adminMintMax": 0,
@@ -39,12 +39,12 @@
   "bundleTokens": [
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 600,
+      "id": 604,
       "isERC1155": false
     },
     {
       "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
-      "id": 601,
+      "id": 605,
       "isERC1155": false
     }
   ]

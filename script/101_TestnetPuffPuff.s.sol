@@ -41,11 +41,11 @@ contract TestnetPuffPuff is THJScriptBase("beradoge") {
         // Approve all
         for (uint256 i = 0; i < addresses.length; i++) {
             if (isERC1155s[i]) {
-                MockERC1155(addresses[i]).mint(deployer, tokenIds[i], 1, "");
+                // MockERC1155(addresses[i]).mint(deployer, tokenIds[i], 1, "");
                 MockERC1155(addresses[i]).setApprovalForAll(address(den), true);
                 continue;
             }
-            MockERC721(addresses[i]).mint(deployer, tokenIds[i]);
+            // MockERC721(addresses[i]).mint(deployer, tokenIds[i]);
             MockERC721(addresses[i]).approve(address(den), tokenIds[i]);
         }
         vm.stopBroadcast();

@@ -25,7 +25,7 @@
   "honeyJar": {
     "startIndex": 0,
     "maxMintableForChain": 1,
-    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
   },
   "revShare": 0,
   "adminMintMax": 0,
@@ -36,5 +36,16 @@
     "subId": 670
   },
   "bundleId": 0,
-  "bundleTokens": []
+  "bundleTokens": [
+    {
+      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
+      "id": 600,
+      "isERC1155": false
+    },
+    {
+      "address": "0x4cdcc9988d47343665d3e134afef4d079f1bd0a9",
+      "id": 601,
+      "isERC1155": false
+    }
+  ]
 }

@@ -2,11 +2,11 @@
   "chainId": 421613,
   "assetChainId": 5,
   "deployments": {
-    "registry": "0xa947259977317F211c1b8b025F18dA0fDcCb48A9",
-    "gatekeeper": "0xA5a9BbBc8f82e97af1194F167ad7510DfD28F1ab",
-    "honeyjar": "0x628d691E913fBAA477b3aCC6430950cbeEbC6c79",
-    "den": "0xa0f991d7965fcf6dB31bA7b7abBa5638B61fFbAB",
-    "portal": "0x3c6C26E26693f89362306DA2beBD15aFBF541d49"
+    "registry": "0xDA5aa1c541E28639e272A726CBD53B61e2736420",
+    "gatekeeper": "0x18ef6a90D90f2DEDf81e9d7569b8e92Aa5000210",
+    "honeyjar": "0x4f7b7C5eB9f74D986D2b42Faa5caCd3b096E4684",
+    "den": "0x4B3650907b0EE219Fd64e121742F37240a82Ce43",
+    "portal": "0xbD406eE306239E4824A849c478023eC289843cee"
   },
   "addresses": {
     "gameAdmin": "0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34",
@@ -22,9 +22,9 @@
     "price_ETH": 0
   },
   "honeyJar": {
-    "startIndex": 1,
+    "startIndex": 0,
     "maxMintableForChain": 733,
-    "baseURI": "https://0xHoneyJar.xyz/api/metadata_beradoge?id="
+    "baseURI": "ipfs://QmePTa6gYg6kojb81v6Ya7e5G1cymB7CFvixt3fARPqm5m/"
   },
   "revShare": 0,
   "adminMintMax": 233,
