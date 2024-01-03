@@ -106,12 +106,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
 
         // Deploy the honeyBox
         honeyBox = new HibernationDen(
-            address(vrfCoordinator),
-            address(gameRegistry),
-            honeyJar,
-            paymentToken,
-            gatekeeper,
-            bearPouch
+            address(vrfCoordinator), address(gameRegistry), honeyJar, paymentToken, gatekeeper, bearPouch
         );
 
         vrfCoordinator.addConsumer(subId, address(honeyBox));

@@ -150,12 +150,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         // Deploy the honeyBox
         honeyBox = new HibernationDen(
-            address(vrfCoordinator),
-            address(gameRegistry),
-            honeyJar,
-            paymentToken,
-            gatekeeper,
-            bearPouch
+            address(vrfCoordinator), address(gameRegistry), honeyJar, paymentToken, gatekeeper, bearPouch
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -320,12 +315,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // Deploy l2 on a new chain
         vm.chainId(l2ChainId);
         HibernationDen l2HibernationDen = new HibernationDen(
-            address(vrfCoordinator),
-            address(gameRegistry),
-            honeyJar,
-            paymentToken,
-            gatekeeper,
-            bearPouch
+            address(vrfCoordinator), address(gameRegistry), honeyJar, paymentToken, gatekeeper, bearPouch
         );
 
         vrfCoordinator.addConsumer(subId, address(l2HibernationDen));

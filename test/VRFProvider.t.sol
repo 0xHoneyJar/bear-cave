@@ -151,6 +151,6 @@ contract VRFProviderTest is Test {
 
         uint256[] memory randomNumbers = recipient.getNumbersForId(requestId);
         assertEq(randomNumbers.length, 2);
-        assertTrue(randomNumbers[0] != randomNumbers[1]);        
+        assertTrue(randomNumbers[0] != randomNumbers[1]);
     }
 }
