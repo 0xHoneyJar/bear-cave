@@ -16,7 +16,7 @@ artifacts/
 .env\.*
 
 # Node fun
-node_modules
+node_modules/
 yarn-error.log
 
 # Coverage

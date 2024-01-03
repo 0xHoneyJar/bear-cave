@@ -16,13 +16,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
     /// Errors
     error NotImplemented();
+    error InvalidRecipient(address);
 
     /// Events
     event RequestedUint256Array(bytes32 indexed requestId, uint256 size);
     event ReceivedUint256Array(bytes32 indexed requestId, uint256[] response);
-
-    /// @notice The recipient of the RNG request that expects a chainlink interface
-    VRFConsumerBaseV2 public recipient;
 
     // These variables can also be declared as `constant`/`immutable`.
     // However, this would mean that they would not be updatable.
@@ -34,19 +32,27 @@ contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
     bytes32 public endpointIdUint256Array;
     address public sponsorWallet;
 
+    /// @notice represents "requestID" for chainlink
     uint256 public requestNumber;
+    // TODO: Could be combined into a struct
     mapping(bytes32 => bool) public expectingRequestWithIdToBeFulfilled;
     mapping(bytes32 => uint256) public requestIdToRequestNumber;
+    mapping(bytes32 => VRFConsumerBaseV2) public requestIdToRecipient;
+    mapping(uint256 => bytes32) public requestNumToRequestId;
+    mapping(address => bool) public isEnabled;
 
     /// @dev RrpRequester sponsors itself, meaning that it can make requests
     /// that will be fulfilled by its sponsor wallet. See the Airnode protocol
     /// docs about sponsorship for more information.
     /// @param _provider Airnode RRP contract address
-    constructor(VRFConsumerBaseV2 _recipient, address _provider) RrpRequesterV0(_provider) {
-        recipient = _recipient;
+    constructor(address _provider) RrpRequesterV0(_provider) {}
+
+    /// @notice method to enable/disable recipients from requesting random numbers
+    function setEnabled(address recipient_, bool isEnabled_) external onlyOwner {
+        isEnabled[recipient_] = isEnabled_;
     }
 
-    /// @notice Sets parameters used in requesting QRNG services
+    /// @notice (REQUIRED) Sets parameters used in requesting QRNG services
     /// @param _airnode Airnode address
     /// @param _endpointIdUint256Array Endpoint ID used to request a `uint256[]`
     /// @param _sponsorWallet Sponsor wallet address
@@ -66,7 +72,7 @@ contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
     /// to pitch in by sending some ETH to the sponsor wallet, you can have
     /// the user use their own sponsor wallet, you can rate-limit users.
     /// @param size Size of the requested array
-    function _makeRequestUint256Array(uint256 size) internal returns (bytes32) {
+    function _makeRequestUint256Array(uint256 size) internal returns (uint256 _requestNum) {
         bytes32 requestId = airnodeRrp.makeFullRequest(
             airnode,
             endpointIdUint256Array,
@@ -80,6 +86,9 @@ contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
 
         expectingRequestWithIdToBeFulfilled[requestId] = true;
         requestIdToRequestNumber[requestId] = requestNumber;
+        requestNumToRequestId[requestNumber] = requestId;
+        requestIdToRecipient[requestId] = VRFConsumerBaseV2(msg.sender);
+        _requestNum = requestNumber;
         requestNumber++;
 
         emit RequestedUint256Array(requestId, size);
@@ -92,11 +101,13 @@ contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
     function fulfillUint256Array(bytes32 requestId, bytes calldata data) external onlyAirnodeRrp {
         require(expectingRequestWithIdToBeFulfilled[requestId], "Request ID not known");
         expectingRequestWithIdToBeFulfilled[requestId] = false;
-        uint256 requestNumber = requestIdToRequestNumber[requestId];
+        uint256 requestNum = requestIdToRequestNumber[requestId];
+        VRFConsumerBaseV2 recipient = requestIdToRecipient[requestId];
+        require(address(recipient) != address(0), "Recipient address zero");
 
         uint256[] memory qrngUint256Array = abi.decode(data, (uint256[]));
 
-        _sendRandomWords(requestNumber, qrngUint256Array);
+        _sendRandomWords(recipient, requestNum, qrngUint256Array);
 
         emit ReceivedUint256Array(requestId, qrngUint256Array);
     }
@@ -109,14 +120,16 @@ contract VRFProvider is VRFCoordinatorV2Interface, RrpRequesterV0, Ownable {
         uint32, // callbackGasLimit
         uint32 numWords
     ) external returns (uint256 requestId) {
-        require(msg.sender == address(recipient), "Must be configured recipient");
+        if (!isEnabled[msg.sender]) {
+            revert InvalidRecipient(msg.sender);
+        }
 
-        _makeRequestUint256Array(numWords);
+        requestId = _makeRequestUint256Array(numWords);
     }
 
     /// @dev rawFulfillRandomWords valdiates that the reciving contract is being called by a valid VRF Coordinator
     /// @dev since this contract is acting like a VRFCoordinator this will work
-    function _sendRandomWords(uint256 requestId, uint256[] memory randomWords) internal {
+    function _sendRandomWords(VRFConsumerBaseV2 recipient, uint256 requestId, uint256[] memory randomWords) internal {
         // TODO: massage random words into a chainLink format
         recipient.rawFulfillRandomWords(requestId, randomWords);
     }
