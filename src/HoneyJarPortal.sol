@@ -292,7 +292,7 @@ contract HoneyJarPortal is IHoneyJarPortal, GameRegistryConsumer, CrossChainTHJ,
 
     /// @notice a copy of the OFNFT721COre _nonBlockingrcv to keep NFT functionality the same.
     function _processSendNFTMessage(uint16 _srcChainId, bytes memory _srcAddress, bytes memory _payload) internal {
-        SendNFTPayload memory payload = _decodeSendNFT(_payload);
+        (address to, SendNFTPayload memory payload) = _decodeSendNFT(_payload);
 
         uint256 nextIndex = _creditTill(_srcChainId, payload.to, 0, payload.tokenIds);
         if (nextIndex < payload.tokenIds.length) {
