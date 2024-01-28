@@ -16,7 +16,6 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     /**
      * Errors
      */
-
     error TooMuchHoneyJarInGate(uint256 gateId);
     error GatekeeperInvalidProof();
     error NoGates();
