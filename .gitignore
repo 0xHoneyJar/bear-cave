@@ -1,8 +1,9 @@
 # Compiler files
-cache/
+cache*/
 out/
 bin/
 docs/
+artifacts/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -15,7 +16,7 @@ docs/
 .env\.*
 
 # Node fun
-node_modules
+node_modules/
 yarn-error.log
 
 # Coverage

@@ -1,25 +1,29 @@
 [profile.default]
 src = 'src'
 out = 'out'
-libs = ['lib']
+libs = ['node_modules', 'lib']
 test = 'test'
 script = 'script'
+cache_path = 'cache-forge'
+
 remappings = [
     '@openzeppelin/=lib/openzeppelin-contracts/',
     '@layerzero/=lib/solidity-examples/contracts/',
     '@chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/',
     'chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/contracts/src/v0.8/',
-    'solmate/=lib/solmate/src/'
+    'solmate/=lib/solmate/src/',
 ]
 fs_permissions = [
-    {access = "write", path = "./deployments/"},
-    {access = "read-write", path = "./script/"}
+    { access = "write", path = "./deployments/" },
+    { access = "read-write", path = "./script/" },
 ]
 
-# known error codes are: ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]
+# known error codes are: ["unreachable",  "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]
 # additional warnings can be added using their numeric error code: ["license", 1337]
 ignored_error_codes = ["unused-param", "unused-var"]
-solc_version = "0.8.19"
+# solc_version = "0.8.19"
+auto_detect_solc = true
+
 vir_ir = true
 optimizer = true
 optimizer_runs = 1000
@@ -30,11 +34,11 @@ evm_version = "paris"
 [rpc_endpoints]
 mainnet = "${MAINNET_URL}"
 goerli = "${GOERLI_URL}"
-arbitrum-goerli= "${ARB_GOERLI_URL}"
+arbitrum-goerli = "${ARB_GOERLI_URL}"
 arbitrum = "${ARBITRUM_URL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_ETH}" }
-arbitrum= { key = "${ETHERSCAN_ARBITRUM}" }
+arbitrum = { key = "${ETHERSCAN_ARBITRUM}" }
 goerli = { key = "${ETHERSCAN_ETH}" }
 arbitrum-goerli = { key = "${ETHERSCAN_ARBITRUM}" }

@@ -3,17 +3,19 @@ pragma solidity 0.8.19;
 
 import "./THJScriptBase.sol";
 
-import {HoneyJar} from "src/HoneyJar.sol";
+import {HoneyJar, IHoneyJar} from "src/HoneyJar.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
-import {Gatekeeper} from "src/Gatekeeper.sol";
+import {Gatekeeper, IGatekeeper} from "src/Gatekeeper.sol";
 import {HibernationDen} from "src/HibernationDen.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
+import {BearPouch, IBearPouch} from "src/BearPouch.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
 contract DeployScript is THJScriptBase("gen3") {
     using stdJson for string;
@@ -90,15 +92,22 @@ contract DeployScript is THJScriptBase("gen3") {
 
         vm.startBroadcast();
 
+        // Bear pouch
+        IBearPouch.DistributionConfig[] memory distributions = new IBearPouch.DistributionConfig[](2);
+        distributions[0] = IBearPouch.DistributionConfig({recipient: address(beekeeper), share: revShare});
+        distributions[1] =
+            IBearPouch.DistributionConfig({recipient: address(jani), share: FixedPointMathLib.WAD - revShare});
+
+        BearPouch bearPouch = new BearPouch(address(gameRegistry), address(paymentToken), distributions);
+
+        // Deploy the honeyBox
         HibernationDen den = new HibernationDen(
-            vrfCoordinator,
-            gameRegistry,
-            honeyJar,
-            paymentToken,
-            gatekeeper,
-            jani,
-            beekeeper,
-            revShare
+            address(vrfCoordinator),
+            address(gameRegistry),
+            IHoneyJar(honeyJar),
+            ERC20(paymentToken),
+            IGatekeeper(gatekeeper),
+            bearPouch
         );
 
         console.log("-HibernationDenAddress: ", address(den));

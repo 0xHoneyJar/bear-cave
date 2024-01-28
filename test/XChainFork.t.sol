@@ -21,6 +21,7 @@ import {Gatekeeper} from "src/Gatekeeper.sol";
 import {Constants} from "src/Constants.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
+import {BearPouch, IBearPouch} from "src/BearPouch.sol";
 
 /// @notice tests core HibernationDen functionality across multiple chains
 contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
@@ -73,6 +74,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     HibernationDen private hibernationDenL1;
     HibernationDen.VRFConfig private vrfConfig;
     HibernationDen.MintConfig private mintConfig;
+    BearPouch private bearPouchL1;
     HoneyJar private honeyJar;
     Gatekeeper private gatekeeper;
     HoneyJarPortal private portalL1;
@@ -82,6 +84,7 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     HibernationDen private hibernationDenL2;
     HibernationDen.VRFConfig private vrfConfigL2;
     HibernationDen.MintConfig private mintConfigL2;
+    BearPouch private bearPouchL2;
     HoneyJar private honeyJarL2;
     Gatekeeper private gatekeeperL2;
     HoneyJarPortal private portalL2;
@@ -184,15 +187,17 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         honeyJar = new HoneyJar(address(this), address(gameRegistry), START_TOKEN_ID, 69);
         gatekeeper = new Gatekeeper(address(gameRegistry));
 
+        // Bear pouch
+        IBearPouch.DistributionConfig[] memory distributions = new IBearPouch.DistributionConfig[](2);
+        distributions[0] = IBearPouch.DistributionConfig({recipient: address(beekeeper), share: honeyJarShare});
+        distributions[1] =
+            IBearPouch.DistributionConfig({recipient: address(jani), share: FixedPointMathLib.WAD - honeyJarShare});
+
+        bearPouchL1 = new BearPouch(address(gameRegistry), address(paymentToken), distributions);
+
+        // Deploy the honeyBox
         hibernationDenL1 = new HibernationDen(
-            address(vrfCoordinator),
-            address(gameRegistry),
-            address(honeyJar),
-            address(paymentToken),
-            address(gatekeeper),
-            address(jani),
-            address(beekeeper),
-            honeyJarShare
+            address(vrfCoordinator), address(gameRegistry), honeyJar, paymentToken, gatekeeper, bearPouchL1
         );
 
         mintConfig = HibernationDen.MintConfig({
@@ -205,8 +210,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vrfCoordinator.addConsumer(subId, address(hibernationDenL1));
         hibernationDenL1.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
 
-        portalL1 =
-        new HoneyJarPortal(50000, L1_LZ_ENDPOINT, address(honeyJar),address(hibernationDenL1), address(gameRegistry));
+        portalL1 = new HoneyJarPortal(
+            50000, L1_LZ_ENDPOINT, address(honeyJar), address(hibernationDenL1), address(gameRegistry)
+        );
         portalL1.setMinDstGas(portalL1.lzChainId(L2_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
         gameRegistry.grantRole(Constants.PORTAL, address(portalL1));
         gameRegistry.grantRole(Constants.BURNER, address(portalL1));
@@ -287,15 +293,11 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         // use BundleId from l1.addBundle()
         gatekeeperL2.addGate(bundleId, gateRoot, maxClaimableHoneyJar + 1, 0);
 
+        bearPouchL2 = new BearPouch(address(gameRegistryL2), address(paymentTokenL2), distributions);
+
+        // Deploy the honeyBox
         hibernationDenL2 = new HibernationDen(
-            address(vrfCoordinatorL2),
-            address(gameRegistryL2),
-            address(honeyJarL2),
-            address(paymentTokenL2),
-            address(gatekeeperL2),
-            address(jani),
-            address(beekeeper),
-            honeyJarShare
+            address(vrfCoordinatorL2), address(gameRegistryL2), honeyJarL2, paymentTokenL2, gatekeeperL2, bearPouchL2
         );
 
         mintConfigL2 = mintConfig; // same ol mintConfig
@@ -303,8 +305,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         hibernationDenL2.initialize(HibernationDen.VRFConfig("", subIdL2, 3, 10000000), mintConfigL2);
         vm.deal(address(hibernationDenL2), 6 ether); // It will make the xChain calls.
 
-        portalL2 =
-        new HoneyJarPortal(50000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
+        portalL2 = new HoneyJarPortal(
+            50000, L2_LZ_ENDPOINT, address(honeyJarL2), address(hibernationDenL2), address(gameRegistryL2)
+        );
         hibernationDenL2.setPortal(address(portalL2));
         portalL2.setMinDstGas(portalL2.lzChainId(L1_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
 

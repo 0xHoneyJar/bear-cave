@@ -18,7 +18,7 @@ import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2I
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 
 import {IHoneyJarPortal} from "src/interfaces/IHoneyJarPortal.sol";
-import {IHibernationDen} from "src/interfaces/IHibernationDen.sol";
+import {IDenLite} from "src/interfaces/IDenLite.sol";
 import {IHoneyJar} from "src/interfaces/IHoneyJar.sol";
 import {IBearPouch} from "src/interfaces/IBearPouch.sol";
 import {IGatekeeper} from "src/interfaces/IGatekeeper.sol";
@@ -26,10 +26,10 @@ import {GameRegistryConsumer} from "src/GameRegistryConsumer.sol";
 import {CrossChainTHJ} from "src/CrossChainTHJ.sol";
 import {Constants} from "src/Constants.sol";
 
-/// @title HibernationDen
-/// @notice Manages bundling & storage of NFTs. Mints honeyJar ERC721s
+/// @title Den
+/// @notice removes VRF requirements from minting
 contract HibernationDen is
-    IHibernationDen,
+    IDenLite,
     VRFConsumerBaseV2,
     ERC721TokenReceiver,
     ERC1155TokenReceiver,
