@@ -20,7 +20,8 @@ contract TestScript is THJScriptBase("gen3") {
         string memory json = _getConfig(env);
 
         // startGame(json);
-        checkDenJars(json);
+        // checkDenJars(json);
+        fixFermentation(json);
     }
 
     function sendFermented(string memory json) internal {
@@ -109,6 +110,50 @@ contract TestScript is THJScriptBase("gen3") {
 
         for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
             console.log(party.fermentedJars[i].id, party.fermentedJars[i].isUsed);
+        }
+    }
+
+    function fixFermentation(string memory json) internal {
+        uint8 bundleId = uint8(json.readUint(".bundleId"));
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+        GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
+
+        HibernationDen.SlumberParty memory party = den.getSlumberParty(bundleId);
+        _printPartyInformation(party);
+
+        // Additional fermentedJars obtained from `go run getRandom.go`
+        uint256[] memory newFermentedJarsList = new uint256[](4);
+        newFermentedJarsList[0] = party.fermentedJars[0].id;
+        newFermentedJarsList[1] = party.fermentedJars[1].id;
+        newFermentedJarsList[2] = 962;
+        newFermentedJarsList[3] = 617;
+
+        // uint256 pk = vm.envUint("PRIVATE_KEY");
+        // vm.startBroadcast(pk);
+        // // Give the EOA portal permissions
+        // registry.grantRole(Constants.PORTAL, 0x88f82E3e33aeA5669667Ee6F25Fe40d04AE4B572);
+
+        // den.setCrossChainFermentedJars(0, newFermentedJarsList);
+
+        // vm.stopBroadcast();
+        // party = den.getSlumberParty(0);
+        // _printPartyInformation(party);
+    }
+
+    function _printPartyInformation(HibernationDen.SlumberParty memory party) internal view {
+        console.log("bundleId", party.bundleId);
+        console.log("numSleepers", party.sleepoors.length);
+        console.log("checkpointIndex", party.checkpointIndex);
+        console.log("fermentedJars", party.fermentedJars.length);
+        console.log("sleepoors", party.sleepoors.length);
+        console.log("checkpoints", party.checkpoints.length);
+
+        for (uint256 i = 0; i < party.checkpoints.length; ++i) {
+            console.log("checkpoint: ", i, party.checkpoints[i]);
+        }
+
+        for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
+            console.log("fermennted:", party.fermentedJars[i].id, party.fermentedJars[i].isUsed);
         }
     }
 }
