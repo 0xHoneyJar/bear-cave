@@ -404,7 +404,6 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         /**
          * Phase 1: claim available
          */
-
         assertEq(gatekeeper.calculateClaimable(bundleId, 0, alfaHunter, 2, getProof(0)), 2);
         vm.startPrank(alfaHunter);
         honeyBox.claim(bundleId, 0, 2, getProof(0));
@@ -440,7 +439,6 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
          * Phase 2: do it again:
          *         Do it again, and validate nothing changes.
          */
-
         vm.startPrank(alfaHunter);
         honeyBox.claim(bundleId, 0, 2, getProof(0));
         assertEq(honeyJar.balanceOf(alfaHunter), 2);
@@ -509,7 +507,6 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         /**
          * Phase 5: End of Game
          */
-
         vrfCoordinator.fulfillRandomWords(4, address(honeyBox)); // Final winner
         HibernationDen.SlumberParty memory party = honeyBox.getSlumberParty(bundleId);
 

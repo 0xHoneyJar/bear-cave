@@ -16,6 +16,5 @@ func main() {
 	for i := 0; i < len(checkpoints); i++ {
 		seed :=rand.New(rand.NewSource(int64(checkpoints[i])));
 		fmt.Println(seed.Intn(checkpoints[i]+1))
-
 	}
 }

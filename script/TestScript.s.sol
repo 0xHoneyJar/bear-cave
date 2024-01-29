@@ -20,8 +20,9 @@ contract TestScript is THJScriptBase("gen3") {
         string memory json = _getConfig(env);
 
         // startGame(json);
-        // checkDenJars(json);
-        fixFermentation(json);
+        checkDenJars(json);
+        // fixFermentation(json);
+        // sendFermented(json);
     }
 
     function sendFermented(string memory json) internal {
@@ -51,8 +52,10 @@ contract TestScript is THJScriptBase("gen3") {
 
         vm.startBroadcast();
 
+        den.sendFermentedJars(0);
+
         // SRC address
-        lz.retryPayload(10121, abi.encodePacked(0x1399706d571ae4E915f32099995eE0ad9107AD96), payload);
+        // lz.retryPayload(10121, abi.encodePacked(0x1399706d571ae4E915f32099995eE0ad9107AD96), payload);
 
         vm.stopBroadcast();
     }
@@ -131,10 +134,7 @@ contract TestScript is THJScriptBase("gen3") {
         // uint256 pk = vm.envUint("PRIVATE_KEY");
         // vm.startBroadcast(pk);
         // // Give the EOA portal permissions
-        // registry.grantRole(Constants.PORTAL, 0x88f82E3e33aeA5669667Ee6F25Fe40d04AE4B572);
-
         // den.setCrossChainFermentedJars(0, newFermentedJarsList);
-
         // vm.stopBroadcast();
         // party = den.getSlumberParty(0);
         // _printPartyInformation(party);

@@ -91,14 +91,7 @@ contract DeployScript is THJScriptBase("gen3") {
         vm.startBroadcast();
 
         HibernationDen den = new HibernationDen(
-            vrfCoordinator,
-            gameRegistry,
-            honeyJar,
-            paymentToken,
-            gatekeeper,
-            jani,
-            beekeeper,
-            revShare
+            vrfCoordinator, gameRegistry, honeyJar, paymentToken, gatekeeper, jani, beekeeper, revShare
         );
 
         console.log("-HibernationDenAddress: ", address(den));

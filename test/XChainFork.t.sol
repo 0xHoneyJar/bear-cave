@@ -205,8 +205,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         vrfCoordinator.addConsumer(subId, address(hibernationDenL1));
         hibernationDenL1.initialize(HibernationDen.VRFConfig("", subId, 3, 10000000), mintConfig);
 
-        portalL1 =
-        new HoneyJarPortal(50000, L1_LZ_ENDPOINT, address(honeyJar),address(hibernationDenL1), address(gameRegistry));
+        portalL1 = new HoneyJarPortal(
+            50000, L1_LZ_ENDPOINT, address(honeyJar), address(hibernationDenL1), address(gameRegistry)
+        );
         portalL1.setMinDstGas(portalL1.lzChainId(L2_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
         gameRegistry.grantRole(Constants.PORTAL, address(portalL1));
         gameRegistry.grantRole(Constants.BURNER, address(portalL1));
@@ -303,8 +304,9 @@ contract XChainForkTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         hibernationDenL2.initialize(HibernationDen.VRFConfig("", subIdL2, 3, 10000000), mintConfigL2);
         vm.deal(address(hibernationDenL2), 6 ether); // It will make the xChain calls.
 
-        portalL2 =
-        new HoneyJarPortal(50000, L2_LZ_ENDPOINT, address(honeyJarL2),address(hibernationDenL2), address(gameRegistryL2));
+        portalL2 = new HoneyJarPortal(
+            50000, L2_LZ_ENDPOINT, address(honeyJarL2), address(hibernationDenL2), address(gameRegistryL2)
+        );
         hibernationDenL2.setPortal(address(portalL2));
         portalL2.setMinDstGas(portalL2.lzChainId(L1_CHAIN_ID), uint16(MessageTypes.SEND_NFT), 225000);
 
