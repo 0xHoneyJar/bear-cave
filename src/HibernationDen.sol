@@ -90,12 +90,16 @@ contract HibernationDen is
     event SleeperAwoke(uint8 bundleId, uint256 tokenId, uint256 jarId, address player);
     event SleeperAdded(uint8 bundleId_, SleepingNFT sleeper);
     event CheckpointsUpdated(uint256 checkpointIndex, uint256[] checkpoints);
+    event AdminMintAmount(uint256 amount);
+    event MaxPublicMint(uint256 amount);
 
     /**
      * Configuration
      */
     IERC20 public immutable paymentToken; // OHM
     MintConfig public mintConfig;
+    uint256 public adminMintAmount;
+    uint256 public maxPublicMint = 5;
 
     /**
      * Chainlink VRF Config
@@ -146,6 +150,8 @@ contract HibernationDen is
     mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
+    /// @notice Tracks the amount of mints per user
+    mapping(address => uint256) public jarsMints;
 
     constructor(
         address _vrfCoordinator,
@@ -323,50 +329,91 @@ contract HibernationDen is
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof
-    /// @param proofAmount the amount of free claims you are entitled to in the claim
+    /// @param bundleId the ID of the bundle in the game.
+    /// @param gateId the gate index the player is using
+    /// @param proofIdx the index of the proof
+    /// @param claimAllowance the amount of free claims you are entitled to in the claim
+    /// @param mintAllowance the amount of free mints you are entitled to in the mint
     /// @param proof The proof from the gate that allows the player to mint
-    /// @param mintAmount actual amount of honeyJars you want to mint.
+    /// @param desiredMint actual amount of honeyJars you want to mint.
     function earlyMekHoneyJarWithERC20(
         uint8 bundleId,
         uint32 gateId,
-        uint32 proofAmount,
+        uint256 proofIdx,
+        uint32 claimAllowance,
+        uint32 mintAllowance,
         bytes32[] calldata proof,
-        uint256 mintAmount
+        uint32 desiredMint
     ) external returns (uint256) {
-        _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof);
-        if (!validProof) revert Claim_InvalidProof();
+        uint32 mintAmount =
+            gatekeeper.calculateMintable(bundleId, gateId, proofIdx, msg.sender, claimAllowance, mintAllowance, proof);
+        if (desiredMint > mintAmount) revert MekingTooManyHoneyJars(bundleId);
+
+        if (mintAmount == 0) {
+            return 0;
+        }
+
+        gatekeeper.addMinted(bundleId, gateId, msg.sender, desiredMint);
+
+        // Check if the HoneyJars can be minted
+        _canMintHoneyJar(bundleId, desiredMint);
+
+        // You're trying to mint more than you're entitled to)
         return _distributeERC20AndMintHoneyJar(bundleId, mintAmount);
     }
 
     /// @notice Allows players to mint honeyJar with a valid proof (Taking ETH as payment)
-    /// @param proofAmount the amount of free claims you are entitled to in the claim
+    /// @param bundleId the ID of the bundle in the game.
+    /// @param gateId the gate index the player is using
+    /// @param proofIdx the index of the proof
+    /// @param claimAllowance the amount of free claims you are entitled to in the claim
+    /// @param mintAllowance the amount of free mints you are entitled to in the mint
     /// @param proof The proof from the gate that allows the player to mint
-    /// @param mintAmount actual amount of honeyJars you want to mint.
+    /// @param desiredMint actual amount of honeyJars you want to mint.
     function earlyMekHoneyJarWithEth(
         uint8 bundleId,
         uint32 gateId,
-        uint32 proofAmount,
+        uint256 proofIdx,
+        uint32 claimAllowance,
+        uint32 mintAllowance,
         bytes32[] calldata proof,
-        uint256 mintAmount
+        uint32 desiredMint
     ) external payable returns (uint256) {
-        _canMintHoneyJar(bundleId, mintAmount);
         // validateProof checks that gates are open
-        bool validProof = gatekeeper.validateProof(bundleId, gateId, msg.sender, proofAmount, proof); // This shit needs to be bulletproof
-        if (!validProof) revert Claim_InvalidProof();
+        uint32 mintAmount =
+            gatekeeper.calculateMintable(bundleId, gateId, proofIdx, msg.sender, claimAllowance, mintAllowance, proof);
+        if (desiredMint > mintAmount) revert MekingTooManyHoneyJars(bundleId);
+
+        if (mintAmount == 0) {
+            return 0;
+        }
+
+        gatekeeper.addMinted(bundleId, gateId, msg.sender, desiredMint);
+
+        // Check if the HoneyJars can be minted
+        _canMintHoneyJar(bundleId, desiredMint);
+
+        // You're trying to mint more than you're entitled to)
         return _distributeETHAndMintHoneyJar(bundleId, mintAmount);
     }
 
     function mekHoneyJarWithERC20(uint8 bundleId_, uint256 amount_) external returns (uint256) {
         _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
+        if (jarsMints[msg.sender] >= maxPublicMint) revert MekingTooManyHoneyJars(bundleId_);
+        uint256 allowedMints = maxPublicMint - jarsMints[msg.sender];
+        if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
+
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
     function mekHoneyJarWithETH(uint8 bundleId_, uint256 amount_) external payable returns (uint256) {
         _canMintHoneyJar(bundleId_, amount_);
         if (slumberParties[bundleId_].publicMintTime > block.timestamp) revert GeneralMintNotOpen(bundleId_);
+        if (jarsMints[msg.sender] >= maxPublicMint) revert MekingTooManyHoneyJars(bundleId_);
+        uint256 allowedMints = maxPublicMint - jarsMints[msg.sender];
+        if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
@@ -598,11 +645,20 @@ contract HibernationDen is
     /// @notice Allows a player to claim free HoneyJar based on eligibility (FCFS)
     /// @dev free claims are determined by the gatekeeper and the accounting is done in this method
     /// @param gateId id of gate from Gatekeeper.
-    /// @param amount amount player is claiming
+    /// @param claimAllowance amount player is claiming
+    /// @param mintAllowance amount player is allowed to mint as per the tree
     /// @param proof valid proof that entitles msg.sender to amount.
-    function claim(uint8 bundleId_, uint32 gateId, uint32 amount, bytes32[] calldata proof) public nonReentrant {
+    function claim(
+        uint8 bundleId_,
+        uint32 gateId,
+        uint256 proofIdx,
+        uint32 claimAllowance,
+        uint32 mintAllowance,
+        bytes32[] calldata proof
+    ) public nonReentrant {
         // Gatekeeper tracks per-player/per-gate claims
-        uint32 numClaim = gatekeeper.calculateClaimable(bundleId_, gateId, msg.sender, amount, proof);
+        uint32 numClaim =
+            gatekeeper.calculateClaimable(bundleId_, gateId, proofIdx, msg.sender, claimAllowance, mintAllowance, proof);
         if (numClaim == 0) {
             return;
         }
@@ -630,24 +686,62 @@ contract HibernationDen is
     /// @dev Helper function to process all free cams. More client-sided computation.
     /// @param bundleId_ the bundle to claim tokens for.
     /// @param gateIds the list of gates to claim. The txn will revert if an ID for an inactive gate is included.
-    /// @param amounts the list of amounts being claimed for the respective gates.
+    /// @param proofIdxs the index of the proof for the respective gates
+    /// @param claimAllowances the list of amounts being claimed for the respective gates.
+    /// @param mintAllowances the amount that is being allowed to mint for the respective gates
     /// @param proofs the list of proofs associated with the respective gates
     function claimAll(
         uint8 bundleId_,
         uint32[] calldata gateIds,
-        uint32[] calldata amounts,
+        uint256[] calldata proofIdxs,
+        uint32[] calldata claimAllowances,
+        uint32[] calldata mintAllowances,
         bytes32[][] calldata proofs
     ) external {
         uint256 inputLength = proofs.length;
         if (inputLength != gateIds.length) revert InvalidInput("claimAll");
-        if (inputLength != amounts.length) revert InvalidInput("claimAll");
+        if (inputLength != claimAllowances.length) revert InvalidInput("claimAll");
+        if (inputLength != mintAllowances.length) revert InvalidInput("claimAll");
+        if (inputLength != proofIdxs.length) revert InvalidInput("claimAll");
 
         for (uint256 i = 0; i < inputLength; ++i) {
-            claim(bundleId_, gateIds[i], amounts[i], proofs[i]);
+            claim(bundleId_, gateIds[i], proofIdxs[i], claimAllowances[i], mintAllowances[i], proofs[i]);
         }
     }
 
+    function adminMint(address to_, uint8 bundleId_, uint256 amount_)
+        external
+        nonReentrant
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        if (adminMintAmount == 0) revert MekingTooManyHoneyJars(bundleId_);
+        if (amount_ == 0) revert ZeroMint();
+
+        if (amount_ > adminMintAmount) {
+            amount_ = adminMintAmount;
+        }
+        adminMintAmount -= amount_;
+
+        _canMintHoneyJar(bundleId_, amount_);
+
+        _mintHoneyJarForBear(to_, bundleId_, amount_);
+    }
+
     //=============== SETTERS ================//
+
+    /// @notice game_admin method to set the amount of jars that can be minted by the admin.
+    function setAdminMint(uint256 adminMintAmount_) external onlyRole(Constants.GAME_ADMIN) {
+        adminMintAmount = adminMintAmount_;
+
+        emit AdminMintAmount(adminMintAmount_);
+    }
+
+    /// @notice game_admin method to set the amount of jars that can be minted during public mint
+    function setMaxPublicMint(uint256 maxPublicMint_) external onlyRole(Constants.GAME_ADMIN) {
+        maxPublicMint = maxPublicMint_;
+
+        emit MaxPublicMint(maxPublicMint_);
+    }
 
     /// @notice sets HoneyJarPortal which is responsible for xChain communication.
     /// @dev intentionally allow 0x0 to disable automatic xChain comms

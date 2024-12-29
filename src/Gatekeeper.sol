@@ -33,6 +33,7 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     event GateActivated(uint256 bundleId, uint256 gateId, uint256 activationTime);
     event GetSetMaxClaimable(uint256 bundleId, uint256 gateId, uint256 maxClaimable);
     event GateReset(uint256 bundleId, uint256 index);
+    event GateRootUpdated(uint256 bundleId, uint256 index, bytes32 gateRoot);
 
     /**
      * Internal Storage
@@ -40,6 +41,9 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     mapping(uint256 => Gate[]) public tokenToGates; // bundle -> Gates[]
     mapping(uint256 => mapping(bytes32 => bool)) public consumedProofs; // gateId --> proof --> boolean
     mapping(uint256 => bytes32[]) public consumedProofsList; // gateId --> consumed proofs (needed for resets)
+
+    // There will only be one bundle -- don't need mapping from bundle to gate here.
+    mapping(uint256 => mapping(address => uint32)) public minted; // mapping of player to amount minted
 
     /**
      * Dependencies
@@ -57,8 +61,10 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     function calculateClaimable(
         uint256 bundleId,
         uint256 index,
+        uint256 proofIndex,
         address player,
-        uint32 amount,
+        uint32 claimableAllowance,
+        uint32 mintAllowance,
         bytes32[] calldata proof
     ) external view returns (uint32 claimAmount) {
         // If proof was already used within the gate, there are 0 left to claim
@@ -69,21 +75,47 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
         uint32 claimedCount = gate.claimedCount;
         if (claimedCount >= gate.maxClaimable) revert TooMuchHoneyJarInGate(index);
 
-        claimAmount = amount;
-        bool validProof = validateProof(bundleId, index, player, amount, proof);
+        claimAmount = claimableAllowance;
+        bool validProof = validateProof(bundleId, index, proofIndex, player, claimableAllowance, mintAllowance, proof);
         if (!validProof) revert GatekeeperInvalidProof();
 
-        if (amount + claimedCount > gate.maxClaimable) {
+        if (claimableAllowance + claimedCount > gate.maxClaimable) {
             claimAmount = gate.maxClaimable - claimedCount;
         }
     }
 
+    function calculateMintable(
+        uint256 bundleId,
+        uint256 index,
+        uint256 proofIndex,
+        address player,
+        uint32 claimAllowance,
+        uint32 mintAllowance,
+        bytes32[] calldata proof
+    ) external view returns (uint32 mintAmount) {
+        bytes32 proofHash = keccak256(abi.encode(proof));
+
+        Gate storage gate = tokenToGates[bundleId][index];
+
+        // Set the mint to be the allowance
+        mintAmount = mintAllowance;
+        bool validProof = validateProof(bundleId, index, proofIndex, player, claimAllowance, mintAllowance, proof);
+        if (!validProof) revert GatekeeperInvalidProof();
+
+        // remove the amount the player has already minted
+        mintAmount -= minted[index][player];
+    }
+
     /// @inheritdoc IGatekeeper
-    function validateProof(uint256 bundleId, uint256 index, address player, uint32 amount, bytes32[] calldata proof)
-        public
-        view
-        returns (bool validProof)
-    {
+    function validateProof(
+        uint256 bundleId,
+        uint256 index,
+        uint256 proofIndex,
+        address player,
+        uint32 claimAllowance,
+        uint32 mintAllowance,
+        bytes32[] calldata proof
+    ) public view returns (bool validProof) {
         Gate[] storage gates = tokenToGates[bundleId];
         if (gates.length == 0) revert NoGates();
         if (index >= gates.length) revert Gate_OutOfBounds(index);
@@ -93,7 +125,7 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
         if (!gate.enabled) revert Gate_NotEnabled(index);
         if (gate.activeAt > block.timestamp) revert Gate_NotActive(index, gate.activeAt);
 
-        bytes32 leaf = keccak256(abi.encodePacked(player, amount));
+        bytes32 leaf = keccak256(abi.encodePacked(proofIndex, player, claimAllowance, mintAllowance));
         validProof = MerkleProofLib.verify(proof, gate.gateRoot, leaf);
     }
 
@@ -117,6 +149,18 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
 
         consumedProofs[gateId][proofHash] = true;
         consumedProofsList[gateId].push(proofHash);
+    }
+
+    function addMinted(uint256 bundleId, uint256 gateId, address player, uint32 numMinted)
+        external
+        onlyRole(Constants.GAME_INSTANCE)
+    {
+        Gate storage gate = tokenToGates[bundleId][gateId];
+
+        if (!gate.enabled) revert Gate_NotEnabled(gateId);
+        if (gate.activeAt > block.timestamp) revert Gate_NotActive(gateId, gate.activeAt);
+
+        minted[gateId][player] += numMinted;
     }
 
     /**
@@ -166,6 +210,13 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
     {
         tokenToGates[bundleId][index].maxClaimable = maxClaimable_;
         emit GetSetMaxClaimable(bundleId, index, maxClaimable_);
+    }
+
+    /// @notice admin function that can change the root of a specific gate
+    function setGateRoot(uint256 bundleId, uint256 index, bytes32 newRoot) external onlyRole(Constants.GAME_ADMIN) {
+        tokenToGates[bundleId][index].gateRoot = newRoot;
+
+        emit GateRootUpdated(bundleId, index, newRoot);
     }
 
     /// @notice helper function to reset gate state for a game

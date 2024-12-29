@@ -44,6 +44,20 @@ interface IHibernationDen {
         uint256 checkpointIndex;
     }
 
+    /// @notice Represents a node in the merkle tree
+    struct ProofNode {
+        /// @dev the index of the node in the tree
+        uint256 index;
+        /// @dev the player
+        address player;
+        /// @dev amount the player is allowed to claim
+        uint32 claimAllowance;
+        /// @dev amount the player is allowed to mint
+        uint32 mintAllowance;
+        /// @dev the merkle proof associated with the node
+        bytes32[] proof;
+    }
+
     function startGame(uint256 srcChainId, uint8 bundleId_, uint256 numSleepers_, uint256[] calldata checkpoints)
         external;
     function setCrossChainFermentedJars(uint8 bundleId, uint256[] calldata fermentedJarIds) external;
