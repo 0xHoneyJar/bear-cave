@@ -15,7 +15,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase("gen3") {
+contract DeployScript is THJScriptBase("gen6") {
     using stdJson for string;
 
     function setUp() public {}

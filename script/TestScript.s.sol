@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 
 import {ILayerZeroEndpoint} from "@layerzero/interfaces/ILayerZeroEndpoint.sol";
 
+import {LzLib} from "@layerzero/libraries/LzLib.sol";
+
 import {HibernationDen} from "src/HibernationDen.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
@@ -13,16 +15,17 @@ import {HoneyJar} from "src/HoneyJar.sol";
 import "./THJScriptBase.sol";
 
 /// @notice this script is only meant to test do not use for production
-contract TestScript is THJScriptBase("gen3") {
+contract TestScript is THJScriptBase("gen6") {
     using stdJson for string;
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        // startGame(json);
-        checkDenJars(json);
+        startGame(json);
+        // checkDenJars(json);
         // fixFermentation(json);
         // sendFermented(json);
+        // bridgeJars(json);
     }
 
     function sendFermented(string memory json) internal {
@@ -63,28 +66,36 @@ contract TestScript is THJScriptBase("gen3") {
     /// @notice this script is only meant to test do not use for production
     /// @notice mimicks the behavior of the portal to start a cross chain game. Run on L2
     function startGame(string memory json) internal {
-        ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addressess.lzEndpoint"));
+        // ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addressess.lzEndpoint"));
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
-        HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
+        // HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
+        uint8 bundleId = uint8(json.readUint(".bundleId"));
         GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
         address deployer = json.readAddress(".addresses.deployer");
         uint256 assetChainId = json.readUint(".assetChainId");
 
-        bytes memory payload =
-            hex"00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000260000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000001A400000000000000000000000000000000000000000000000000000000000002B2000000000000000000000000000000000000000000000000000000000000058C0000000000000000000000000000000000000000000000000000000000000D0500000000000000000000000000000000000000000000000000000000000010680000000000000000000000000000000000000000000000000000000000001B390000000000000000000000000000000000000000000000000000000000002769";
-        (, HoneyJarPortal.StartGamePayload memory startGamePayload) =
-            abi.decode(payload, (HoneyJarPortal.MessageTypes, HoneyJarPortal.StartGamePayload));
+        // bytes memory payload =
+        //     hex"00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000260000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000001A400000000000000000000000000000000000000000000000000000000000002B2000000000000000000000000000000000000000000000000000000000000058C0000000000000000000000000000000000000000000000000000000000000D0500000000000000000000000000000000000000000000000000000000000010680000000000000000000000000000000000000000000000000000000000001B390000000000000000000000000000000000000000000000000000000000002769";
+        // (, HoneyJarPortal.StartGamePayload memory startGamePayload) =
+        //     abi.decode(payload, (HoneyJarPortal.MessageTypes, HoneyJarPortal.StartGamePayload));
 
-        console.log(startGamePayload.bundleId, "bundleId");
-        console.log(startGamePayload.numSleepers, "numSleepers");
-        for (uint256 i = 0; i < startGamePayload.checkpoints.length; ++i) {
-            console.log(startGamePayload.checkpoints[i]);
-        }
+        // console.log(startGamePayload.bundleId, "bundleId");
+        // console.log(startGamePayload.numSleepers, "numSleepers");
+        // for (uint256 i = 0; i < startGamePayload.checkpoints.length; ++i) {
+        //     console.log(startGamePayload.checkpoints[i]);
+        // }
+
+        //         ///Testnet
+        //           ERC721:  0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714
+        //   ERC1155:  0x347F6c76844B07A3821Fed43deFb572104991b05
+        //   ERC20:  0xAD1C00575D816d9c4756Bf053e4dE14a617c5e38
+        // uint256[] memory checkpoints = new uint256[](1);
+        // checkpoints[0] = 30;
+
         vm.startBroadcast();
         registry.grantRole(Constants.PORTAL, deployer);
-        den.startGame(
-            assetChainId, startGamePayload.bundleId, startGamePayload.numSleepers, startGamePayload.checkpoints
-        );
+        // den.startGame(assetChainId, 1, 1, checkpoints);
+        den.puffPuffPassOut(bundleId);
         registry.renounceRole(Constants.PORTAL, deployer);
         vm.stopBroadcast();
     }
@@ -138,6 +149,52 @@ contract TestScript is THJScriptBase("gen3") {
         // vm.stopBroadcast();
         // party = den.getSlumberParty(0);
         // _printPartyInformation(party);
+    }
+
+    function bridgeJars(string memory json) internal {
+        ILayerZeroEndpoint lz = ILayerZeroEndpoint(json.readAddress(".addresses.lzEndpoint"));
+        HoneyJarPortal portal = HoneyJarPortal(json.readAddress(".deployments.portal"));
+
+        uint16 lzChainId1 = portal.lzChainId(1);
+
+        uint256 pk = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(pk);
+        uint256[] memory jars = new uint256[](3);
+        jars[0] = 136;
+        jars[1] = 137;
+        jars[2] = 138;
+
+        // portal.sendBatchFrom{value: 0.01 ether}(
+        //     address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7),
+        //     lzChainId1,
+        //     abi.encodePacked(address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7)),
+        //     jars, //137, 138, 139
+        //     payable(address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7)),
+        //     address(0),
+        //     buildAdapterParams()
+        // );
+
+        portal.sendFrom{value: 0.02 ether}(
+            address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7),
+            lzChainId1,
+            abi.encodePacked(address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7)),
+            3855, //1491, //1340
+            payable(address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7)),
+            address(0),
+            buildAdapterParams()
+        );
+
+        vm.stopBroadcast();
+    }
+
+    function buildAdapterParams() internal pure returns (bytes memory) {
+        // txType 2
+        // bytes  [2       32        32            bytes[]         ]
+        // fields [txType  extraGas  dstNativeAmt  dstNativeAddress]
+        return LzLib.buildDefaultAdapterParams(uint32(225000));
+        // return abi.encodePacked(
+        // uint16(2), uint32(30000), uint32(1), abi.encodePacked(address(0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7))
+        // );
     }
 
     function _printPartyInformation(HibernationDen.SlumberParty memory party) internal view {
