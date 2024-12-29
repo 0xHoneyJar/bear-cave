@@ -211,20 +211,20 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
     function testFailClaim_InvalidProof() public {
         vm.startPrank(alfaHunter);
         bytes32[] memory blankProof;
-        honeyBox.claim(bundleId, 0, 2, blankProof);
+        honeyBox.claim(bundleId, 0, 0, 2, 2, blankProof);
     }
 
     function testFail_earlyMekETH() public {
         vm.startPrank(alfaHunter);
         bytes32[] memory blankProof;
-        honeyBox.earlyMekHoneyJarWithEth(bundleId, 0, 2, blankProof, 2);
+        honeyBox.earlyMekHoneyJarWithEth(bundleId, 0, 0, 2, 2, blankProof, 2);
     }
 
     function testFail_earlyMekERC20() public {
         vm.startPrank(alfaHunter);
 
         bytes32[] memory blankProof;
-        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 2, blankProof, 2);
+        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 0, 2, 2, blankProof, 2);
     }
 
     function testFailMekHoney_InvalidBundle() public {
@@ -404,14 +404,14 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         /**
          * Phase 1: claim available
          */
-        assertEq(gatekeeper.calculateClaimable(bundleId, 0, alfaHunter, 2, getProof(0)), 2);
+        assertEq(gatekeeper.calculateClaimable(bundleId, 0, 0, alfaHunter, 2, 2, getProof(0)), 2);
         vm.startPrank(alfaHunter);
-        honeyBox.claim(bundleId, 0, 2, getProof(0));
+        honeyBox.claim(bundleId, 0, 0, 2, 2, getProof(0));
         assertEq(honeyJar.balanceOf(alfaHunter), 2);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        honeyBox.claim(bundleId, 0, 3, getProof(1));
+        honeyBox.claim(bundleId, 0, 1, 3, 3, getProof(1));
         assertEq(honeyJar.balanceOf(bera), 3);
         vm.stopPrank();
 
@@ -420,7 +420,7 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
         _validateWinners();
 
         vm.startPrank(clown);
-        honeyBox.claim(bundleId, 0, 3, getProof(2));
+        honeyBox.claim(bundleId, 0, 2, 3, 3, getProof(2));
         assertEq(honeyJar.balanceOf(clown), 1);
         vm.stopPrank();
 
@@ -440,17 +440,17 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
          *         Do it again, and validate nothing changes.
          */
         vm.startPrank(alfaHunter);
-        honeyBox.claim(bundleId, 0, 2, getProof(0));
+        honeyBox.claim(bundleId, 0, 0, 2, 2, getProof(0));
         assertEq(honeyJar.balanceOf(alfaHunter), 2);
         vm.stopPrank();
 
         vm.startPrank(bera);
-        honeyBox.claim(bundleId, 0, 3, getProof(1));
+        honeyBox.claim(bundleId, 0, 1, 3, 3, getProof(1));
         assertEq(honeyJar.balanceOf(bera), 3);
         vm.stopPrank();
 
         vm.startPrank(clown);
-        honeyBox.claim(bundleId, 0, 3, getProof(2));
+        honeyBox.claim(bundleId, 0, 2, 3, 3, getProof(2));
         assertEq(honeyJar.balanceOf(clown), 1);
         vm.stopPrank();
 
@@ -462,21 +462,21 @@ contract HibernationDenTest is Test, ERC721TokenReceiver, ERC1155TokenReceiver {
 
         vm.startPrank(alfaHunter);
         paymentToken.approve(address(honeyBox), 2 * MINT_PRICE_ERC20);
-        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 2, getProof(0), 1);
+        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 0, 2, 2, getProof(0), 1);
         assertEq(honeyJar.balanceOf(alfaHunter), 3);
         vm.stopPrank();
 
         vm.startPrank(bera);
         paymentToken.approve(address(honeyBox), 3 * MINT_PRICE_ERC20);
-        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 3, getProof(1), 2);
+        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 1, 3, 3, getProof(1), 2);
         assertEq(honeyJar.balanceOf(bera), 5); //claimed 3, early minted 2
         vm.stopPrank();
 
         vm.deal(clown, MINT_PRICE_ETH);
         vm.startPrank(clown);
         paymentToken.approve(address(honeyBox), 3 * MINT_PRICE_ERC20);
-        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 3, getProof(2), 1);
-        honeyBox.earlyMekHoneyJarWithEth{value: MINT_PRICE_ETH}(bundleId, 0, 3, getProof(2), 1);
+        honeyBox.earlyMekHoneyJarWithERC20(bundleId, 0, 2, 3, 3, getProof(2), 1);
+        honeyBox.earlyMekHoneyJarWithEth{value: MINT_PRICE_ETH}(bundleId, 0, 2, 3, 3, getProof(2), 1);
 
         assertEq(honeyJar.balanceOf(clown), 3); // claimed 1, earlyMinted 2
         vm.stopPrank();
