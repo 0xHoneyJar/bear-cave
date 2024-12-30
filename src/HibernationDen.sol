@@ -405,6 +405,9 @@ contract HibernationDen is
         uint256 allowedMints = maxPublicMint - jarsMints[msg.sender];
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
+        // Increment counter to prevent over minting
+        jarMints[msg.sender]++;
+
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
 
@@ -414,6 +417,9 @@ contract HibernationDen is
         if (jarsMints[msg.sender] >= maxPublicMint) revert MekingTooManyHoneyJars(bundleId_);
         uint256 allowedMints = maxPublicMint - jarsMints[msg.sender];
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
+
+        // Increment counter to prevent over minting
+        jarMints[msg.sender]++;
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
