@@ -18,7 +18,7 @@
     "mintConfig": {
         "maxHoneyJar_claimable": 10000,
         "price_ERC20": 0,
-        "price_ETH": 110000000000000000
+        "price_ETH": 40000000000000000
     },
     "mintChainId": 11155111,
     "assetChainId": 11155111,
@@ -28,7 +28,7 @@
     ],
     "honeyJar": {
         "startIndex": 0,
-        "maxMintableForChain": 589,
+        "maxMintableForChain": 5898,
         "baseURI": "ipfs://QmcEVL17WvLeXVFSfoBRgCJK8taksP95YiX6e9zQmw4nGS"
     },
     "revShare": 42000000000000000,
@@ -41,7 +41,7 @@
     "bundleTokens": [
         {
             "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
-            "id": 1,
+            "id": 2,
             "isERC1155": false
         }
     ]

@@ -150,7 +150,7 @@ contract HibernationDen is
     mapping(uint256 => uint8) public honeyJarToParty; // Reverse mapping for honeyJar to bundle (needed for UI)
     /// @notice list of HoneyJars associated with a particular SlumberParty (bundle)
     mapping(uint8 => uint256[]) public honeyJarShelf;
-    /// @notice Tracks the amount of mints per user
+    /// @notice Tracks the amount of mints per user (NOTE INTENTIONAL TYPO "jars")
     mapping(address => uint256) public jarsMints;
 
     constructor(
@@ -406,7 +406,7 @@ contract HibernationDen is
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
         // Increment counter to prevent over minting
-        jarMints[msg.sender]++;
+        jarsMints[msg.sender]++;
 
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
@@ -419,7 +419,7 @@ contract HibernationDen is
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
         // Increment counter to prevent over minting
-        jarMints[msg.sender]++;
+        jarsMints[msg.sender]++;
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
