@@ -18,7 +18,7 @@ contract StartGame is THJScriptBase("gen6") {
 
         vm.startBroadcast();
 
-        // registry.registerGame(den);
+        registry.registerGame(den);
         registry.startGame(den);
         HibernationDen(den).setPortal(portal);
 

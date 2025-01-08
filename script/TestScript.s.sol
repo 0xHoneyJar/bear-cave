@@ -6,6 +6,7 @@ import {ILayerZeroEndpoint} from "@layerzero/interfaces/ILayerZeroEndpoint.sol";
 import {LzLib} from "@layerzero/libraries/LzLib.sol";
 
 import {HibernationDen} from "src/HibernationDen.sol";
+import {Gatekeeper} from "src/Gatekeeper.sol";
 import {GameRegistry} from "src/GameRegistry.sol";
 import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
@@ -22,6 +23,7 @@ contract TestScript is THJScriptBase("gen6") {
         string memory json = _getConfig(env);
 
         startGame(json);
+        // deployGatekeeper(json);
         // checkDenJars(json);
         // fixFermentation(json);
         // sendFermented(json);
@@ -63,6 +65,13 @@ contract TestScript is THJScriptBase("gen6") {
         vm.stopBroadcast();
     }
 
+    function deployGatekeeper(string memory json) internal {
+        address registryAddress = json.readAddress(".deployments.registry");
+        vm.startBroadcast();
+        new Gatekeeper(registryAddress);
+        vm.stopBroadcast();
+    }
+
     /// @notice this script is only meant to test do not use for production
     /// @notice mimicks the behavior of the portal to start a cross chain game. Run on L2
     function startGame(string memory json) internal {
@@ -93,10 +102,11 @@ contract TestScript is THJScriptBase("gen6") {
         // checkpoints[0] = 30;
 
         vm.startBroadcast();
-        registry.grantRole(Constants.PORTAL, deployer);
-        // den.startGame(assetChainId, 1, 1, checkpoints);
         den.puffPuffPassOut(bundleId);
-        registry.renounceRole(Constants.PORTAL, deployer);
+
+        // registry.grantRole(Constants.PORTAL, deployer);
+        // den.startGame(assetChainId, 1, 1, checkpoints);
+        // registry.renounceRole(Constants.PORTAL, deployer);
         vm.stopBroadcast();
     }
 

@@ -29,9 +29,20 @@ contract BundleTokens is THJScriptBase("gen6") {
 
         uint256 mintChainId = json.readUint(".mintChainId");
         uint256[] memory checkpoints = json.readUintArray(".checkpoints");
-        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
-        uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
-        bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+        // address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
+        // uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
+        // bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
+
+        // Single Entry
+        address addy = json.readAddress(".bundleTokens[*].address");
+        uint256 tokenId = json.readUint(".bundleTokens[*].id");
+        bool isERC1155 = json.readBool(".bundleTokens[*].isERC1155");
+        address[] memory addresses = new address[](1);
+        addresses[0] = addy;
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = tokenId;
+        bool[] memory isERC1155s = new bool[](1);
+        isERC1155s[0] = isERC1155;
 
         vm.startBroadcast();
         // Identify tokenID to hibernate

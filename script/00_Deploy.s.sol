@@ -65,7 +65,7 @@ contract DeployScript is THJScriptBase("gen6") {
 
         vm.startBroadcast();
 
-        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
+        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga694201"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
         honeyJar.setBaseURI(baseURI);
 

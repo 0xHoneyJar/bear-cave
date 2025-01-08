@@ -406,7 +406,7 @@ contract HibernationDen is
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
         // Increment counter to prevent over minting
-        jarsMints[msg.sender]++;
+        jarsMints[msg.sender] += amount_;
 
         return _distributeERC20AndMintHoneyJar(bundleId_, amount_);
     }
@@ -419,7 +419,7 @@ contract HibernationDen is
         if (amount_ > allowedMints) revert MekingTooManyHoneyJars(bundleId_);
 
         // Increment counter to prevent over minting
-        jarsMints[msg.sender]++;
+        jarsMints[msg.sender] += amount_;
 
         return _distributeETHAndMintHoneyJar(bundleId_, amount_);
     }
