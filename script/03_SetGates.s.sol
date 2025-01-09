@@ -31,8 +31,10 @@ contract SetGates is THJScriptBase("gen6") {
         // gk.addGate(bundleId, bytes32(0), 0, 0);
         // gk.addGate(bundleId, bytes32(0), 0, 0);
         // Set gate amount really high so the cap doesn't get hit
-        gk.addGate(bundleId, 0xf3db17cf1fdf936c25eeabe095b899bd6e3c7c68b520589198ec5f8bd107fdb9, 1990, 0);
-        gk.addGate(bundleId, 0x00604c6fd735e2995ff81e4660f70c2b929baae3d7f4125e2eb476616747abb3, 6078, 0);
+        gk.addGate(bundleId, 0x08cf1b2c4ca7bcf13aba0ba1503a81eb5fffb2d18207e1454d63facefbb313e7, 1523, 0);
+        gk.addGate(bundleId, 0x73073b2ba8a6894770b363288c57b4b862153a13514b6d13aaf3f6b47f55adbb, 1203, 1);
+        gk.addGate(bundleId, 0x3d60b71dff94163dae9934ba24830d4b09c7fcd63c4a330395ff2b8e4b8a826f, 6698, 2);
+
         // gr.grantRole(Constants.GAME_INSTANCE, deployer);
         // gk.startGatesForBundle(bundleId);
         // gr.renounceRole(Constants.GAME_INSTANCE, deployer);

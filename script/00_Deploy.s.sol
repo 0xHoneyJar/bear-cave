@@ -35,12 +35,14 @@ contract DeployScript is THJScriptBase("gen6") {
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
         // Initializing StageTimes
-        uint256[] memory stageTimes = new uint256[](1);
-        stageTimes[0] = 0 hours;
+        uint256[] memory stageTimes = new uint256[](3);
+        stageTimes[0] = 1 hours; // Gate 1
+        stageTimes[1] = 25 hours; // Gate 2
+        stageTimes[2] = 49 hours; // Gate 3
 
         vm.startBroadcast();
 
-        // Deploy gameRegistry and give gameAdmin permisisons
+        // Deploy gameRegistry and give gameAdmin permissions
         GameRegistry gameRegistry = new GameRegistry();
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
         gameRegistry.setJani(jani);
@@ -65,7 +67,7 @@ contract DeployScript is THJScriptBase("gen6") {
 
         vm.startBroadcast();
 
-        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga694201"));
+        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga694203"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
         honeyJar.setBaseURI(baseURI);
 
