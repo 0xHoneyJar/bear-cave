@@ -93,8 +93,6 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
         uint32 mintAllowance,
         bytes32[] calldata proof
     ) external view returns (uint32 mintAmount) {
-        bytes32 proofHash = keccak256(abi.encode(proof));
-
         Gate storage gate = tokenToGates[bundleId][index];
 
         // Set the mint to be the allowance
