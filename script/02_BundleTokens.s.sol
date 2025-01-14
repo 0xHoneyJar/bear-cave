@@ -29,20 +29,34 @@ contract BundleTokens is THJScriptBase("gen6") {
 
         uint256 mintChainId = json.readUint(".mintChainId");
         uint256[] memory checkpoints = json.readUintArray(".checkpoints");
-        // address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
+        // address[] memory addresses = json.readAddressArray("$.bundleTokens[*].address");
         // uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         // bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
 
-        // Single Entry
-        address addy = json.readAddress(".bundleTokens[*].address");
-        uint256 tokenId = json.readUint(".bundleTokens[*].id");
-        bool isERC1155 = json.readBool(".bundleTokens[*].isERC1155");
-        address[] memory addresses = new address[](1);
-        addresses[0] = addy;
-        uint256[] memory tokenIds = new uint256[](1);
-        tokenIds[0] = tokenId;
-        bool[] memory isERC1155s = new bool[](1);
-        isERC1155s[0] = isERC1155;
+        // Manual Entry
+        // address addy = json.readAddress(".bundleTokens[*].address");
+        // uint256 tokenId = json.readUint(".bundleTokens[*].id");
+        // bool isERC1155 = json.readBool(".bundleTokens[*].isERC1155");
+        address[] memory addresses = new address[](5);
+        addresses[0] = 0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714;
+        addresses[1] = 0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714;
+        addresses[2] = 0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714;
+        addresses[3] = 0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714;
+        addresses[4] = 0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714;
+
+        uint256[] memory tokenIds = new uint256[](5);
+        tokenIds[0] = 10;
+        tokenIds[1] = 11;
+        tokenIds[2] = 12;
+        tokenIds[3] = 13;
+        tokenIds[4] = 14;
+
+        bool[] memory isERC1155s = new bool[](5);
+        isERC1155s[0] = false;
+        isERC1155s[1] = false;
+        isERC1155s[2] = false;
+        isERC1155s[3] = false;
+        isERC1155s[4] = false;
 
         vm.startBroadcast();
         // Identify tokenID to hibernate

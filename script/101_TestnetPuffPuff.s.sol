@@ -23,12 +23,13 @@ contract TestnetPuffPuff is THJScriptBase("gen6") {
 
         // ReadConfig
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+        uint8 bundleId = uint8(json.readUint(".bundleId")); // BundleId has to be less than 255
 
         address deployer = json.readAddress(".addresses.beekeeper");
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
 
         MockERC20 erc20 = MockERC20(json.readAddress(".addresses.paymentToken"));
-        address[] memory addresses = json.readAddressArray(".bundleTokens[*].address");
+        address[] memory addresses = json.readAddressArray("[].bundleTokens[*].address");
         uint256[] memory tokenIds = json.readUintArray(".bundleTokens[*].id");
         bool[] memory isERC1155s = json.readBoolArray(".bundleTokens[*].isERC1155");
 
@@ -48,6 +49,9 @@ contract TestnetPuffPuff is THJScriptBase("gen6") {
             MockERC721(addresses[i]).mint(deployer, tokenIds[i]);
             MockERC721(addresses[i]).approve(address(den), tokenIds[i]);
         }
+
+        den.puffPuffPassOut(bundleId);
+
         vm.stopBroadcast();
     }
 
