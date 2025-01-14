@@ -30,6 +30,7 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
      */
     event GateAdded(uint256 bundleId, uint256 gateId);
     event GateSetEnabled(uint256 bundleId, uint256 gateId, bool enabled);
+    event GateTimeUpdated(uint256 bundleId, uint256 gateId, uint256 activeAt);
     event GateActivated(uint256 bundleId, uint256 gateId, uint256 activationTime);
     event GetSetMaxClaimable(uint256 bundleId, uint256 gateId, uint256 maxClaimable);
     event GateReset(uint256 bundleId, uint256 index);
@@ -215,6 +216,16 @@ contract Gatekeeper is GameRegistryConsumer, IGatekeeper {
         tokenToGates[bundleId][index].gateRoot = newRoot;
 
         emit GateRootUpdated(bundleId, index, newRoot);
+    }
+
+    /// @notice admin function that can change the start time of a specific gate
+    function updateGateTime(uint256 bundleId, uint256 index, uint256 newTimestamp)
+        external
+        onlyRole(Constants.GAME_ADMIN)
+    {
+        tokenToGates[bundleId][index].activeAt = newTimestamp;
+
+        emit GateTimeUpdated(bundleId, index, newTimestamp);
     }
 
     /// @notice helper function to reset gate state for a game
