@@ -348,6 +348,8 @@ contract HibernationDen is
         // validateProof checks that gates are open
         uint32 mintAmount =
             gatekeeper.calculateMintable(bundleId, gateId, proofIdx, msg.sender, claimAllowance, mintAllowance, proof);
+
+        // You're trying to mint more than you're entitled to
         if (desiredMint > mintAmount) revert MekingTooManyHoneyJars(bundleId);
 
         if (mintAmount == 0) {
@@ -359,7 +361,6 @@ contract HibernationDen is
         // Check if the HoneyJars can be minted
         _canMintHoneyJar(bundleId, desiredMint);
 
-        // You're trying to mint more than you're entitled to)
         return _distributeERC20AndMintHoneyJar(bundleId, mintAmount);
     }
 
@@ -383,6 +384,8 @@ contract HibernationDen is
         // validateProof checks that gates are open
         uint32 mintAmount =
             gatekeeper.calculateMintable(bundleId, gateId, proofIdx, msg.sender, claimAllowance, mintAllowance, proof);
+
+        // You're trying to mint more than you're entitled to)
         if (desiredMint > mintAmount) revert MekingTooManyHoneyJars(bundleId);
 
         if (mintAmount == 0) {
@@ -394,7 +397,6 @@ contract HibernationDen is
         // Check if the HoneyJars can be minted
         _canMintHoneyJar(bundleId, desiredMint);
 
-        // You're trying to mint more than you're entitled to)
         return _distributeETHAndMintHoneyJar(bundleId, mintAmount);
     }
 
