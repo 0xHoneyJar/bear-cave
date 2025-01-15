@@ -1,0 +1,72 @@
+{
+    "chainId": 11155111,
+    "deployments": {
+        "registry": "0xAFcE34352bb7Df4F545B1dAefD7BD5A15922c4A3",
+        "gatekeeper": "0x38c62DCb5bca6c3E8237A2c9C2e671252610F2A8",
+        "honeyjar": "0x5fA4D4b32B2b1F059aBB4710fBcfCa93199E53bD",
+        "den": "0xA91ffDE0F43973dA4Ceb144aF0105c7d96388406",
+        "portal": "0x42BD43C5f3A74e627C8F99095d6079B68ec0cD13"
+    },
+    "addresses": {
+        "gameAdmin": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7",
+        "jani": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
+        "beekeeper": "0xF951bA8107D7BF63733188E64D7E07bD27b46Af7",
+        "paymentToken": "0x0000000000000000000000000000000000000000",
+        "lzEndpoint": "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1",
+        "deployer": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7"
+    },
+    "mintConfig": {
+        "maxHoneyJar_claimable": 10000,
+        "price_ERC20": 0,
+        "price_ETH": 40000000000000000
+    },
+    "mintChainId": 11155111,
+    "assetChainId": 11155111,
+    "adminMint": 3301,
+    "checkpoints": [
+        4000,
+        4500,
+        5000,
+        5500,
+        5898
+    ],
+    "honeyJar": {
+        "startIndex": 0,
+        "maxMintableForChain": 5898,
+        "baseURI": "ipfs://QmcEVL17WvLeXVFSfoBRgCJK8taksP95YiX6e9zQmw4nGS"
+    },
+    "revShare": 42000000000000000,
+    "vrf": {
+        "coordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
+        "keyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
+        "subId": 12336
+    },
+    "bundleId": 0,
+    "bundleTokens": [
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 10,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 11,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 12,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 13,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 14,
+            "isERC1155": false
+        }
+    ]
+}

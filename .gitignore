@@ -17,6 +17,9 @@ docs/
 # Node fun
 node_modules
 yarn-error.log
+artifacts/
+cache-forge/
+cache-hardhat/
 
 # Coverage
 *.info

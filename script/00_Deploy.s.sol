@@ -15,7 +15,7 @@ import {ERC1155} from "solmate/tokens/ERC1155.sol";
 import {ERC721} from "solmate/tokens/ERC721.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-contract DeployScript is THJScriptBase("gen3") {
+contract DeployScript is THJScriptBase("gen6") {
     using stdJson for string;
 
     function setUp() public {}
@@ -35,12 +35,15 @@ contract DeployScript is THJScriptBase("gen3") {
         address beekeeper = json.readAddress(".addresses.beekeeper");
 
         // Initializing StageTimes
-        uint256[] memory stageTimes = new uint256[](1);
-        stageTimes[0] = 0 hours;
+        uint256[] memory stageTimes = new uint256[](4);
+        stageTimes[0] = 1 hours; // Gate 1
+        stageTimes[1] = 25 hours; // Gate 2
+        stageTimes[2] = 49 hours; // Gate 3
+        stageTimes[3] = 51 hours; // Gate 4 (Public)
 
         vm.startBroadcast();
 
-        // Deploy gameRegistry and give gameAdmin permisisons
+        // Deploy gameRegistry and give gameAdmin permissions
         GameRegistry gameRegistry = new GameRegistry();
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
         gameRegistry.setJani(jani);
@@ -65,7 +68,7 @@ contract DeployScript is THJScriptBase("gen3") {
 
         vm.startBroadcast();
 
-        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga"));
+        bytes32 salt = keccak256(bytes("BerasLoveTheHoneyJarFurthermoreOogaBooga694203"));
         HoneyJar honeyJar = new HoneyJar{salt: salt}(deployer, gameRegistry, honeyJarStartIndex, honeyJarAmount);
         honeyJar.setBaseURI(baseURI);
 
