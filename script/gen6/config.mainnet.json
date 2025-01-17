@@ -1,0 +1,82 @@
+{
+    "chainId": 1,
+    "deployments": {
+        "registry": "0x756f22c35619F6C9AA45dD553517088985A55C6F",
+        "gatekeeper": "0x0649e6b09c6E0c0fe72B3C705c823063A763Bfe9",
+        "honeyjar": "0x98Dc31A9648F04E23e4E36B0456D1951531C2a05",
+        "den": "0x29D9CfB6b0594442196F10980d00fb1C4c83728F",
+        "portal": "0x6B0474f2406ae0aBD3ec7Ae34675286a11C288C7"
+    },
+    "addresses": {
+        "gameAdmin": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7",
+        "jani": "0x25542Fd6204bbBe570E358B9ebeb391513980c34",
+        "beekeeper": "0x67EDbbF1531b28551f2075223D8a30a9AE457ECa",
+        "paymentToken": "0x0000000000000000000000000000000000000000",
+        "lzEndpoint": "0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675",
+        "deployer": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7"
+    },
+    "mintConfig": {
+        "maxHoneyJar_claimable": 10000,
+        "price_ERC20": 0,
+        "price_ETH": 40000000000000000
+    },
+    "mintChainId": 1,
+    "assetChainId": 1,
+    "adminMint": 3301,
+    "checkpoints": [
+        3500,
+        3664,
+        3828,
+        3992,
+        4156,
+        4320,
+        4484,
+        4648,
+        4812,
+        4976,
+        5140,
+        5304,
+        5468,
+        5632,
+        5898
+    ],
+    "honeyJar": {
+        "startIndex": 0,
+        "maxMintableForChain": 5898,
+        "baseURI": "ipfs://bafkreiacxbwbbkcb4bityfo2vwbtv4zh4dzqplj5mdopdmxzl77v6zsy5u"
+    },
+    "revShare": 42000000000000000,
+    "vrf": {
+        "coordinator": "0x271682DEB8C4E0901D1a1550aD2e64D568E69909",
+        "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
+        "subId": 670
+    },
+    "bundleId": 1,
+    "bundleTokens": [
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 10,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 11,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 12,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 13,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 14,
+            "isERC1155": false
+        }
+    ]
+}
