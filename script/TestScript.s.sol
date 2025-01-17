@@ -23,6 +23,7 @@ contract TestScript is THJScriptBase("gen6") {
         string memory json = _getConfig(env);
 
         startGame(json);
+        updateGateTimes(json);
         // deployGatekeeper(json);
         // checkDenJars(json);
         // fixFermentation(json);
@@ -135,6 +136,24 @@ contract TestScript is THJScriptBase("gen6") {
         for (uint256 i = 0; i < party.fermentedJars.length; ++i) {
             console.log(party.fermentedJars[i].id, party.fermentedJars[i].isUsed);
         }
+    }
+
+    function updateGateTimes(string memory json) internal {
+        uint8 bundleId = uint8(json.readUint(".bundleId"));
+        Gatekeeper gk = Gatekeeper((json.readAddress(".deployments.gatekeeper")));
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+
+        vm.startBroadcast();
+
+        // Update gate times to be speicific
+        gk.updateGateTime(bundleId, 0, 1737217200);
+        gk.updateGateTime(bundleId, 1, 1737303600);
+        gk.updateGateTime(bundleId, 2, 1737390000);
+
+        // Modify public mintTime
+        den.setPublicMintTime(bundleId, 1737397200);
+
+        vm.stopBroadcast();
     }
 
     function fixFermentation(string memory json) internal {
