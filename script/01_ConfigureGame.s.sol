@@ -52,9 +52,10 @@ contract ConfigureGame is THJScriptBase("gen6") {
         vm.startBroadcast();
 
         hibernationDen.initialize(vrfConfig, mintConfig);
-        registry.grantRole(Constants.PORTAL, address(portal));
-        registry.grantRole(Constants.BURNER, address(portal));
-        registry.grantRole(Constants.MINTER, address(portal));
+        // Skip the following for hj6
+        // registry.grantRole(Constants.PORTAL, address(portal));
+        // registry.grantRole(Constants.BURNER, address(portal));
+        // registry.grantRole(Constants.MINTER, address(portal));
         registry.registerGame(address(hibernationDen));
 
         vm.stopBroadcast();
