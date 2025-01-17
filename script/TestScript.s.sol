@@ -22,9 +22,9 @@ contract TestScript is THJScriptBase("gen6") {
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        startGame(json);
         setApproval(json);
-        // updateGateTimes(json);
+        startGame(json);
+        updateGateTimes(json);
         // deployGatekeeper(json);
         // checkDenJars(json);
         // fixFermentation(json);
@@ -163,7 +163,7 @@ contract TestScript is THJScriptBase("gen6") {
         HoneyJar hj1 = HoneyJar(0xa20CF9B0874c3E46b344DEAEEa9c2e0C3E1db37d);
         HoneyJar hj2 = HoneyJar(0x3f4DD25BA6Fb6441Bfd1a869Cbda6a511966456D);
         HoneyJar hj4 = HoneyJar(0x0B820623485dCFb1C40A70c55755160F6a42186D);
-        HoneyJar hj5 = Honeyjar(0x39EB35a84752B4bd3459083834aF1267D276a54C);
+        HoneyJar hj5 = HoneyJar(0x39EB35a84752B4bd3459083834aF1267D276a54C);
 
         vm.startBroadcast();
         hj1.setApprovalForAll(den, true);
