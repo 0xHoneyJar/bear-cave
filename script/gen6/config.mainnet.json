@@ -1,11 +1,11 @@
 {
     "chainId": 1,
     "deployments": {
-        "registry": "",
-        "gatekeeper": "",
-        "honeyjar": "",
-        "den": "",
-        "portal": ""
+        "registry": "0x756f22c35619F6C9AA45dD553517088985A55C6F",
+        "gatekeeper": "0x0649e6b09c6E0c0fe72B3C705c823063A763Bfe9",
+        "honeyjar": "0x98Dc31A9648F04E23e4E36B0456D1951531C2a05",
+        "den": "0x29D9CfB6b0594442196F10980d00fb1C4c83728F",
+        "portal": "0x6B0474f2406ae0aBD3ec7Ae34675286a11C288C7"
     },
     "addresses": {
         "gameAdmin": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7",
