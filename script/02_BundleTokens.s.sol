@@ -55,7 +55,7 @@ contract BundleTokens is THJScriptBase("gen6") {
         addresses[14] = 0x0B820623485dCFb1C40A70c55755160F6a42186D; // 6272
         addresses[15] = 0xa20CF9B0874c3E46b344DEAEEa9c2e0C3E1db37d; // 3905
         addresses[16] = 0x39EB35a84752B4bd3459083834aF1267D276a54C; // 6311
-        addresses[17] = 0x3f4DD25BA6Fb6441Bfd1a869Cbda6a511966456D; // 6812
+        addresses[17] = 0x0B820623485dCFb1C40A70c55755160F6a42186D; // 6273
 
         uint256[] memory ids = new uint256[](18);
         ids[0] = 6312;
@@ -75,7 +75,7 @@ contract BundleTokens is THJScriptBase("gen6") {
         ids[14] = 6272;
         ids[15] = 3905;
         ids[16] = 6311;
-        ids[17] = 6812;
+        ids[17] = 6273;
 
         bool[] memory isERC1155s = new bool[](18);
         isERC1155s[0] = false;
@@ -95,7 +95,6 @@ contract BundleTokens is THJScriptBase("gen6") {
         isERC1155s[14] = false;
         isERC1155s[15] = false;
         isERC1155s[16] = false;
-        isERC1155s[17] = false;
 
         vm.startBroadcast();
         // Identify tokenID to hibernate
