@@ -81,6 +81,7 @@ contract HibernationDen is
      */
     event Initialized(MintConfig mintConfig);
     event PortalSet(address portal);
+    event PublicMintTimeUpdated(uint8 bundleId, uint256 publicMintTime);
     event SlumberPartyStarted(uint8 bundleId);
     event SlumberPartyAdded(uint8 bundleId);
     event FermentedJarsFound(uint8 bundleId, uint256[] honeyJarIds);
@@ -736,6 +737,13 @@ contract HibernationDen is
     }
 
     //=============== SETTERS ================//
+
+    /// @notice GameAdmin function to update public mint times for a bundle
+    function setPublicMintTime(uint8 bundleId_, uint256 publicMintTime_) external onlyRole(Constants.GAME_ADMIN) {
+        slumberParties[bundleId_].publicMintTime = publicMintTime_;
+
+        emit PublicMintTimeUpdated(bundleId_, publicMintTime_);
+    }
 
     /// @notice game_admin method to set the amount of jars that can be minted by the admin.
     function setAdminMint(uint256 adminMintAmount_) external onlyRole(Constants.GAME_ADMIN) {

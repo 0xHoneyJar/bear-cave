@@ -46,6 +46,7 @@ contract DeployScript is THJScriptBase("gen6") {
         // Deploy gameRegistry and give gameAdmin permissions
         GameRegistry gameRegistry = new GameRegistry();
         gameRegistry.grantRole(Constants.GAME_ADMIN, gameAdmin);
+        gameRegistry.grantRole(Constants.GAME_ADMIN, jani);
         gameRegistry.setJani(jani);
         gameRegistry.setBeekeeper(beekeeper);
         gameRegistry.setStageTimes(stageTimes);
