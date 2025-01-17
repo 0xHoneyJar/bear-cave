@@ -1,0 +1,72 @@
+{
+    "chainId": 1,
+    "deployments": {
+        "registry": "",
+        "gatekeeper": "",
+        "honeyjar": "",
+        "den": "",
+        "portal": ""
+    },
+    "addresses": {
+        "gameAdmin": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7",
+        "jani": "0x25542Fd6204bbBe570E358B9ebeb391513980c34",
+        "beekeeper": "0x67EDbbF1531b28551f2075223D8a30a9AE457ECa",
+        "paymentToken": "0x0000000000000000000000000000000000000000",
+        "lzEndpoint": "0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675",
+        "deployer": "0x4A8c9a29b23c4eAC0D235729d5e0D035258CDFA7"
+    },
+    "mintConfig": {
+        "maxHoneyJar_claimable": 10000,
+        "price_ERC20": 0,
+        "price_ETH": 40000000000000000
+    },
+    "mintChainId": 1,
+    "assetChainId": 1,
+    "adminMint": 3301,
+    "checkpoints": [
+        4000,
+        4500,
+        5000,
+        5500,
+        5898
+    ],
+    "honeyJar": {
+        "startIndex": 0,
+        "maxMintableForChain": 5898,
+        "baseURI": "ipfs://bafkreiacxbwbbkcb4bityfo2vwbtv4zh4dzqplj5mdopdmxzl77v6zsy5u"
+    },
+    "revShare": 42000000000000000,
+    "vrf": {
+        "coordinator": "0x271682DEB8C4E0901D1a1550aD2e64D568E69909",
+        "keyHash": "0xff8dedfbfa60af186cf3c830acbc32c05aae823045ae5ea7da1e45fbfaba4f92",
+        "subId": 670
+    },
+    "bundleId": 0,
+    "bundleTokens": [
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 10,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 11,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 12,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 13,
+            "isERC1155": false
+        },
+        {
+            "address": "0x6C8fE8f2c7B9A5bAC8e0E31aFA05F53e18DA5714",
+            "id": 14,
+            "isERC1155": false
+        }
+    ]
+}
