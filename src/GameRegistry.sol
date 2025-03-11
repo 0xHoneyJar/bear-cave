@@ -21,10 +21,10 @@ contract GameRegistry is AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(Constants.GAME_ADMIN, msg.sender);
 
-        // Initial 4 stages
-        stageTimes.push(0 hours);
-        stageTimes.push(2 hours);
-        stageTimes.push(4 hours);
+        // Initial 3 stages
+        stageTimes.push(1 hours);
+        stageTimes.push(25 hours);
+        stageTimes.push(49 hours);
     }
 
     /// @notice stores enabled state for the games.

@@ -14,7 +14,7 @@ import {HoneyJarPortal} from "src/HoneyJarPortal.sol";
 import {Constants} from "src/Constants.sol";
 
 // Sets up HibernationDen as a game
-contract ConfigureGame is THJScriptBase("gen3") {
+contract ConfigureGame is THJScriptBase("gen6") {
     using stdJson for string;
     using SafeCastLib for uint256;
 
@@ -52,9 +52,10 @@ contract ConfigureGame is THJScriptBase("gen3") {
         vm.startBroadcast();
 
         hibernationDen.initialize(vrfConfig, mintConfig);
-        registry.grantRole(Constants.PORTAL, address(portal));
-        registry.grantRole(Constants.BURNER, address(portal));
-        registry.grantRole(Constants.MINTER, address(portal));
+        // Skip the following for hj6
+        // registry.grantRole(Constants.PORTAL, address(portal));
+        // registry.grantRole(Constants.BURNER, address(portal));
+        // registry.grantRole(Constants.MINTER, address(portal));
         registry.registerGame(address(hibernationDen));
 
         vm.stopBroadcast();

@@ -475,7 +475,7 @@ contract HibernationDenUnitTest is Test, ERC1155TokenReceiver, ERC721TokenReceiv
             gatekeeper.tokenToGates(bundleId, 1);
 
         vm.prank(address(0x79092A805f1cf9B0F5bE3c5A296De6e51c1DEd34));
-        honeyBox.claim(bundleId, 1, 2, proof); // results in 2
+        honeyBox.claim(bundleId, 1, 1, 2, 2, proof); // results in 2
 
         // honeyBox.claim(bundleId, 0, 2, proof); reverts
     }

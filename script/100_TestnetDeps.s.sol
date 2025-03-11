@@ -8,13 +8,13 @@ import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
 // Deploys ERC721, ERC20, ERC1155 to Game_Admin
-contract TestnetDeps is THJScriptBase("gen3") {
+contract TestnetDeps is THJScriptBase("gen6") {
     using stdJson for string;
 
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
         address gameAdmin = json.readAddress(".addresses.gameAdmin");
-        address deployer = json.readAddress(".address.deployer");
+        address deployer = json.readAddress(".addresses.deployer");
         // MockERC20 paymentToken = MockERC20(json.readAddress(".addresses.paymentToken"));
 
         vm.startBroadcast();
