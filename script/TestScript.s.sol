@@ -22,12 +22,13 @@ contract TestScript is THJScriptBase("gen6") {
     function run(string calldata env) public override {
         string memory json = _getConfig(env);
 
-        setApproval(json);
-        startGame(json);
-        updateGateTimes(json);
+        // setApproval(json);
+        // startGame(json);
+        // updateGateTimes(json);
+        // setAdminMintAmount(json);
         // deployGatekeeper(json);
         // checkDenJars(json);
-        // fixFermentation(json);
+        fixFermentation(json);
         // sendFermented(json);
         // bridgeJars(json);
     }
@@ -157,6 +158,16 @@ contract TestScript is THJScriptBase("gen6") {
         vm.stopBroadcast();
     }
 
+    function setAdminMintAmount(string memory json) internal {
+        uint8 bundleId = uint8(json.readUint(".bundleId"));
+        uint256 adminMintAmount = json.readUint(".adminMint");
+        HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
+
+        vm.startBroadcast();
+        den.setAdminMint(adminMintAmount);
+        vm.stopBroadcast();
+    }
+
     function setApproval(string memory json) internal {
         address den = json.readAddress(".deployments.den");
 
@@ -175,6 +186,7 @@ contract TestScript is THJScriptBase("gen6") {
 
     function fixFermentation(string memory json) internal {
         uint8 bundleId = uint8(json.readUint(".bundleId"));
+        address deployer = json.readAddress(".addresses.deployer");
         HibernationDen den = HibernationDen(payable(json.readAddress(".deployments.den")));
         GameRegistry registry = GameRegistry(json.readAddress(".deployments.registry"));
 
@@ -182,19 +194,34 @@ contract TestScript is THJScriptBase("gen6") {
         _printPartyInformation(party);
 
         // Additional fermentedJars obtained from `go run getRandom.go`
-        uint256[] memory newFermentedJarsList = new uint256[](4);
-        newFermentedJarsList[0] = party.fermentedJars[0].id;
-        newFermentedJarsList[1] = party.fermentedJars[1].id;
-        newFermentedJarsList[2] = 962;
-        newFermentedJarsList[3] = 617;
+        uint256[] memory newFermentedJarsList = new uint256[](18);
+        newFermentedJarsList[0] = 3500;
+        newFermentedJarsList[1] = 3503;
+        newFermentedJarsList[2] = 3633;
+        newFermentedJarsList[3] = 3969;
+        newFermentedJarsList[4] = 3581;
+        newFermentedJarsList[5] = 4311;
+        newFermentedJarsList[6] = 4327;
+        newFermentedJarsList[7] = 3934;
+        newFermentedJarsList[8] = 4534;
+        newFermentedJarsList[9] = 4396;
+        newFermentedJarsList[10] = 4575;
+        newFermentedJarsList[11] = 4556;
+        newFermentedJarsList[12] = 5031;
+        newFermentedJarsList[13] = 3724;
+        newFermentedJarsList[14] = 5814;
+        newFermentedJarsList[15] = 5582;
+        newFermentedJarsList[16] = 5263;
+        newFermentedJarsList[17] = 5208;
 
-        // uint256 pk = vm.envUint("PRIVATE_KEY");
-        // vm.startBroadcast(pk);
+        uint256 pk = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(pk);
         // // Give the EOA portal permissions
-        // den.setCrossChainFermentedJars(0, newFermentedJarsList);
-        // vm.stopBroadcast();
-        // party = den.getSlumberParty(0);
-        // _printPartyInformation(party);
+        registry.grantRole(Constants.PORTAL, deployer);
+        den.setCrossChainFermentedJars(bundleId, newFermentedJarsList);
+        vm.stopBroadcast();
+        party = den.getSlumberParty(bundleId);
+        _printPartyInformation(party);
     }
 
     function bridgeJars(string memory json) internal {
